@@ -573,15 +573,17 @@
           if (avatarTabInitialized) return;
           avatarTabInitialized = true;
           
-          const avatarBasenames = [
-              'Hair-Nicki SL Black_14507337010',
-              'Hair-Nicki SL Blonde_14507259815',
-              'Hair-Nicki SL Brunette_14507761707',
-              'Chest-Boobs code_11259731773'
-          ];
-          
-          allAvatarItems = avatarBasenames.map(basename => parseItemName(basename, 'photos/items'));
-          renderAvatarGallery(allAvatarItems);
+          // --- INICIO DE CAMBIO: Cargar items desde items.json ---
+          fetch('photos/items/items.json')
+            .then(res => res.json())
+            .then(imageBasenames => {
+                allAvatarItems = imageBasenames.map(basename => parseItemName(basename, 'photos/items'));
+                renderAvatarGallery(allAvatarItems);
+            }).catch(error => {
+                console.error("Failed to load avatar data:", error);
+                document.getElementById('avatar-gallery-container').innerHTML = `<p class="text-red-400 text-center">Error al cargar datos de avatar. Verifique si items.json es correcto.</p>`;
+            });
+          // --- FIN DE CAMBIO ---
       }
 
       // --- Music Tab Logic ---
