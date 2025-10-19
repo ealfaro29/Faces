@@ -1,0 +1,891 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-s8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Roblox Face Creator</title> 
+  
+  <style>
+    /* Global CSS Variables */
+    :root {
+      --accent-color: #4f46e5;
+      --accent-color-tint: #c7d2fe;
+      --color-text-primary-light: #1C1C1E; --color-text-secondary-light: #3A3A3C;
+      --color-surface-light: #F5F5F7; --color-background-light: #FFFFFF;
+      --color-divider-light: #EAEAEA; --color-text-primary-dark: #EAEAEB;
+      --color-text-secondary-dark: #9A9A9E; --color-surface-dark: #121212;
+      --color-background-dark: #1E1E1E; --color-divider-dark: #3A3A3C;
+      --color-accent-text: #FFFFFF;
+      --font-family-sans: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial;
+      --font-size-h1: 20px; --font-size-body: 14px; --font-size-caption: 12px;
+      --font-weight-emphasis: 600; --font-weight-medium: 500;
+      --space-2: 8px; --space-3: 12px; --space-4: 16px; --space-5: 24px;
+      --radius-sm: 6px; --radius-md: 8px; --radius-xl: 16px;
+      --shadow-raised-2: 0 4px 12px rgba(0,0,0,0.06);
+      --shadow-floating-3: 0 8px 20px rgba(0,0,0,0.12);
+      --duration-standard: 200ms;
+    }
+    /* Theme Application */
+    html[data-theme="light"] { --ink: var(--color-text-primary-light); --muted: var(--color-text-secondary-light); --surface: var(--color-surface-light); --surface-alt: var(--color-background-light); --border-color: var(--color-divider-light); --panel-shadow: var(--shadow-raised-2); color-scheme: light; }
+    html[data-theme="dark"] { --ink: var(--color-text-primary-dark); --muted: var(--color-text-secondary-dark); --surface: var(--color-surface-dark); --surface-alt: var(--color-background-dark); --border-color: var(--color-divider-dark); --panel-shadow: 0 4px 12px rgba(0, 0, 0, 0.3); color-scheme: dark; }
+    
+    /* Base Styles */
+    html { box-sizing: border-box; } *, *:before, *:after { box-sizing: inherit; }
+    body { margin: 0; color: var(--ink); background-color: var(--surface); font: var(--font-size-body)/1.5 var(--font-family-sans); padding: 25px; }
+    
+    /* Layout Container: Ancho máximo ajustado para llenar la ventana con el panel fijo de 600px */
+    .container { 
+        max-width: calc(100vw - 50px); /* 100% del viewport menos el padding del body (25px * 2) */
+        margin: 0 auto; 
+        display: grid; 
+        /* Panel de control (1fr) usa todo el espacio sobrante. Panel principal (600px) es fijo. */
+        grid-template-columns: 1fr 600px; 
+        grid-template-rows: auto 1fr; 
+        gap: 25px; 
+        height: calc(100vh - 50px); 
+        transition: filter 0.5s ease-in-out; 
+    }
+    .container.loading { filter: blur(5px); pointer-events: none; }
+    
+    /* Panel Styles */
+    .panel { background: var(--surface-alt); border: 1px solid var(--border-color); border-radius: var(--radius-xl); box-shadow: var(--panel-shadow); }
+    
+    /* Header Specifics */
+    header.panel { grid-column: 1 / -1; height:65px; flex-shrink: 0; display: flex; align-items: center; gap: var(--space-3); padding: var(--space-4); }
+    header h1 { font-size: var(--font-size-h1); font-weight: var(--font-weight-emphasis); margin: 0; }
+    header .sub { color: var(--muted); }
+    
+    /* Theme Switcher & Wiki Button */
+    .theme-switcher { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+    #theme-toggle, #wiki-open-btn { width: 36px; height: 36px; padding: 0; border-radius: 50%; background-color: var(--surface); color: var(--ink); border: 1px solid var(--border-color); font-size: 18px; display: grid; place-items: center; cursor: pointer; transition: all var(--duration-standard) ease; }
+    #theme-toggle:hover, #wiki-open-btn:hover { background-color: var(--surface-alt); }
+    
+    /* Back to Home Button */
+    .back-to-home { width: 36px; height: 36px; border-radius: 50%; background-color: var(--surface); color: var(--ink); border: 1px solid var(--border-color); display: grid; place-items: center; cursor: pointer; transition: all var(--duration-standard) ease; text-decoration: none; }
+    .back-to-home:hover { background-color: var(--surface-alt); }
+    .back-to-home svg { width: 18px; height: 18px; }
+
+    /* Aside Controls Layout: Usará el espacio 1fr, sin scroll vertical */
+    aside.panel.controls { 
+        position: sticky; 
+        top: 0; 
+        max-height: calc(100vh - 50px - 25px); 
+        overflow-y: hidden; 
+        display: flex; 
+        flex-direction: column; 
+        gap: var(--space-5); 
+        padding: var(--space-5); 
+    }
+    .control-group { display: flex; flex-direction: column; gap: var(--space-4); }
+    .control-group + .control-group { border-top: 1px solid var(--border-color); padding-top: var(--space-5); }
+    .note { font-size: var(--font-size-caption); color: var(--muted); border-top: 1px solid var(--border-color); padding-top: var(--space-4); }
+    
+    /* Form Elements & Buttons */
+    .form-group { display: flex; flex-direction: column; gap: var(--space-2); }
+    .form-group label { font-weight: var(--font-weight-medium); }
+    .form-control, .select-wrapper select, input[type="color"], input[type="number"], textarea, input[type="range"] { width: 100%; box-sizing: border-box; background: var(--surface); color: var(--ink); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 8px 12px; resize: vertical; min-height: 40px; }
+    
+    .btn { display: inline-flex; align-items: center; justify-content: center; width: 100%; cursor: pointer; font-weight: var(--font-weight-emphasis); font-size: 14px; border-radius: var(--radius-md); height: 40px; padding: 0 var(--space-4); border: 1px solid transparent; transition: all var(--duration-standard) ease; }
+    .btn-primary { background-color: var(--accent-color); color: var(--color-accent-text); }
+    .btn-primary:hover { filter: brightness(1.1); }
+    .btn-secondary { background-color: var(--accent-color-tint); color: var(--accent-color); border-color: transparent; }
+    .btn-secondary:hover { filter: brightness(0.95); }
+    .btn:focus-visible, input:focus-visible, select:focus-visible, button:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent-color); outline-offset: 2px; }
+    .btn:disabled { background-color: var(--surface); color: var(--muted); cursor: not-allowed; }
+
+    /* Main Canvas/Content Area: Fijo y cuadrado (600x600) y se alinea a la derecha */
+    main.panel { 
+        width: 600px; /* Tamaño fijo para la visualización */
+        height: 600px;
+        flex-shrink: 0; 
+        align-self: flex-start; 
+        display: flex; 
+        align-items: center; 
+        justify-content: center; 
+        padding: 0; 
+        min-height: 0; 
+        overflow: hidden; 
+        /* Se alinea a la derecha automáticamente por el grid (1fr 600px) */
+    }
+    
+    #faceCanvas {
+        width: 100%; 
+        height: 100%;
+        max-width: 1000px; 
+        max-height: 1000px;
+        object-fit: contain; 
+        image-rendering: crisp-edges;
+        margin: auto; 
+    }
+    
+    /* --- ESTILOS PARA EL SELECTOR DE COLOR (DROP-DOWN) --- */
+    .color-dropdown-wrapper {
+        position: relative;
+    }
+    
+    #selectedColorButton {
+        width: 100%;
+        height: 40px;
+        border-radius: var(--radius-md);
+        border: 1px solid var(--border-color);
+        background-color: var(--surface);
+        padding: 0 var(--space-4);
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+        justify-content: space-between;
+        font-weight: var(--font-weight-medium);
+        transition: background-color var(--duration-standard);
+    }
+    #selectedColorButton:hover {
+        background-color: var(--surface-alt);
+    }
+    
+    .selected-color-preview {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        margin-right: var(--space-3);
+        display: inline-grid;
+        place-items: center;
+        font-size: var(--font-size-caption);
+        font-weight: var(--font-weight-emphasis);
+        color: white;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        border: 1px solid var(--border-color);
+    }
+
+    #colorPaletteDropdown {
+        position: absolute;
+        top: 100%; 
+        left: 0;
+        right: 0;
+        z-index: 100;
+        background: var(--surface-alt);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        box-shadow: var(--shadow-floating-3);
+        padding: var(--space-3);
+        display: none;
+        flex-wrap: wrap;
+        gap: var(--space-2);
+        max-height: 200px;
+        overflow-y: auto;
+    }
+    #colorPaletteDropdown.show {
+        display: flex;
+    }
+
+    .color-option {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        border: 2px solid transparent;
+        cursor: pointer;
+        display: grid;
+        place-items: center;
+        font-size: var(--font-size-caption);
+        font-weight: var(--font-weight-emphasis);
+        color: var(--color-accent-text);
+        line-height: 1;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        transition: transform 0.1s ease-out;
+    }
+    .color-option.selected {
+        border-color: var(--accent-color);
+        box-shadow: 0 0 0 2px var(--surface-alt), 0 0 0 4px var(--accent-color);
+        transform: scale(1.1);
+    }
+    
+    /* Estilos de Facciones */
+    .radio-group { display: flex; flex-wrap: wrap; gap: var(--space-3); }
+    .radio-group label {
+        display: inline-block;
+        padding: var(--space-2) var(--space-3);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        cursor: pointer;
+        transition: all var(--duration-standard) ease;
+        font-weight: var(--font-weight-medium);
+        background-color: var(--surface);
+    }
+    .radio-group input[type="radio"] {
+        display: none;
+    }
+    .radio-group input[type="radio"]:checked + label {
+        background-color: var(--accent-color);
+        color: var(--color-accent-text);
+        border-color: var(--accent-color);
+    }
+    .radio-group label:hover {
+        background-color: var(--accent-color-tint);
+        color: var(--accent-color);
+    }
+
+    /* Estilos Popups & Modals (Completos) */
+    .popup-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); z-index: 2000; display: none; }
+    .popup-overlay.show { display: flex; align-items: center; justify-content: center; }
+    .wiki-modal-content { background: var(--surface-alt); border-radius: var(--radius-xl); box-shadow: var(--shadow-floating-3); z-index: 2001; width: 800px; max-width: 90vw; max-height: 80vh; border: 1px solid var(--border-color); display: flex; flex-direction: column; overflow: hidden; }
+    .wiki-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: var(--space-4);
+      flex-shrink: 0;
+      position: relative;
+      height: 80px;
+      color: white;
+      background-image: url('modal.png');
+      background-size: cover;
+      background-position: center bottom;
+    }
+    .wiki-header::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 100%);
+      z-index: 1;
+    }
+    .wiki-header h3, #wiki-close-btn {
+      position: relative;
+      z-index: 2;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+    }
+    #wiki-close-btn {
+      background: none;
+      border: none;
+      font-size: 24px;
+      line-height: 1;
+      padding: 0;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      color: var(--color-accent-text);
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+    }
+    #wiki-close-btn:hover {
+      background-color: rgba(255,255,255,0.1);
+    }
+    .wiki-content {
+        padding: var(--space-5);
+        overflow: hidden;
+        flex-grow: 1;
+        display: flex;
+        gap: var(--space-5);
+    }
+    .wiki-column {
+        flex: 1;
+        min-width: 0;
+    }
+    .wiki-content h4 {
+        margin-top: 0;
+        margin-bottom: var(--space-3);
+        font-weight: var(--font-weight-emphasis);
+        color: var(--accent-color);
+    }
+    
+    /* Splash Screen Modal (Completos) */
+    .splash-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background-color: rgba(0,0,0,0.1);
+      -webkit-backdrop-filter: blur(4px);
+      backdrop-filter: blur(4px);
+      z-index: 9999;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      opacity: 1;
+      transition: opacity 0.5s ease-out;
+      cursor: pointer;
+    }
+    .splash-overlay.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+    .splash-content {
+      display: flex;
+      width: 800px;
+      height: 450px;
+      max-width: 90vw;
+      max-height: 80vh;
+      background: var(--surface-alt);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-floating-3);
+      overflow: hidden;
+      cursor: default;
+      position: relative;
+    }
+    #splash-close-btn {
+        position: absolute;
+        top: var(--space-3);
+        right: var(--space-3);
+        width: 32px;
+        height: 32px;
+        padding: 0;
+        border-radius: 50%;
+        background-color: var(--surface);
+        color: var(--muted);
+        border: 1px solid var(--border-color);
+        font-size: 24px;
+        line-height: 1;
+        display: grid;
+        place-items: center;
+        cursor: pointer;
+        transition: all var(--duration-standard) ease;
+        z-index: 10;
+    }
+    #splash-close-btn:hover {
+        background-color: var(--surface-alt);
+        color: var(--ink);
+        transform: scale(1.1);
+    }
+    .splash-info {
+        flex: 0 0 300px;
+        padding: var(--space-5);
+        display: flex;
+        flex-direction: column;
+        background-color: var(--surface-alt);
+        color: var(--ink);
+        border-left: 4px solid var(--accent-color);
+    }
+    .splash-icon {
+        font-size: 32px;
+        margin-bottom: var(--space-4);
+    }
+    .splash-title {
+        font-size: 24px;
+        font-weight: var(--font-weight-emphasis);
+        color: var(--accent-color);
+        margin-bottom: var(--space-5);
+    }
+    .splash-tech {
+        margin: 0;
+        color: var(--muted);
+        line-height: 1.6;
+    }
+    .splash-credits {
+        margin-top: auto;
+        font-size: var(--font-size-caption);
+        color: var(--muted);
+    }
+    .splash-image {
+        flex: 1;
+        background-color: var(--surface);
+    }
+    .splash-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    /* Responsive Adjustments (Completos) */
+    @media (max-width: 1050px) { 
+        /* Si la pantalla es más pequeña que el panel fijo + panel lateral (mínimo) + gaps, forzamos un apilamiento */
+        .container { 
+            grid-template-columns: 1fr; 
+            grid-template-rows: auto auto auto; 
+            height: auto; 
+            gap: var(--space-4); 
+            max-width: 90vw; 
+        } 
+        aside.controls { 
+            order: 2; /* Mueve el control debajo del header y encima del main panel */
+            position: static; 
+            max-height: none; 
+            overflow-y: auto; 
+        } 
+        main.panel { 
+            order: 3;
+            width: 90vw;
+            height: 90vw; 
+            max-width: none;
+            max-height: none;
+            min-height: 50vh; 
+        } 
+        /* Los demás estilos de splash y wiki se mantienen */
+        .splash-content { flex-direction: column; width: 90vw; height: auto; max-height: 90vh; }
+        .splash-info { flex-basis: auto; border-left: none; border-top: 4px solid var(--accent-color); }
+        .splash-image { width: 100%; height: 200px; }
+        #wiki-content { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <div class="splash-overlay" id="splash-screen">
+    <div class="splash-content">
+      <button id="splash-close-btn" title="Close">&times;</button>
+      <div class="splash-info">
+        <span class="splash-icon">🎨</span>
+        <h2 class="splash-title">Roblox Face Creator</h2>
+        <p class="splash-tech">Crea assets de cara de Roblox combinando una capa de color de piel (HEX de paleta oficial) y una capa de facciones (PNG con transparencia), y exporta el resultado unificado como una imagen PNG de 1000x1000px.</p>
+        <p class="splash-credits">2025. Toolkit by e</p>
+      </div>
+      <div class="splash-image">
+        <img src="modal.png" alt="App Splash Image">
+      </div>
+    </div>
+  </div>
+
+  <div class="container loading" id="app-container">
+    <header class="panel">
+      <a href="../index.html" class="back-to-home" title="Return to Home">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" /></svg>
+      </a>
+      <h1>Roblox Face Creator</h1>
+      <div class="sub">Creador de Assets por Capas</div>
+      <div class="theme-switcher">
+        <button id="wiki-open-btn" title="Info">ⓘ</button>
+        <button id="theme-toggle" title="Change theme"></button>
+      </div>
+    </header>
+
+    <aside class="panel controls" id="controls">
+      
+      <div class="control-group">
+          <h2>Capa 1: Color de Piel (Paleta Oficial)</h2>
+          <div class="color-dropdown-wrapper">
+              
+              <button id="selectedColorButton" aria-expanded="false" aria-controls="colorPaletteDropdown">
+                  <span style="display: flex; align-items: center;">
+                      </span>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M7.247 11.14 2.451 5.658C1.885 5.014 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.658l-4.796 5.48a1 1 0 0 1-1.506 0z"/>
+                  </svg>
+              </button>
+              
+              <div id="colorPaletteDropdown">
+                  <div style="text-align: center; color: var(--muted); padding: var(--space-3); width: 100%;">Cargando colores...</div>
+              </div>
+          </div>
+      </div>
+
+      <div class="control-group">
+          <h2>Capa 2: Facciones</h2>
+          <div class="form-group">
+              <label>Seleccionar Facciones</label>
+              <div class="radio-group">
+                  <input type="radio" name="feature" id="faccion1" value="assets/faccion1.png" checked>
+                  <label for="faccion1">Faccion 1</label>
+                  
+                  <input type="radio" name="feature" id="faccion2" value="assets/faccion2.png">
+                  <label for="faccion2">Faccion 2</label>
+                  
+                  <input type="radio" name="feature" id="faccion3" value="assets/faccion3.png">
+                  <label for="faccion3">Faccion 3</label>
+              </div>
+          </div>
+
+          <div class="form-group">
+              <label for="opacitySlider">Transparencia (Opacidad) <span id="opacityValue">100%</span></label>
+              <input type="range" id="opacitySlider" min="0" max="100" value="100" class="form-control">
+          </div>
+      </div>
+      
+      <div class="control-group">
+          <button class="btn btn-primary" id="exportBtn">Exportar Resultado (PNG 1000x1000)</button>
+      </div>
+
+      <div class="note">Tip: Asegúrate de que los archivos PNG estén en la carpeta **assets/** con el nombre correcto.</div>
+    </aside>
+
+    <main class="panel" id="main-panel">
+      <canvas id="faceCanvas" width="1000" height="1000"></canvas>
+    </main>
+  </div>
+  
+  <div id="wiki-overlay" class="popup-overlay"></div>
+  
+  <script type="module">
+    // --- App Specific Logic Starts Here ---
+    const WIKI_DATA = {
+      "title": "Acerca de Roblox Face Creator",
+      "sections": [
+        {
+          "title": "Funcionamiento",
+          "content": [
+            "Esta aplicación web usa el elemento <b>HTML Canvas</b> para dibujar y combinar dos capas principales:",
+            "<b>1. Capa de Piel:</b> Un color sólido (HEX) seleccionado de la paleta oficial de Roblox, que actúa como el fondo de la cara.",
+            "<b>2. Capa de Facciones:</b> Una imagen PNG con fondo transparente que se dibuja encima. Se le puede aplicar un nivel de transparencia (Opacidad) usando el slider 0-100%."
+          ]
+        },
+        {
+          "title": "Uso y Exportación",
+          "content": [
+            "<b>Assets:</b> Las imágenes de facciones deben ser archivos PNG de 1000px x 1000px con transparencia, ubicados en la carpeta **assets/**.",
+            "<b>Paleta de Color:</b> El color de piel se limita a la paleta oficial de Roblox (mostrada con sus IDs numéricos) y se accede mediante un menú desplegable.",
+            "<b>Exportar:</b> El botón 'Exportar' guarda el resultado unificado como un solo archivo PNG de 1000x1000px, listo para ser cargado como un asset de Roblox."
+          ]
+        }
+      ]
+    };
+
+    // --- PALETA DE COLORES (Extraída de la imagen) ---
+    const ROBLOX_SKIN_PALETTE = [
+        { hex: '#FCCC9E', name: 1 },
+        { hex: '#DAC492', name: 2 },
+        { hex: '#58423A', name: 6 },
+        { hex: '#D78844', name: 15 },
+        { hex: '#825F4B', name: 20 },
+        { hex: '#AB5503', name: 23 },
+        { hex: '#C68B6D', name: 28 },
+        { hex: '#AC9688', name: 31 },
+        { hex: '#663C1E', name: 34 },
+        { hex: '#5E4C42', name: 39 },
+        { hex: '#E5BAC8', name: 42 },
+        { hex: '#9F494A', name: 44 },
+        { hex: '#606062', name: 45 },
+        { hex: '#995B36', name: 47 },
+        { hex: '#CF7238', name: 49 },
+        { hex: '#B9995E', name: 50 },
+        { hex: '#DB847A', name: 57 },
+        { hex: '#FDC5C6', name: 66 },
+        { hex: '#947773', name: 67 },
+        { hex: '#E7BA98', name: 75 },
+    ];
+
+
+    const FaceCreator = {
+      el: {},
+      state: {
+        splashHidden: false,
+        isWikiLoaded: false,
+        selectedSkinColor: ROBLOX_SKIN_PALETTE[0].hex, 
+        selectedSkinName: ROBLOX_SKIN_PALETTE[0].name
+      },
+      THEMES: ['light', 'dark', 'system'],
+      THEME_ICONS: { light: '☀️', dark: '🌔', system: '⚙️' },
+      
+      // --- PROPIEDADES ESPECÍFICAS DE LA APP ---
+      canvas: null,
+      ctx: null,
+      featureImages: {}, 
+      
+      init() {
+        this.cacheDOMElements();
+        this.initTheme();
+        this.setupCanvas();
+        this.renderColorDropdown(); 
+        this.bindEvents();
+        this.preloadFeatureImages();
+        this.render();
+      },
+
+      // --- CONFIGURACIÓN DE COLOR DE PIEL (DROP-DOWN) ---
+      renderColorDropdown() {
+          const dropdown = document.getElementById('colorPaletteDropdown');
+          if (!dropdown) return;
+
+          dropdown.innerHTML = ''; 
+
+          ROBLOX_SKIN_PALETTE.forEach(color => {
+              const colorOption = document.createElement('div');
+              colorOption.className = 'color-option';
+              colorOption.style.backgroundColor = color.hex;
+              colorOption.textContent = color.name;
+              colorOption.dataset.hex = color.hex;
+              colorOption.dataset.name = color.name;
+              colorOption.title = `Color ID: ${color.name} (${color.hex})`;
+
+              // Ajustar el color del texto (número)
+              const r = parseInt(color.hex.substring(1, 3), 16);
+              const g = parseInt(color.hex.substring(3, 5), 16);
+              const b = parseInt(color.hex.substring(5, 7), 16);
+              if ((r * 0.299 + g * 0.587 + b * 0.114) > 186) { 
+                  colorOption.style.color = '#1C1C1E'; 
+              }
+              
+              // Marcar el color inicial
+              if (color.hex === this.state.selectedSkinColor) {
+                  colorOption.classList.add('selected');
+              }
+
+              colorOption.addEventListener('click', () => {
+                  this.updateSelectedColor(color.hex, color.name);
+                  dropdown.classList.remove('show'); // Cerrar el dropdown al seleccionar
+                  document.getElementById('selectedColorButton').setAttribute('aria-expanded', 'false');
+              });
+
+              dropdown.appendChild(colorOption);
+          });
+          
+          this.updateSelectedColorDisplay(); // Renderizar el botón inicial
+      },
+      
+      updateSelectedColor(hex, name) {
+          this.state.selectedSkinColor = hex;
+          this.state.selectedSkinName = name;
+          
+          // Actualizar la clase 'selected'
+          document.querySelectorAll('.color-option').forEach(opt => opt.classList.remove('selected'));
+          const newSelected = document.querySelector(`#colorPaletteDropdown .color-option[data-hex="${hex}"]`);
+          if(newSelected) {
+              newSelected.classList.add('selected');
+          }
+          
+          this.updateSelectedColorDisplay();
+          this.drawFace();
+      },
+
+      updateSelectedColorDisplay() {
+          const button = document.getElementById('selectedColorButton');
+          const hex = this.state.selectedSkinColor;
+          const name = this.state.selectedSkinName;
+          
+          if (!button) return;
+          
+          // Ajustar el color del texto para el preview
+          const r = parseInt(hex.substring(1, 3), 16);
+          const g = parseInt(hex.substring(3, 5), 16);
+          const b = parseInt(hex.substring(5, 7), 16);
+          const textColor = ((r * 0.299 + g * 0.587 + b * 0.114) > 186) ? '#1C1C1E' : 'white';
+          
+          button.querySelector('span').innerHTML = `
+              <div class="selected-color-preview" style="background-color: ${hex}; color: ${textColor};">
+                  ${name}
+              </div>
+              ID: ${name} (${hex})
+          `;
+      },
+
+      toggleColorDropdown() {
+          const dropdown = document.getElementById('colorPaletteDropdown');
+          const button = document.getElementById('selectedColorButton');
+          const isExpanded = button.getAttribute('aria-expanded') === 'true';
+
+          if (isExpanded) {
+              dropdown.classList.remove('show');
+              button.setAttribute('aria-expanded', 'false');
+          } else {
+              dropdown.classList.add('show');
+              button.setAttribute('aria-expanded', 'true');
+              button.focus();
+          }
+      },
+
+
+      // --- CONFIGURACIÓN DE CANVAS Y EVENTOS ESPECÍFICOS ---
+      setupCanvas() {
+          this.canvas = document.getElementById('faceCanvas');
+          if (this.canvas) {
+              this.ctx = this.canvas.getContext('2d');
+          }
+      },
+      
+      preloadFeatureImages() {
+          const featureRadios = document.querySelectorAll('input[name="feature"]');
+          featureRadios.forEach(radio => {
+              const src = radio.value; 
+              if (!this.featureImages[src]) {
+                  const img = new Image();
+                  img.onload = () => this.drawFace(); 
+                  img.onerror = () => console.error(`Error cargando imagen: ${src}. Asegúrate de que esté en la carpeta 'assets/'.`);
+                  img.src = src;
+                  this.featureImages[src] = img;
+              }
+          });
+      },
+
+      bindEvents() {
+        // Eventos de la BaseApp
+        if(this.el.themeToggle) this.el.themeToggle.addEventListener('click', () => this.cycleTheme());
+        if(this.el.wikiOpenBtn) this.el.wikiOpenBtn.addEventListener('click', () => this.openWiki());
+        if(this.el.splashScreen) this.el.splashScreen.addEventListener('click', (e) => {
+            if (e.target === this.el.splashScreen) { this.hideSplashScreen(); }
+        });
+        if(this.el.splashCloseBtn) this.el.splashCloseBtn.addEventListener('click', () => this.hideSplashScreen());
+
+        // Eventos ESPECÍFICOS DE FaceCreator:
+        
+        // Toggle del Dropdown de color
+        document.getElementById('selectedColorButton').addEventListener('click', () => this.toggleColorDropdown());
+        
+        // Cerrar dropdown al hacer clic fuera
+        document.addEventListener('click', (e) => {
+            const dropdownWrapper = document.querySelector('.color-dropdown-wrapper');
+            const dropdown = document.getElementById('colorPaletteDropdown');
+            const button = document.getElementById('selectedColorButton');
+            
+            if (dropdownWrapper && !dropdownWrapper.contains(e.target) && dropdown.classList.contains('show')) {
+                dropdown.classList.remove('show');
+                button.setAttribute('aria-expanded', 'false');
+            }
+        });
+
+        // 1. Slider de opacidad 
+        document.getElementById('opacitySlider').addEventListener('input', () => {
+            this.updateOpacityValueDisplay();
+            this.drawFace();
+        });
+        
+        // 2. Radio buttons de facciones
+        document.querySelectorAll('input[name="feature"]').forEach(radio => {
+            radio.addEventListener('change', () => this.drawFace());
+        });
+        
+        // 3. Botón de Exportar
+        document.getElementById('exportBtn').addEventListener('click', () => this.exportPNG());
+
+        this.updateOpacityValueDisplay();
+      },
+
+      updateOpacityValueDisplay() {
+          const opacityValueEl = document.getElementById('opacityValue');
+          const opacity = document.getElementById('opacitySlider').value;
+          if (opacityValueEl) {
+              opacityValueEl.textContent = `${opacity}%`;
+          }
+      },
+
+      // --- LÓGICA CENTRAL DE DIBUJO ---
+      drawFace() {
+          if (!this.ctx) return;
+
+          this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+          // 1. Obtener valores de los controles
+          const skinColor = this.state.selectedSkinColor; 
+          const opacity = document.getElementById('opacitySlider').value / 100;
+          const featureFile = document.querySelector('input[name="feature"]:checked').value;
+          const currentFeatureImg = this.featureImages[featureFile];
+
+          // --- CAPA 1: PIEL (Color Base) ---
+          this.ctx.globalAlpha = 1.0; 
+          this.ctx.fillStyle = skinColor; 
+          this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+          // --- CAPA 2: FACCIONES (Imagen PNG) ---
+          if (currentFeatureImg && currentFeatureImg.complete) {
+              this.ctx.globalAlpha = opacity;
+              this.ctx.drawImage(currentFeatureImg, 0, 0, this.canvas.width, this.canvas.height);
+          }
+          
+          this.ctx.globalAlpha = 1.0; 
+      },
+      
+      // --- LÓGICA DE EXPORTACIÓN ---
+      exportPNG() {
+          this.drawFace(); 
+          
+          const dataURL = this.canvas.toDataURL('image/png');
+
+          const link = document.createElement('a');
+          link.download = `roblox_face_ID${this.state.selectedSkinName}_asset.png`;
+          link.href = dataURL;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+      },
+
+
+      // --- BaseApp Methods ---
+      hideSplashScreen() {
+          if (!this.state.splashHidden) {
+              this.state.splashHidden = true;
+              this.el.splashScreen.classList.add('hidden');
+              this.el.appContainer.classList.remove('loading');
+              this.drawFace(); 
+          }
+      },
+
+      cacheDOMElements() {
+        const ids = [
+          'theme-toggle', 'wiki-open-btn', 'wiki-overlay', 'splash-screen', 
+          'app-container', 'splash-close-btn'
+        ];
+        ids.forEach(id => {
+          const key = id.replace(/-(\w)/g, (_, char) => char.toUpperCase());
+          const element = document.getElementById(id);
+          if (element) this.el[key] = element;
+        });
+      },
+      
+      render() {
+        this.drawFace(); 
+      },
+
+      // --- Theme Toggle Logic ---
+      initTheme() {
+        const savedTheme = localStorage.getItem('creative-toolkit-theme') || 'system';
+        this.setTheme(savedTheme, false);
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+          if (localStorage.getItem('creative-toolkit-theme') === 'system') this.applyTheme('system');
+        });
+      },
+      setTheme(theme, save = true) {
+        if (save) localStorage.setItem('creative-toolkit-theme', theme);
+        if(this.el.themeToggle) this.el.themeToggle.textContent = this.THEME_ICONS[theme];
+        this.applyTheme(theme);
+      },
+      cycleTheme() {
+        const currentTheme = localStorage.getItem('creative-toolkit-theme') || 'system';
+        this.setTheme(this.THEMES[(this.THEMES.indexOf(currentTheme) + 1) % this.THEMES.length]);
+      },
+      applyTheme(theme) {
+        const isDark = (theme === 'system') ? window.matchMedia('(prefers-color-scheme: dark)').matches : theme === 'dark';
+        document.documentElement.dataset.theme = isDark ? 'dark' : 'light';
+        this.render();
+      },
+
+      // --- Wiki Logic ---
+      openWiki() {
+          if (!this.el.wikiOverlay.querySelector('.wiki-modal-content')) {
+              const wikiModal = document.createElement('div');
+              wikiModal.className = 'wiki-modal-content';
+              wikiModal.innerHTML = `
+                  <div class="wiki-header">
+                    <h3 id="wiki-title">Info</h3>
+                    <button id="wiki-close-btn" title="Close">×</button>
+                  </div>
+                  <div id="wiki-content" class="wiki-content"></div>
+              `;
+              this.el.wikiOverlay.appendChild(wikiModal);
+              wikiModal.querySelector('#wiki-close-btn').addEventListener('click', () => this.closeWiki());
+          }
+
+          if (!this.state.isWikiLoaded) {
+              const titleEl = this.el.wikiOverlay.querySelector('#wiki-title');
+              const contentEl = this.el.wikiOverlay.querySelector('#wiki-content');
+              if(titleEl) titleEl.textContent = WIKI_DATA.title;
+              
+              const col1 = document.createElement('div');
+              col1.className = 'wiki-column';
+              const col2 = document.createElement('div');
+              col2.className = 'wiki-column';
+
+              WIKI_DATA.sections.forEach((s, index) => {
+                  const sectionContainer = document.createElement('div');
+                  const h4 = document.createElement('h4'); h4.textContent = s.title;
+                  sectionContainer.appendChild(h4);
+                  s.content.forEach(c => { const p = document.createElement('p'); p.innerHTML = c; sectionContainer.appendChild(p); });
+                  
+                  if (index < Math.ceil(WIKI_DATA.sections.length / 2)) {
+                      col1.appendChild(sectionContainer);
+                  } else {
+                      col2.appendChild(sectionContainer);
+                  }
+              });
+              
+              if(contentEl) {
+                contentEl.innerHTML = '';
+                contentEl.appendChild(col1);
+                contentEl.appendChild(col2);
+              }
+
+              this.state.isWikiLoaded = true;
+          }
+          if(this.el.wikiOverlay) this.el.wikiOverlay.classList.add('show');
+      },
+      closeWiki() {
+        if(this.el.wikiOverlay) this.el.wikiOverlay.classList.remove('show');
+      }
+    };
+
+    document.addEventListener('DOMContentLoaded', () => FaceCreator.init());
+  </script>
+</body>
+</html>

@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Fashion Muse Doll Base Collection</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet"/>
+
+  <style>
+    :root {
+      /* Variables de color y tamaño */
+      --ink: #e5e7eb; --muted: #a1a1aa;
+      --card: #121317; --border: #2a2b31;
+      --shadow: 0 18px 50px rgba(0,0,0,.45);
+      --gold1: #9b7b25; --gold2: #d5b85a; --gold3: #9b7b25;
+      --font-family-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial;
+      --font-family-serif: 'Playfair Display', ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+      --space-4: 16px; --space-5: 24px;
+      --radius-md: 8px; --radius-xl: 16px;
+      --swiper-navigation-color: var(--gold2);
+    }
+
+    html, body {
+      font-family: var(--font-family-sans);
+      background-color: #12111700;
+      color: var(--ink);
+      margin: 0;
+      padding: var(--space-4);
+      overflow: hidden;
+    }
+    
+    #particle-canvas {
+      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -10; pointer-events: none;
+    }
+
+    .title-fancy { font-family: var(--font-family-serif); }
+    .gold-title {
+      background-image: linear-gradient(90deg, var(--gold1), var(--gold2), var(--gold3));
+      -webkit-background-clip:text; background-clip:text; color:transparent;
+      text-shadow: 0 0 18px rgba(227,199,102,.25);
+    }
+    
+    .container {
+      max-width: 1600px; margin: 0 auto;
+      display: flex; flex-direction: column;
+      gap: var(--space-4); height: calc(100vh - (var(--space-4) * 2));
+      transition: opacity 0.5s ease-in-out, filter 0.5s ease-in-out;
+      opacity: 0; filter: blur(4px);
+    }
+    .container.loaded { opacity: 1; filter: blur(0); }
+
+    .panel {
+      background: rgba(18,19,23,.75); border: 1px solid var(--border);
+      border-radius: var(--radius-xl); box-shadow: var(--shadow); backdrop-filter: blur(12px);
+    }
+    
+    main.panel {
+      padding: var(--space-4); flex-grow: 1;
+      display: flex; flex-direction: column; min-height: 0;
+    }
+    
+    .scrollable-content { overflow-y: auto; flex-grow: 1; }
+    .scrollable-content::-webkit-scrollbar { width: 8px; }
+    .scrollable-content::-webkit-scrollbar-track { background: transparent; }
+    .scrollable-content::-webkit-scrollbar-thumb { background-color: rgba(213, 184, 90, 0.3); border-radius: 4px; border: 2px solid transparent; background-clip: content-box; }
+    .scrollable-content::-webkit-scrollbar-thumb:hover { background-color: rgba(213, 184, 90, 0.5); }
+    
+    .dark-input { background:#0f1115; color:#e7e7ea; border:1px solid #2a2d36; transition: all 0.2s ease; }
+    .dark-input:focus { outline: none; border-color: var(--gold2); box-shadow: 0 0 0 1px var(--gold2); }
+    
+    /* Carousel Styles */
+    .swiper { width: 100%; height: auto; padding-left: 4px; padding-right: 4px;}
+    .swiper-slide { width: auto; }
+    .facebase-card { width: 180px; transition: all 0.2s ease; }
+    .facebase-card:hover { transform: translateY(-4px); box-shadow: 0 8px 20px rgba(0,0,0,0.3); }
+    .swiper-button-next, .swiper-button-prev { top: 50%; transform: translateY(-50%); }
+
+    .country-row { border-bottom: 1px solid var(--border); padding-bottom: 1.5rem; }
+    .country-row:last-child { border-bottom: none; }
+    .flag-aesthetic { height: 32px; border-radius: .4rem; object-fit: cover; }
+    .copied { background-color: #22c55e !important; color: white !important; }
+    
+    /* Estilos de Modales */
+    .modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.8); backdrop-filter: blur(12px);
+      z-index: 2000; display: flex; align-items: center; justify-content: center;
+      opacity: 0; transition: opacity 0.3s ease-in-out; pointer-events: none;
+    }
+    .modal-overlay.show { opacity: 1; pointer-events: auto; }
+    .modal-content {
+      background: #121317; border-radius: var(--radius-xl); box-shadow: var(--shadow);
+      width: 90vw; max-width: 480px; border: 1px solid var(--border);
+    }
+    #loginOverlay { z-index: 5000; }
+    
+    /* Estilos Específicos del Modal de Fotos (Adaptados a la versión simple) */
+    #photosModal .modal-content {
+        background: transparent;
+        border: none;
+        box-shadow: none;
+        width: auto;
+        max-width: 90vw;
+        max-height: 90vh;
+    }
+    /* NUEVOS ESTILOS PARA LA GALERÍA SIMPLE */
+    #photo-container {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      height: 100%;
+      max-width: 700px; /* Ancho máximo para que se vea bien */
+      margin: 0 auto;
+    }
+    #photo-container .photo-slide {
+      position: absolute;
+      width: 100%;
+      max-width: 100%;
+      /* Usamos display: none / flex para el control simple de visibilidad */
+      display: none; 
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding-top: 20px;
+    }
+    #photo-container .photo-slide.active {
+      display: flex; /* Muestra solo la imagen activa */
+    }
+    #photo-container img {
+      max-height: 65vh;
+      object-fit: contain;
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow);
+      max-width: 95%; /* Ajuste de tamaño para móviles */
+    }
+    .nav-btn {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 10;
+      background: rgba(18,19,23,.75);
+      border: 1px solid var(--border);
+      color: var(--gold2);
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 1.5rem;
+      transition: background 0.2s;
+    }
+    .nav-btn:hover { background: rgba(18,19,23,1); }
+
+    /* Estilos de Navegación por Pestañas */
+    .tab-nav-button {
+      padding: 8px 16px; border-radius: var(--radius-md); font-weight: 500;
+      color: var(--muted); background-color: transparent; border: 1px solid transparent;
+      transition: all 0.2s ease; white-space: nowrap;
+    }
+    .tab-nav-button:hover { color: var(--ink); background-color: rgba(255,255,255,0.05); }
+    .tab-nav-button.active {
+      color: var(--gold2);
+      background-color: rgba(213,184,90,0.1);
+      border-color: rgba(213,184,90,0.25);
+    }
+    
+    /* Estilos de Tarjetas de Música */
+    .music-card {
+        background: #151722;
+        border: 1px solid var(--border);
+        transition: all 0.2s ease;
+    }
+    .music-card:hover {
+        transform: translateY(-4px);
+        border-color: rgba(213, 184, 90, 0.4);
+    }
+
+    /* Estilos de Desplazador de Conversor de Tiempo */
+    .hour-scroller { height:200px; overflow-y:scroll; scroll-snap-type:y mandatory; -ms-overflow-style:none; scrollbar-width:none; position:relative; }
+    .hour-scroller::-webkit-scrollbar { display:none; }
+    .hour-scroller-item { height:40px; display:flex; align-items:center; justify-content:center; scroll-snap-align:center; font-size:1.25rem; color:var(--muted); opacity:.5; transform:scale(.8); transition: all .2s ease; }
+    .hour-scroller-item.active { color:var(--ink); opacity:1; transform:scale(1); font-weight:600; }
+    .scroller-selection-indicator { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:100px; height:40px; border-radius:var(--radius-md); border:2px solid var(--gold2); pointer-events:none; }
+  </style>
+</head>
+<body>
+
+  <div id="particle-canvas"></div>
+
+  <div id="loginOverlay" class="modal-overlay show">
+    <div class="modal-content p-8 text-center">
+      <img src="photos/app/logo.svg" alt="Fashion Muse Logo" class="w-256 h-auto mx-auto mb-6">
+      <h2 class="text-2xl font-bold title-fancy gold-title mb-4">Enter Password</h2>
+      <input id="passwordInput" type="password" class="w-full h-11 px-3 text-center dark-input rounded-md" placeholder=" ">
+      <button id="loginBtn" class="mt-4 h-11 w-full flex items-center justify-center rounded-md bg-[var(--gold2)] text-black font-semibold hover:brightness-110 transition-transform hover:scale-105">Unlock</button>
+      <p id="errorMessage" class="mt-2 text-sm text-red-400 h-4"></p>
+    </div>
+  </div>
+
+  <div id="photosModal" class="modal-overlay overflow-y-auto">
+    <div id="photosModalContent" class="modal-content !max-w-[90vw] !max-h-[90vh] !bg-transparent !border-none !shadow-none p-0 relative">
+      <button id="closePhotosBtn" class="absolute top-4 right-4 text-white/50 hover:text-white transition text-4xl z-20">&times;</button>
+      
+      <div id="photo-container" class="py-10" style="min-height: 400px; min-width: 300px;">
+        <button id="prevPhotoBtn" class="nav-btn left-4 hidden">
+          &lsaquo;
+        </button>
+        <button id="nextPhotoBtn" class="nav-btn right-4 hidden">
+          &rsaquo;
+        </button>
+      </div>
+    </div>
+  </div>
+  
+  <div id="timeConverterModal" class="modal-overlay">
+    <div class="modal-content p-6 pt-8 relative">
+      <button id="closeTimeConverterBtn" class="absolute top-2 right-2 text-zinc-400 hover:text-white transition text-3xl z-10">&times;</button>
+      <h2 class="text-center text-xl font-semibold title-fancy gold-title mb-6">Time Converter</h2>
+      
+      <div class="grid grid-cols-[1fr_auto_1fr] items-center text-center px-4 pb-4">
+        <div class="flex flex-col gap-2">
+          <select id="eventTimeZone" class="w-full h-10 px-3 text-sm dark-input rounded-md"></select>
+          <select id="eventDate" class="w-full h-10 px-3 text-sm dark-input rounded-md"></select>
+        </div>
+        <div class="text-3xl text-[var(--gold2)] px-4">▶</div>
+        <div class="flex flex-col gap-2">
+          <div class="font-bold text-lg text-zinc-100">SJO Time</div>
+          <div id="sjoDate" class="text-sm text-zinc-300">-</div>
+        </div>
+      </div>
+
+      <div class="border-t border-[var(--border)] pt-4">
+        <div class="grid grid-cols-[1fr_auto_1fr] items-center">
+          <div class="relative">
+            <div id="hour-scroller-input" class="hour-scroller"></div>
+            <div class="scroller-selection-indicator"></div>
+          </div>
+          <div></div>
+          <div id="sjoTime" class="text-3xl font-bold text-center text-zinc-100">-</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="container" id="app-container">
+    <header class="panel flex flex-col md:flex-row items-center justify-between p-4 gap-4">
+        <h1 class="text-3xl lg:text-4xl title-fancy gold-title">Fashion Muse Collection</h1>
+        <nav class="flex items-center justify-center flex-wrap gap-2">
+            <button class="tab-nav-button active" data-tab="facebases">Facebases</button>
+            <button class="tab-nav-button" data-tab="avatar">Avatar</button>
+            <button class="tab-nav-button" data-tab="music">Music</button>
+            <button class="tab-nav-button" data-tab="other">Other</button>
+        </nav>
+        <div class="flex items-center gap-2">
+            <button id="openPhotosBtn" title="Download Photos" class="w-10 h-10 flex items-center justify-center bg-black/20 text-[var(--gold2)] rounded-full border border-transparent hover:border-[var(--border)] hover:scale-110 transition-all"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16"><path d="M6.002 5.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0"/><path d="M2.002 1a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2h-12zm12 1a1 1 0 0 1 1 1v6.5l-3.777-1.947a.5.5 0 0 0-.577.093l-3.71 3.71-2.66-1.772a.5.5 0 0 0-.63.062L1.002 12V3a1 1 0 0 1 1-1h12z"/></svg></button>
+            <button id="openTimeConverterBtn" title="Time Converter" class="w-10 h-10 flex items-center justify-center bg-black/20 text-[var(--gold2)] rounded-full border border-transparent hover:border-[var(--border)] hover:scale-110 transition-all"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16"><path d="M8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71V3.5z"/><path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16m7-8A7 7 0 1 1 1 8a7 7 0 0 1 14 0"/></svg></button>
+        </div>
+    </header>
+
+    <main class="panel">
+      <div id="search-controls" class="flex-shrink-0 flex flex-col sm:flex-row gap-4 mb-4 pb-4 border-b border-[var(--border)]">
+          <div class="relative flex-grow">
+              <input type="search" id="search-bar" placeholder="Search..." class="w-full h-12 pl-10 pr-4 text-sm dark-input rounded-md">
+              <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                  <svg class="w-5 h-5 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+              </div>
+          </div>
+          <select id="music-category-filter" class="h-12 px-3 text-sm dark-input rounded-md sm:w-64" style="display: none;">
+              <option value="all">All Categories</option>
+          </select>
+      </div>
+      
+      <div id="tab-content-wrapper" class="flex-grow relative min-h-0">
+          <div id="content-facebases" class="tab-content absolute inset-0 scrollable-content">
+              <div id="gallery-container" class="flex flex-col gap-8 pr-2"></div>
+          </div>
+          <div id="content-music" class="tab-content absolute inset-0 hidden scrollable-content">
+              <div id="music-results-container" class="pr-2 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"></div>
+          </div>
+          <div id="content-avatar" class="tab-content absolute inset-0 hidden scrollable-content">
+            <div id="avatar-gallery-container" class="flex flex-col gap-8 pr-2">
+              </div>
+          </div>
+          <div id="content-other" class="tab-content absolute inset-0 hidden">
+              <div class="h-full flex flex-col items-center justify-center text-center text-zinc-500 p-4">
+                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor" class="mb-4" viewBox="0 0 16 16"><path d="M9.405 1.05c.412-1.4.786-2.532 1.14-3.464.354-.933.648-1.768.868-2.52C11.595 2.296 11.838 3 12 3c.162 0 .405-.704.587-1.448.22-.932.514-1.767.868-2.52.354.932.728 2.064 1.14 3.464.412 1.4.638 2.57.638 3.585 0 1.83-1.076 3.215-2.88 3.215-1.045 0-1.748-.6-2.21-1.168-.462-.567-.822-1.353-1.06-2.212-.238-.86-.36-1.755-.36-2.658 0-1.015.226-2.185.638-3.585zM8 1a2.5 2.5 0 0 1 2.5 2.5V4h-5v-.5A2.5 2.5 0 0 1 8 1zm3.5 3v-.5a3.5 3.5 0 1 0-7 0V4H1v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4h-3.5zM2 5h12v9a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V5z"></path></svg>
+                <h3 class="text-xl font-semibold text-zinc-300">Coming Soon</h3>
+                <p>Other resources will be available here.</p>
+              </div>
+          </div>
+      </div>
+    </main>
+  </div>
+  
+  <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // Configuraciones y Elementos Iniciales
+      const SECRET_B64 = 'bWFuY2hpdGFz';
+      const AUTH_KEY = 'isAuthenticated';
+      const LAST_AUTH_KEY = 'lastAuthTime';
+      const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
+      
+      const loginOverlay = document.getElementById('loginOverlay');
+      const passwordInput = document.getElementById('passwordInput');
+      const appContainer = document.getElementById('app-container');
+      
+      let facebasesTabInitialized = false;
+      let musicTabInitialized = false;
+      let timeConverterInitialized = false;
+      let avatarTabInitialized = false;
+      
+      let allFacebaseItems = [];
+      let facebaseCategories = null; // <- Para guardar las categorías cargadas
+      let allAvatarItems = [];
+      let allMusicCodes = [];
+      
+      passwordInput.value = '';
+
+      const startApp = () => {
+        if (!facebasesTabInitialized) initializeFacebasesTab();
+        if (!musicTabInitialized) initializeMusicTab();
+        if (!timeConverterInitialized) initializeTimeConverter();
+        if (!avatarTabInitialized) initializeAvatarTab();
+      };
+
+      const checkAuthentication = () => {
+          const isAuthenticated = localStorage.getItem(AUTH_KEY) === 'true';
+          const lastAuthTime = localStorage.getItem(LAST_AUTH_KEY);
+          const now = Date.now();
+          
+          if (isAuthenticated && lastAuthTime && (now - lastAuthTime < THIRTY_DAYS_MS)) {
+              loginOverlay.classList.remove('show');
+              appContainer.classList.add('loaded');
+              setTimeout(startApp, 500);
+          } else {
+              localStorage.removeItem(AUTH_KEY);
+              localStorage.removeItem(LAST_AUTH_KEY);
+              loginOverlay.classList.add('show');
+          }
+      };
+
+      const authenticate = () => {
+        if (passwordInput.value === atob(SECRET_B64)) {
+          localStorage.setItem(AUTH_KEY, 'true');
+          localStorage.setItem(LAST_AUTH_KEY, Date.now());
+          
+          document.getElementById('errorMessage').textContent = '';
+          loginOverlay.classList.remove('show');
+          appContainer.classList.add('loaded');
+          setTimeout(startApp, 500); 
+        } else {
+          document.getElementById('errorMessage').textContent = 'Incorrect password.';
+        }
+      };
+      
+      checkAuthentication(); 
+
+      document.getElementById('loginBtn').addEventListener('click', authenticate);
+      passwordInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') authenticate(); });
+
+      // --- Universal Copy Button Logic ---
+      appContainer.addEventListener('click', (event) => {
+          const copyBtn = event.target.closest('.copy-btn');
+          if (!copyBtn) return;
+          
+          const input = copyBtn.previousElementSibling;
+          const valueToCopy = input ? input.value : copyBtn.dataset.id;
+
+          if (valueToCopy) {
+              navigator.clipboard.writeText(valueToCopy).then(() => {
+                  copyBtn.innerHTML = `<svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M12.736 3.97a.733.733 0 0 1 1.047 0c.286.289.29.756.01 1.05L7.88 12.01a.733.733 0 0 1-1.065.02L3.217 8.384a.757.757 0 0 1 0-1.06.733.733 0 0 1 1.047 0l3.052 3.093 5.4-6.425z"/></svg>`;
+                  copyBtn.classList.add('copied');
+                  setTimeout(() => {
+                      copyBtn.innerHTML = `<svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z"/><path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h3zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3z"/></svg>`;
+                      copyBtn.classList.remove('copied');
+                  }, 1200);
+              });
+          }
+      });
+
+      const tabs = document.querySelectorAll('.tab-nav-button');
+      const contentAreas = document.querySelectorAll('.tab-content');
+      const searchBar = document.getElementById('search-bar');
+      const musicCategoryFilter = document.getElementById('music-category-filter');
+      
+      const updateSearchUI = (activeTab) => {
+          searchBar.value = '';
+          if (activeTab === 'facebases') {
+              searchBar.placeholder = 'Search by country or name...';
+              musicCategoryFilter.style.display = 'none';
+          } else if (activeTab === 'music') {
+              searchBar.placeholder = 'Search by artist, title, or marker...';
+              musicCategoryFilter.style.display = 'block';
+          } else if (activeTab === 'avatar') {
+              searchBar.placeholder = 'Search by category or name...';
+              musicCategoryFilter.style.display = 'none';
+          } else {
+              searchBar.placeholder = 'Search...';
+              musicCategoryFilter.style.display = 'none';
+          }
+      }
+
+      tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+          const target = tab.dataset.tab;
+          tabs.forEach(t => t.classList.remove('active'));
+          tab.classList.add('active');
+          contentAreas.forEach(area => area.classList.toggle('hidden', area.id !== `content-${target}`));
+          updateSearchUI(target);
+          searchBar.dispatchEvent(new Event('input')); 
+        });
+      });
+      
+      // Generic function to parse item names
+      const parseItemName = (basename, pathPrefix) => {
+          const name = basename.replace(/\.png$/,'');
+          const lastUnderscore = name.lastIndexOf('_');
+          let label = name, codeId = '';
+          if (lastUnderscore > -1) { 
+              const maybeId = name.slice(lastUnderscore + 1); 
+              if (!isNaN(maybeId) && maybeId.trim() !== '') { 
+                  label = name.slice(0, lastUnderscore); 
+                  codeId = maybeId; 
+              } 
+          }
+          const group = label.split('-')[0] || 'Uncategorized';
+          const displayName = label.replace(new RegExp('^' + group + '-'), '').replace(/[-_]/g,' ');
+          return { id: name, group, displayName, codeId, src: `${pathPrefix}/${name}.png` };
+      };
+
+      // --- Facebases Tab Logic ---
+      function renderFacebasesGallery(itemsToRender, categoriesData) {
+        const galleryContainer = document.getElementById('gallery-container');
+        
+        const byGroup = itemsToRender.reduce((acc, it) => {
+            (acc[it.group] ||= []).push(it);
+            return acc;
+        }, {});
+
+        const allCategories = [...(categoriesData.countries || []), ...(categoriesData.others || [])];
+        
+        let galleryHTML = '';
+        allCategories.forEach(category => {
+            const itemsForCategory = byGroup[category.name];
+            
+            if (!itemsForCategory || itemsForCategory.length === 0) {
+                return; 
+            }
+
+            const flagSrc = category.iso 
+                ? `https://flagcdn.com/h80/${category.iso.toLowerCase()}.png`
+                : category.flag;
+
+            galleryHTML += `
+              <section class="country-row">
+                <div class="flex items-center gap-3 mb-4">
+                  <img src="${flagSrc}" alt="${category.name} flag" class="flag-aesthetic">
+                  <h2 class="text-2xl font-bold title-fancy gold-title">${category.name}</h2>
+                </div>
+                <div class="swiper relative">
+                  <div class="swiper-wrapper">
+                    ${itemsForCategory.map(it => `
+                      <div class="swiper-slide">
+                        <div class="facebase-card bg-[#151722] rounded-xl shadow-xl ring-1 ring-[var(--border)] overflow-hidden flex flex-col p-1.5 space-y-1.5">
+                          <div class="text-xs text-zinc-200 font-medium px-1 text-center h-8 flex items-center justify-center">${it.displayName}</div>
+                          <img src="${it.src}" alt="${it.displayName}" loading="lazy" class="w-full h-auto object-cover aspect-square rounded-md">
+                          <div class="flex items-center gap-1.5 p-1">
+                            <input readonly type="text" value="${it.codeId || ''}" placeholder="…" class="flex-grow w-0 h-8 px-2 text-xs dark-input rounded-md">
+                            <button class="copy-btn flex-shrink-0 w-8 h-8 flex items-center justify-center bg-[#1b1d24] text-zinc-200 rounded-md border border-[var(--border)] hover:bg-[#222533] transition">
+                              <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z"/><path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h3zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3z"/></svg>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    `).join('')}
+                  </div>
+                  <div class="swiper-button-prev"></div>
+                  <div class="swiper-button-next"></div>
+                </div>
+              </section>
+            `;
+        });
+        
+        galleryContainer.innerHTML = galleryHTML || `<p class="text-zinc-500 text-center col-span-full">No results found.</p>`;
+        
+        document.querySelectorAll('#gallery-container .swiper').forEach(el => new Swiper(el, { 
+          slidesPerView: 'auto', spaceBetween: 16, grabCursor: true,
+          navigation: { nextEl: el.querySelector('.swiper-button-next'), prevEl: el.querySelector('.swiper-button-prev'), },
+        }));
+      }
+
+      function initializeFacebasesTab() {
+        if (facebasesTabInitialized) return;
+        facebasesTabInitialized = true;
+        
+        Promise.all([
+          fetch('photos/facebases/facebases.json').then(res => res.json()),
+          fetch('photos/facebases/categories.json').then(res => res.json())
+        ]).then(([imageBasenames, categoriesData]) => {
+          facebaseCategories = categoriesData;
+          allFacebaseItems = imageBasenames.map(basename => parseItemName(basename, 'photos/facebases'));
+          renderFacebasesGallery(allFacebaseItems, facebaseCategories);
+        }).catch(error => {
+          console.error("Failed to load facebase data:", error);
+          document.getElementById('gallery-container').innerHTML = `<p class="text-red-400 text-center">Error loading data. Check if JSON files are correct.</p>`;
+        });
+      }
+      
+      // --- Avatar Tab Logic ---
+      function renderAvatarGallery(itemsToRender) {
+          const galleryContainer = document.getElementById('avatar-gallery-container');
+          const byCategory = itemsToRender.reduce((acc, it) => { (acc[it.group] ||= []).push(it); return acc; }, {});
+          const categories = Object.keys(byCategory).sort();
+
+          let galleryHTML = '';
+          categories.forEach(category => {
+              galleryHTML += `
+                  <section class="country-row">
+                      <div class="flex items-center gap-3 mb-4">
+                          <h2 class="text-2xl font-bold title-fancy gold-title">${category}</h2>
+                      </div>
+                      <div class="swiper relative">
+                          <div class="swiper-wrapper">
+                              ${byCategory[category].map(it => `
+                                  <div class="swiper-slide">
+                                      <div class="facebase-card bg-[#151722] rounded-xl shadow-xl ring-1 ring-[var(--border)] overflow-hidden flex flex-col p-1.5 space-y-1.5">
+                                          <div class="text-xs text-zinc-200 font-medium px-1 text-center h-8 flex items-center justify-center">${it.displayName}</div>
+                                          <img src="${it.src}" alt="${it.displayName}" loading="lazy" class="w-full h-auto object-cover aspect-square rounded-md">
+                                          <div class="flex items-center gap-1.5 p-1">
+                                              <input readonly type="text" value="${it.codeId || ''}" placeholder="…" class="flex-grow w-0 h-8 px-2 text-xs dark-input rounded-md">
+                                              <button class="copy-btn flex-shrink-0 w-8 h-8 flex items-center justify-center bg-[#1b1d24] text-zinc-200 rounded-md border border-[var(--border)] hover:bg-[#222533] transition">
+                                                  <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z"/><path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h3zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3z"/></svg>
+                                              </button>
+                                          </div>
+                                      </div>
+                                  </div>
+                              `).join('')}
+                          </div>
+                          <div class="swiper-button-prev"></div>
+                          <div class="swiper-button-next"></div>
+                      </div>
+                  </section>
+              `;
+          });
+          galleryContainer.innerHTML = galleryHTML;
+
+          document.querySelectorAll('#avatar-gallery-container .swiper').forEach(el => new Swiper(el, {
+              slidesPerView: 'auto',
+              spaceBetween: 16,
+              grabCursor: true,
+              navigation: {
+                  nextEl: el.querySelector('.swiper-button-next'),
+                  prevEl: el.querySelector('.swiper-button-prev'),
+              },
+          }));
+      }
+
+      function initializeAvatarTab() {
+          if (avatarTabInitialized) return;
+          avatarTabInitialized = true;
+          
+          const avatarBasenames = [
+              'Hair-Nicki SL Black_14507337010',
+              'Hair-Nicki SL Blonde_14507259815',
+              'Hair-Nicki SL Brunette_14507761707',
+              'Chest-Boobs code_11259731773'
+          ];
+          
+          allAvatarItems = avatarBasenames.map(basename => parseItemName(basename, 'photos/items'));
+          renderAvatarGallery(allAvatarItems);
+      }
+
+      // --- Music Tab Logic ---
+      function initializeMusicTab() {
+        if (musicTabInitialized) return;
+        musicTabInitialized = true;
+        
+        const resultsContainer = document.getElementById('music-results-container');
+        
+        const populateCategories = (codes) => { 
+          const categories = [...new Set(codes.map(code => code.category))].filter(Boolean); 
+          categories.sort().forEach(category => { 
+            const option = document.createElement('option'); 
+            option.value = category; 
+            option.textContent = category; 
+            musicCategoryFilter.appendChild(option); 
+          }); 
+        };
+        
+        fetch('music.json')
+          .then(response => response.ok ? response.json() : [])
+          .then(data => { 
+            allMusicCodes = data; 
+            if (data.length > 0) {
+              musicCategoryFilter.innerHTML = '<option value="all">All Categories</option>';
+              populateCategories(allMusicCodes); 
+              renderMusicCodes(allMusicCodes); 
+            }
+          })
+          .catch(error => { 
+            console.error('Error loading music codes:', error); 
+            resultsContainer.innerHTML = `<p class="text-red-400 text-center col-span-full">Failed to load music codes.</p>`; 
+          });
+      }
+
+      // --- Search and Filter Logic ---
+      const debounce = (func, delay) => {
+          let timeout;
+          return function(...args) {
+              clearTimeout(timeout);
+              timeout = setTimeout(() => func.apply(this, args), delay);
+          };
+      };
+      
+      const filterContent = () => {
+          const activeTab = document.querySelector('.tab-nav-button.active').dataset.tab;
+          const searchTerm = searchBar.value.toLowerCase().trim();
+          
+          if (activeTab === 'facebases') {
+              const filteredItems = (searchTerm === '') ? allFacebaseItems : allFacebaseItems.filter(item => 
+                  item.group.toLowerCase().includes(searchTerm) || 
+                  item.displayName.toLowerCase().includes(searchTerm)
+              );
+              if (facebaseCategories) {
+                  renderFacebasesGallery(filteredItems, facebaseCategories);
+              }
+          } else if (activeTab === 'avatar') {
+              const filteredItems = (searchTerm === '') ? allAvatarItems : allAvatarItems.filter(item =>
+                  item.group.toLowerCase().includes(searchTerm) ||
+                  item.displayName.toLowerCase().includes(searchTerm)
+              );
+              renderAvatarGallery(filteredItems);
+          } else if (activeTab === 'music') {
+              const selectedCategory = musicCategoryFilter.value;
+              const filteredCodes = allMusicCodes.filter(code => {
+                  const matchesCategory = selectedCategory === 'all' || code.category === selectedCategory;
+                  const searchCorpus = `${code.title.toLowerCase()} ${code.artist ? code.artist.toLowerCase() : ''} ${(code.markers || []).join(' ')}`;
+                  return matchesCategory && searchCorpus.includes(searchTerm);
+              });
+              renderMusicCodes(filteredCodes);
+          }
+      };
+      
+      const renderMusicCodes = (codes) => {
+        const resultsContainer = document.getElementById('music-results-container');
+        resultsContainer.innerHTML = '';
+        if (codes.length === 0) {
+            resultsContainer.innerHTML = `<p class="text-zinc-500 text-center col-span-full">No results found.</p>`;
+            return;
+        }
+        codes.forEach(code => {
+            const cardHTML = ` <div class="music-card rounded-lg p-4 flex flex-col justify-between gap-3"> <div class="flex-grow"> <h3 class="font-semibold text-zinc-100 truncate" title="${code.title}">${code.title} ${ (code.pitch && code.pitch !== 0) ? `<span class="ml-2 text-xs font-semibold text-cyan-400" title="Pitch: ${code.pitch}">[PITCH]</span>` : ''}</h3> <p class="text-sm text-zinc-400 truncate" title="${code.artist}">${code.artist || 'Unknown Artist'}</p> <p class="text-xs text-[var(--gold2)] opacity-80 mt-2">${code.category || 'Uncategorized'}</p> ${ (code.markers && code.markers.length > 0) ? `<div class="flex flex-wrap gap-1.5 mt-2">${code.markers.map(marker => `<span class="text-xs font-medium bg-zinc-700 text-zinc-300 px-2 py-0.5 rounded-full">${marker}</span>`).join('')}</div>` : ''} </div> <div class="flex items-center gap-2 mt-2"> <input readonly type="text" value="${code.id}" class="flex-grow w-0 h-9 px-2 text-xs dark-input rounded-md font-mono"> <button class="copy-btn flex-shrink-0 w-9 h-9 flex items-center justify-center bg-[#1b1d24] text-zinc-200 rounded-md border border-[var(--border)] hover:bg-[#222533] transition" data-id="${code.id}" title="Copy ID"> <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z"/><path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h3zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3z"/></svg> </button> </div> </div>`;
+            resultsContainer.innerHTML += cardHTML;
+        });
+      };
+
+      searchBar.addEventListener('input', debounce(filterContent, 300));
+      musicCategoryFilter.addEventListener('change', filterContent);
+
+      const setupModal = (openBtnId, closeBtnId, modalId) => { 
+        const openBtn = document.getElementById(openBtnId);
+        const closeBtn = document.getElementById(closeBtnId);
+        const modal = document.getElementById(modalId);
+        if (openBtn) openBtn.addEventListener('click', () => modal.classList.add('show'));
+        if (closeBtn) closeBtn.addEventListener('click', () => modal.classList.remove('show'));
+        if (modal) modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.remove('show'); });
+      };
+
+      // --- Photos Modal Logic ---
+      const openPhotosBtn = document.getElementById('openPhotosBtn');
+      const closePhotosBtn = document.getElementById('closePhotosBtn');
+      const photosModal = document.getElementById('photosModal');
+      const photoContainer = document.getElementById('photo-container');
+      const prevPhotoBtn = document.getElementById('prevPhotoBtn');
+      const nextPhotoBtn = document.getElementById('nextPhotoBtn');
+      let currentPhotoIndex = 0;
+      const downloadablePhotos = [
+          { src: 'photos/modal/UK.png', filename: 'UK.png', title: 'UK Collection' },
+          { src: 'photos/modal/Brazil.png', filename: 'Brazil.png', title: 'Brazil Collection' }
+      ];
+
+      function renderSimpleGallery() {
+          if (!photoContainer) return;
+          const slidesHTML = downloadablePhotos.map((photo, index) => `
+              <div id="slide-${index}" class="photo-slide">
+                  <h3 class="text-xl font-semibold text-zinc-100 mb-4">${photo.title}</h3>
+                  <img src="${photo.src}" alt="${photo.title}">
+                  <a href="${photo.src}" download="${photo.filename}" class="mt-6 px-4 py-2 bg-[var(--gold2)] text-black font-semibold rounded-md hover:brightness-110 transition-all">
+                      Descargar ${photo.filename}
+                  </a>
+              </div>
+          `).join('');
+          
+          Array.from(photoContainer.children).forEach(child => { if (child.id.startsWith('slide-')) child.remove(); });
+          photoContainer.insertAdjacentHTML('afterbegin', slidesHTML);
+          currentPhotoIndex = 0;
+          updateGalleryDisplay(currentPhotoIndex, false);
+      }
+
+      function updateGalleryDisplay(newIndex, isNavigation = true) {
+          const slides = photoContainer.querySelectorAll('.photo-slide');
+          if (slides.length === 0) return;
+          if (isNavigation) {
+            if (newIndex >= slides.length) newIndex = 0;
+            else if (newIndex < 0) newIndex = slides.length - 1;
+          }
+          slides.forEach((slide, index) => slide.classList.toggle('active', index === newIndex));
+          currentPhotoIndex = newIndex;
+          const showNav = slides.length > 1;
+          prevPhotoBtn.classList.toggle('hidden', !showNav);
+          nextPhotoBtn.classList.toggle('hidden', !showNav);
+      }
+
+      nextPhotoBtn.addEventListener('click', () => updateGalleryDisplay(currentPhotoIndex + 1));
+      prevPhotoBtn.addEventListener('click', () => updateGalleryDisplay(currentPhotoIndex - 1));
+      openPhotosBtn.addEventListener('click', () => { renderSimpleGallery(); photosModal.classList.add('show'); });
+      closePhotosBtn.addEventListener('click', () => photosModal.classList.remove('show'));
+      photosModal.addEventListener('click', (e) => { if (e.target === photosModal) photosModal.classList.remove('show'); });
+      
+      // --- Time Converter Logic ---
+      setupModal('openTimeConverterBtn', 'closeTimeConverterBtn', 'timeConverterModal');
+      function initializeTimeConverter() {
+        if (timeConverterInitialized) return;
+        timeConverterInitialized = true;
+        const SJO_TZ = 'America/Costa_Rica';
+        const tzSelect = document.getElementById('eventTimeZone');
+        const dateSelect = document.getElementById('eventDate');
+        const hourScroller = document.getElementById('hour-scroller-input');
+        const sjoDateEl = document.getElementById('sjoDate');
+        const sjoTimeEl = document.getElementById('sjoTime');
+        
+        const timezones = { 'Etc/GMT+12':'IDLW (-12)','Pacific/Honolulu':'HST (-10)','America/Anchorage':'AKST (-9)','America/Los_Angeles':'PST (-8)','America/Denver':'MST (-7)','America/Chicago':'CST (-6)','America/Mexico_City':'CST-MX (-6)','America/New_York':'EST (-5)','America/Bogota':'COT (-5)','America/Lima':'PET (-5)','America/Caracas':'VET (-4)','America/Santiago':'CLT (-3)','America/Sao_Paulo':'BRT (-3)','Atlantic/Azores':'AZOT (-1)','Europe/London':'GMT (+0)','Europe/Paris':'CET (+1)','Europe/Berlin':'CET-DE (+1)','Europe/Athens':'EET (+2)','Africa/Johannesburg':'SAST (+2)','Asia/Dubai':'GST (+4)','Asia/Karachi':'PKT (+5)','Asia/Kolkata':'IST (+5:30)','Asia/Bangkok':'ICT (+7)','Asia/Hong_Kong':'HKT (+8)','Asia/Singapore':'SGT (+8)','Asia/Manila':'PHT (+8)','Asia/Tokyo':'JST (+9)','Asia/Seoul':'KST (+9)','Australia/Sydney':'AEST (+10)','Pacific/Auckland':'NZST (+12)' };
+        tzSelect.innerHTML = Object.entries(timezones).map(([val, text]) => `<option value="${val}">${text}</option>`).join('');
+        tzSelect.value = 'America/New_York';
+
+        const today = new Date();
+        for (let i = -7; i <= 7; i++) {
+          const date = new Date(today);
+          date.setDate(today.getDate() + i);
+          const option = document.createElement('option');
+          option.value = date.toISOString().split('T')[0];
+          option.textContent = date.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+          if (i === 0) option.selected = true;
+          dateSelect.appendChild(option);
+        }
+
+        let scrollerHTML = '<div class="h-[80px]"></div>';
+        for (let i = 0; i < 48; i++) {
+            const hour = Math.floor(i / 2);
+            const minute = (i % 2) * 30;
+            scrollerHTML += `<div class="hour-scroller-item" data-index="${i}">${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}</div>`;
+        }
+        hourScroller.innerHTML = scrollerHTML + '<div class="h-[80px]"></div>';
+
+        const hourItems = hourScroller.querySelectorAll('.hour-scroller-item');
+        const now = new Date();
+        hourScroller.scrollTop = (now.getHours() * 2 + Math.floor(now.getMinutes() / 30)) * 40;
+
+        function updateConversion() {
+          const tz = tzSelect.value;
+          const [y,m,d] = dateSelect.value.split('-').map(Number);
+          const selectedIndex = Math.round(hourScroller.scrollTop / 40);
+          const hour = Math.floor(selectedIndex / 2);
+          const minute = (selectedIndex % 2) * 30;
+
+          hourItems.forEach((item, index) => item.classList.toggle('active', index === selectedIndex));
+          
+          let t = Date.UTC(y, m-1, d, hour, minute);
+          const p = new Intl.DateTimeFormat('en-CA', {timeZone: tz, year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false}).formatToParts(new Date(t)).reduce((a,p)=>(a[p.type]=p.value,a),{});
+          t -= (Date.UTC(+p.year, +p.month-1, +p.day, +p.hour, +p.minute) - t);
+          
+          const sjoDate = new Date(t).toLocaleDateString('en-US', {timeZone: SJO_TZ, weekday: 'long', month: 'short', day: 'numeric'});
+          const sjoTime = new Date(t).toLocaleTimeString('en-US', {timeZone: SJO_TZ, hour: '2-digit', minute: '2-digit', hour12: false });
+          sjoDateEl.textContent = sjoDate; 
+          sjoTimeEl.textContent = sjoTime;
+        }
+
+        let scrollTimeout;
+        hourScroller.addEventListener('scroll', () => { clearTimeout(scrollTimeout); scrollTimeout = setTimeout(updateConversion, 150); });
+        hourScroller.addEventListener('wheel', (event) => {
+            event.preventDefault();
+            const itemHeight = 40;
+            const currentIndex = Math.round(hourScroller.scrollTop / itemHeight);
+            hourScroller.scrollTo({ top: (Math.max(0, Math.min(currentIndex + Math.sign(event.deltaY), 47)) * itemHeight), behavior: 'smooth' });
+        });
+        tzSelect.addEventListener('change', updateConversion);
+        dateSelect.addEventListener('change', updateConversion);
+        updateConversion();
+      }
+    });
+  </script>
+
+  <script>
+    let raindrops = [];
+    const PARTICLE_COUNT = 15; 
+    function setup() {
+      let canvas = createCanvas(windowWidth, windowHeight); canvas.parent('particle-canvas'); 
+      for (let i = 0; i < PARTICLE_COUNT; i++) { raindrops.push(new Raindrop()); }
+    }
+    function draw() {
+      background(18, 17, 23, 15);
+      for (let drop of raindrops) { drop.fall(); drop.show(); }
+    }
+    function windowResized() { resizeCanvas(windowWidth, windowHeight); }
+    class Raindrop {
+      constructor() { this.x = random(width); this.y = random(-500, -50); this.z = random(0, 20); this.len = map(this.z, 0, 20, 15, 30); this.ySpeed = map(this.z, 0, 20, 1, 4); }
+      fall() { this.y += this.ySpeed; this.ySpeed += 0.02; if (this.y > height) { this.x = random(width); this.y = random(-200, -100); this.ySpeed = map(this.z, 0, 20, 1, 4); } }
+      show() { let thick = map(this.z, 0, 20, 1, 2.5); strokeWeight(thick); stroke('rgba(213, 184, 90, 0.5)'); line(this.x, this.y, this.x, this.y + this.len); }
+    }
+  </script>
+</body>
+</html>
