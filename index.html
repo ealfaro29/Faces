@@ -286,11 +286,12 @@
     <header class="panel flex flex-col md:flex-row items-center justify-between p-4 gap-4">
         <h1 class="text-3xl lg:text-4xl title-fancy gold-title">Fashion Muse Collection</h1>
         <nav class="flex items-center justify-center flex-wrap gap-2">
-            <button class="tab-nav-button active" data-tab="favorites">Favorites</button> </nav>
             <button class="tab-nav-button" data-tab="facebases">Facebases</button>
             <button class="tab-nav-button" data-tab="avatar">Avatar</button>
             <button class="tab-nav-button" data-tab="textures">Textures</button>
             <button class="tab-nav-button" data-tab="music">Music</button>
+            <button class="tab-nav-button active" data-tab="favorites">Favorites</button>
+        </nav>
         <div class="flex items-center gap-2">
             <button id="openPhotosBtn" title="Download Photos" class="w-10 h-10 flex items-center justify-center bg-black/20 text-[var(--gold2)] rounded-full border border-transparent hover:border-[var(--border)] hover:scale-110 transition-all"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16"><path d="M6.002 5.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0"/><path d="M2.002 1a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2h-12zm12 1a1 1 0 0 1 1 1v6.5l-3.777-1.947a.5.5 0 0 0-.577.093l-3.71 3.71-2.66-1.772a.5.5 0 0 0-.63.062L1.002 12V3a1 1 0 0 1 1-1h12z"/></svg></button>
             <button id="openTimeConverterBtn" title="Time Converter" class="w-10 h-10 flex items-center justify-center bg-black/20 text-[var(--gold2)] rounded-full border border-transparent hover:border-[var(--border)] hover:scale-110 transition-all"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16"><path d="M8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71V3.5z"/><path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16m7-8A7 7 0 1 1 1 8a7 7 0 0 1 14 0"/></svg></button>
@@ -305,14 +306,17 @@
                   <svg class="w-5 h-5 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
               </div>
           </div>
+          <select id="facebase-country-filter" class="h-12 px-3 text-sm dark-input rounded-md sm:w-64" style="display: none;">
+              <option value="all">All Countries</option>
+          </select>
           <select id="music-category-filter" class="h-12 px-3 text-sm dark-input rounded-md sm:w-64" style="display: none;">
               <option value="all">All Categories</option>
           </select>
       </div>
       
       <div id="tab-content-wrapper" class="flex-grow relative min-h-0">
-          <div id="content-facebases" class="tab-content absolute inset-0 scrollable-content">
-              <div id="gallery-container" class="flex flex-col gap-8 pr-2"></div>
+          <div id="content-facebases" class="tab-content absolute inset-0 hidden scrollable-content">
+              <div id="gallery-container" class="pr-2 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4"></div>
           </div>
           <div id="content-music" class="tab-content absolute inset-0 hidden scrollable-content">
               <div id="music-results-container" class="pr-2 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"></div>
@@ -325,9 +329,9 @@
               <div id="textures-gallery-container" class="pr-2 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
               </div>
           </div>
-          <div id="content-favorites" class="tab-content absolute inset-0 hidden scrollable-content">
+          <div id="content-favorites" class="tab-content absolute inset-0 scrollable-content">
               <div id="favorites-gallery-container" class="pr-2 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-                  <p class="text-zinc-500 text-center col-span-full pt-4">Mark an item as favorite (⭐) to see it here.</p>
+                  <p class="text-zinc-500 text-center col-span-full pt-4">Mark an item as favorite (❤️) to see it here.</p>
               </div>
           </div>
       </div>
@@ -365,9 +369,9 @@
 
         localStorage.setItem(FAVORITES_KEY, JSON.stringify(Array.from(favorites)));
 
-        // Actualizar la estrella en el botón
+        // Actualizar el icono en el botón (MODIFICADO: Corazón)
         if (buttonElement) {
-            buttonElement.innerHTML = isNowFavorite ? '⭐' : '☆';
+            buttonElement.innerHTML = isNowFavorite ? '❤️' : '🖤'; 
             buttonElement.classList.toggle('is-favorite', isNowFavorite);
         }
 
@@ -381,7 +385,7 @@
 
     document.addEventListener('DOMContentLoaded', () => {
       // Configuraciones y Elementos Iniciales
-      const SECRET_B64 = 'bWFuY2hpd杳as';
+      const SECRET_B64 = 'bWFuY2hpdGFz';
       const AUTH_KEY = 'isAuthenticated';
       const LAST_AUTH_KEY = 'lastAuthTime';
       const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
@@ -395,7 +399,7 @@
       let timeConverterInitialized = false;
       let avatarTabInitialized = false;
       let texturesTabInitialized = false;
-      let favoritesTabInitialized = false; // NUEVA VARIABLE
+      let favoritesTabInitialized = false;
       
       let allFacebaseItems = [];
       let facebaseCategories = null; 
@@ -403,15 +407,20 @@
       let allTextureItems = [];
       let allMusicCodes = [];
       
+      // Obtener el nuevo filtro de país
+      const facebaseCountryFilter = document.getElementById('facebase-country-filter');
+      const musicCategoryFilter = document.getElementById('music-category-filter');
+      
       passwordInput.value = '';
 
       const startApp = () => {
+        // Al iniciar, inicializa Favorites primero para que filterContent() tenga los datos
         if (!facebasesTabInitialized) initializeFacebasesTab();
         if (!musicTabInitialized) initializeMusicTab();
         if (!timeConverterInitialized) initializeTimeConverter();
         if (!avatarTabInitialized) initializeAvatarTab();
         if (!texturesTabInitialized) initializeTexturesTab();
-        if (!favoritesTabInitialized) initializeFavoritesTab(); // INICIALIZAR FAVORITOS
+        if (!favoritesTabInitialized) initializeFavoritesTab(); 
       };
 
       const checkAuthentication = () => {
@@ -472,23 +481,25 @@
 
       const tabs = document.querySelectorAll('.tab-nav-button');
       const contentAreas = document.querySelectorAll('.tab-content');
-      const searchBar = document.getElementById('search-bar');
-      const musicCategoryFilter = document.getElementById('music-category-filter');
       
       const updateSearchUI = (activeTab) => {
+          const musicCategoryFilter = document.getElementById('music-category-filter');
+          const facebaseCountryFilter = document.getElementById('facebase-country-filter');
+
           searchBar.value = '';
+          facebaseCountryFilter.style.display = 'none';
+          musicCategoryFilter.style.display = 'none';
+
           if (activeTab === 'facebases') {
-              searchBar.placeholder = 'Search by country or name...';
-              musicCategoryFilter.style.display = 'none';
+              searchBar.placeholder = 'Search by name...';
+              facebaseCountryFilter.style.display = 'block'; // Mostrar filtro de país
           } else if (activeTab === 'music') {
               searchBar.placeholder = 'Search by artist, title, or marker...';
               musicCategoryFilter.style.display = 'block';
           } else if (activeTab === 'avatar' || activeTab === 'textures' || activeTab === 'favorites') {
               searchBar.placeholder = 'Search by name or category...';
-              musicCategoryFilter.style.display = 'none';
           } else {
               searchBar.placeholder = 'Search...';
-              musicCategoryFilter.style.display = 'none';
           }
       }
 
@@ -523,78 +534,81 @@
       // --- Facebases Tab Logic ---
       function renderFacebasesGallery(itemsToRender, categoriesData) {
         const galleryContainer = document.getElementById('gallery-container');
+        galleryContainer.innerHTML = ''; // Limpiar contenido
         
-        const byGroup = itemsToRender.reduce((acc, it) => {
-            (acc[it.group] ||= []).push(it);
-            return acc;
+        // Mapeo para buscar ISO por nombre de país/grupo
+        const isoMap = categoriesData.countries.reduce((map, country) => {
+            map[country.name] = country.iso;
+            return map;
         }, {});
-
-        const allCategories = [...(categoriesData.countries || []), ...(categoriesData.others || [])];
         
-        let galleryHTML = '';
-        allCategories.forEach(category => {
-            const itemsForCategory = byGroup[category.name];
-            
-            if (!itemsForCategory || itemsForCategory.length === 0) {
-                return; 
-            }
+        if (itemsToRender.length === 0) {
+            galleryContainer.innerHTML = `<p class="text-zinc-500 text-center col-span-full pt-4">No results found.</p>`;
+            return;
+        }
 
-            const flagSrc = category.iso 
-                ? `https://flagcdn.com/h80/${category.iso.toLowerCase()}.png`
-                : category.flag;
+        const gridItemsHTML = itemsToRender.map(it => {
+            const iso = isoMap[it.group] || '';
+            const flagSrc = iso 
+                ? `https://flagcdn.com/h20/${iso.toLowerCase()}.png` // Bandera de 20px de altura
+                : '';
+            const flagTag = flagSrc 
+                ? `<img src="${flagSrc}" alt="${it.group} flag" class="flag-aesthetic !h-5 !w-auto rounded shadow">`
+                : `<span class="text-xs text-zinc-500">${it.group}</span>`; // Muestra el nombre si no hay bandera
 
-            galleryHTML += `
-              <section class="country-row">
-                <div class="flex items-center gap-3 mb-4">
-                  <img src="${flagSrc}" alt="${category.name} flag" class="flag-aesthetic">
-                  <h2 class="text-2xl font-bold title-fancy gold-title">${category.name}</h2>
+            return `
+                <div class="music-card facebase-card bg-[#151722] rounded-xl shadow-xl ring-1 ring-[var(--border)] overflow-hidden flex flex-col p-1.5 space-y-1.5 !w-full relative">
+                    <div class="favorite-container">
+                        <button class="favorite-btn" data-id="${it.id}" onclick="toggleFavorite('${it.id}', this)">
+                            ${isFavorite(it.id) ? '❤️' : '🖤'}
+                        </button>
+                    </div>
+                    <div class="text-xs text-zinc-200 font-medium px-1 h-8 flex items-center justify-start gap-1">
+                        ${flagTag}
+                        <span class="truncate">${it.displayName}</span>
+                    </div>
+                    <img src="${it.src}" alt="${it.displayName}" loading="lazy" class="w-full h-auto object-cover aspect-square rounded-md">
+                    <div class="flex items-center gap-1.5 p-1">
+                        <input readonly type="text" value="${it.codeId || ''}" placeholder="…" class="flex-grow w-0 h-8 px-2 text-xs dark-input rounded-md">
+                        <button class="copy-btn flex-shrink-0 w-8 h-8 flex items-center justify-center bg-[#1b1d24] text-zinc-200 rounded-md border border-[var(--border)] hover:bg-[#222533] transition">
+                            <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z"/><path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h3zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3z"/></svg>
+                        </button>
+                    </div>
                 </div>
-                <div class="swiper relative">
-                  <div class="swiper-wrapper">
-                    ${itemsForCategory.map(it => `
-                      <div class="swiper-slide">
-                        <div class="facebase-card bg-[#151722] rounded-xl shadow-xl ring-1 ring-[var(--border)] overflow-hidden flex flex-col p-1.5 space-y-1.5 relative"> <div class="favorite-container">
-                              <button class="favorite-btn" data-id="${it.id}" onclick="toggleFavorite('${it.id}', this)">
-                                  ${isFavorite(it.id) ? '⭐' : '☆'}
-                              </button>
-                          </div>
-                          <div class="text-xs text-zinc-200 font-medium px-1 text-center h-8 flex items-center justify-center">${it.displayName}</div>
-                          <img src="${it.src}" alt="${it.displayName}" loading="lazy" class="w-full h-auto object-cover aspect-square rounded-md">
-                          <div class="flex items-center gap-1.5 p-1">
-                            <input readonly type="text" value="${it.codeId || ''}" placeholder="…" class="flex-grow w-0 h-8 px-2 text-xs dark-input rounded-md">
-                            <button class="copy-btn flex-shrink-0 w-8 h-8 flex items-center justify-center bg-[#1b1d24] text-zinc-200 rounded-md border border-[var(--border)] hover:bg-[#222533] transition">
-                              <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z"/><path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h3zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3z"/></svg>
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    `).join('')}
-                  </div>
-                  <div class="swiper-button-prev"></div>
-                  <div class="swiper-button-next"></div>
-                </div>
-              </section>
             `;
-        });
+        }).join('');
         
-        galleryContainer.innerHTML = galleryHTML || `<p class="text-zinc-500 text-center col-span-full">No results found.</p>`;
-        
-        document.querySelectorAll('#gallery-container .swiper').forEach(el => new Swiper(el, { 
-          slidesPerView: 'auto', spaceBetween: 16, grabCursor: true,
-          navigation: { nextEl: el.querySelector('.swiper-button-next'), prevEl: el.querySelector('.swiper-button-prev'), },
-        }));
+        galleryContainer.innerHTML = gridItemsHTML;
       }
 
       function initializeFacebasesTab() {
         if (facebasesTabInitialized) return;
         facebasesTabInitialized = true;
         
+        // Función auxiliar para poblar el dropdown de países
+        const populateCountryFilter = (categoriesData) => {
+            const filter = document.getElementById('facebase-country-filter');
+            filter.innerHTML = '<option value="all">All Countries</option>';
+            
+            categoriesData.countries.forEach(country => {
+                const option = document.createElement('option');
+                option.value = country.name;
+                option.textContent = country.name;
+                filter.appendChild(option);
+            });
+            
+            // Agregar listener solo una vez
+            filter.addEventListener('change', filterContent);
+        };
+
         Promise.all([
           fetch('photos/facebases/facebases.json').then(res => res.json()),
           fetch('photos/facebases/categories.json').then(res => res.json())
         ]).then(([imageBasenames, categoriesData]) => {
           facebaseCategories = categoriesData;
           allFacebaseItems = imageBasenames.map(basename => parseItemName(basename, 'photos/facebases'));
+          
+          populateCountryFilter(facebaseCategories); // Poblar el dropdown
           renderFacebasesGallery(allFacebaseItems, facebaseCategories);
         }).catch(error => {
           console.error("Failed to load facebase data:", error);
@@ -615,10 +629,10 @@
                 <div class="music-card facebase-card bg-[#151722] rounded-xl shadow-xl ring-1 ring-[var(--border)] overflow-hidden flex flex-col p-1.5 space-y-1.5 !w-full relative">
                     <div class="favorite-container">
                         <button class="favorite-btn" data-id="${it.id}" onclick="toggleFavorite('${it.id}', this)">
-                            ${isFavorite(it.id) ? '⭐' : '☆'}
+                            ${isFavorite(it.id) ? '❤️' : '🖤'}
                         </button>
                     </div>
-                    <div class="text-xs text-zinc-200 font-medium px-1 text-center h-8 flex items-center justify-center">${it.displayName} (${it.group})</div>
+                    <div class="text-xs text-zinc-200 font-medium px-1 text-center h-8 flex items-center justify-start gap-1">${it.displayName} (${it.group})</div>
                     <img src="${it.src}" alt="${it.displayName}" loading="lazy" class="w-full h-auto object-cover aspect-square rounded-md">
                     <div class="flex items-center gap-1.5 p-1">
                         <input readonly type="text" value="${it.codeId || ''}" placeholder="…" class="flex-grow w-0 h-8 px-2 text-xs dark-input rounded-md">
@@ -661,10 +675,10 @@
                 <div class="music-card facebase-card bg-[#151722] rounded-xl shadow-xl ring-1 ring-[var(--border)] overflow-hidden flex flex-col p-1.5 space-y-1.5 !w-full relative">
                     <div class="favorite-container">
                         <button class="favorite-btn" data-id="${it.id}" onclick="toggleFavorite('${it.id}', this)">
-                            ${isFavorite(it.id) ? '⭐' : '☆'}
+                            ${isFavorite(it.id) ? '❤️' : '🖤'}
                         </button>
                     </div>
-                    <div class="text-xs text-zinc-200 font-medium px-1 text-center h-8 flex items-center justify-center">${it.displayName} (${it.group})</div>
+                    <div class="text-xs text-zinc-200 font-medium px-1 text-center h-8 flex items-center justify-start gap-1">${it.displayName} (${it.group})</div>
                     <img src="${it.src}" alt="${it.displayName}" loading="lazy" class="w-full h-auto object-cover aspect-square rounded-md">
                     <div class="flex items-center gap-1.5 p-1">
                         <input readonly type="text" value="${it.codeId || ''}" placeholder="…" class="flex-grow w-0 h-8 px-2 text-xs dark-input rounded-md">
@@ -709,7 +723,7 @@
             <div class="music-card rounded-lg p-4 flex flex-col justify-between gap-3 relative"> 
                 <div class="favorite-container !top-2 !right-2 !bg-transparent !backdrop-filter-none !w-auto !h-auto">
                     <button class="favorite-btn" data-id="${code.id}" onclick="toggleFavorite('${code.id}', this)">
-                        ${isFav ? '⭐' : '☆'}
+                        ${isFav ? '❤️' : '🖤'}
                     </button>
                 </div>
                 <div class="flex-grow"> 
@@ -761,13 +775,14 @@
           });
       }
 
-      // --- Favorites Tab Logic (NUEVA FUNCIÓN) ---
+      // --- Favorites Tab Logic ---
       function renderFavoritesGallery(itemsToRender) {
           const galleryContainer = document.getElementById('favorites-gallery-container');
           galleryContainer.innerHTML = '';
           
           if (itemsToRender.length === 0) {
-              galleryContainer.innerHTML = `<p class="text-zinc-500 text-center col-span-full pt-4">No has marcado ningún ítem como favorito todavía. Busca en las otras pestañas y usa la estrella (⭐).</p>`;
+              // MODIFICACIÓN: Mensaje con corazón
+              galleryContainer.innerHTML = `<p class="text-zinc-500 text-center col-span-full pt-4">No has marcado ningún ítem como favorito todavía. Busca en las otras pestañas y usa el corazón (❤️).</p>`;
               return;
           }
 
@@ -778,7 +793,7 @@
                     <div class="music-card rounded-lg p-4 flex flex-col justify-between gap-3 relative"> 
                         <div class="favorite-container !top-2 !right-2 !bg-transparent !backdrop-filter-none !w-auto !h-auto">
                             <button class="favorite-btn" data-id="${item.id}" onclick="toggleFavorite('${item.id}', this)">
-                                ${isFavorite(item.id) ? '⭐' : '☆'}
+                                ${isFavorite(item.id) ? '❤️' : '🖤'}
                             </button>
                         </div>
                         <div class="flex-grow"> 
@@ -795,15 +810,27 @@
                         </div> 
                     </div>`;
                     galleryContainer.innerHTML += cardHTML;
-              } else { // Es una tarjeta de Facebase/Avatar/Texture
+              } else { 
+                    // Es una tarjeta de Facebase/Avatar/Texture
+                    const iso = facebaseCategories?.countries.find(c => c.name === item.group)?.iso || '';
+                    const flagSrc = iso 
+                        ? `https://flagcdn.com/h20/${iso.toLowerCase()}.png`
+                        : '';
+                    const flagTag = flagSrc 
+                        ? `<img src="${flagSrc}" alt="${item.group} flag" class="flag-aesthetic !h-5 !w-auto rounded shadow">`
+                        : `<span class="text-xs text-zinc-500">${item.group}</span>`;
+                        
                     const cardHTML = `
                         <div class="music-card facebase-card bg-[#151722] rounded-xl shadow-xl ring-1 ring-[var(--border)] overflow-hidden flex flex-col p-1.5 space-y-1.5 !w-full relative">
                             <div class="favorite-container">
                                 <button class="favorite-btn" data-id="${item.id}" onclick="toggleFavorite('${item.id}', this)">
-                                    ${isFavorite(item.id) ? '⭐' : '☆'}
+                                    ${isFavorite(item.id) ? '❤️' : '🖤'}
                                 </button>
                             </div>
-                            <div class="text-xs text-zinc-200 font-medium px-1 text-center h-8 flex items-center justify-center">${item.displayName} (${item.group})</div>
+                            <div class="text-xs text-zinc-200 font-medium px-1 h-8 flex items-center justify-start gap-1">
+                                ${flagTag}
+                                <span class="truncate">${item.displayName}</span>
+                            </div>
                             <img src="${item.src}" alt="${item.displayName}" loading="lazy" class="w-full h-auto object-cover aspect-square rounded-md">
                             <div class="flex items-center gap-1.5 p-1">
                                 <input readonly type="text" value="${item.codeId || ''}" placeholder="…" class="flex-grow w-0 h-8 px-2 text-xs dark-input rounded-md">
@@ -821,10 +848,10 @@
       function initializeFavoritesTab() {
           if (favoritesTabInitialized) return;
           favoritesTabInitialized = true;
-          // No hace falta cargar datos, solo usar los arrays globales
+          // Esto asegura que la pestaña se cargue con el filtro aplicado.
           filterContent(); 
       }
-
+      
       // --- Search and Filter Logic ---
       const debounce = (func, delay) => {
           let timeout;
@@ -839,10 +866,17 @@
           const searchTerm = searchBar.value.toLowerCase().trim();
           
           if (activeTab === 'facebases') {
-              const filteredItems = (searchTerm === '') ? allFacebaseItems : allFacebaseItems.filter(item => 
-                  item.group.toLowerCase().includes(searchTerm) || 
-                  item.displayName.toLowerCase().includes(searchTerm)
-              );
+              const selectedCountry = facebaseCountryFilter.value; // Obtener país seleccionado
+              
+              const filteredItems = allFacebaseItems.filter(item => {
+                  const matchesCountry = selectedCountry === 'all' || item.group === selectedCountry;
+                  const matchesSearch = searchTerm === '' || 
+                      item.displayName.toLowerCase().includes(searchTerm) ||
+                      item.group.toLowerCase().includes(searchTerm);
+                  
+                  return matchesCountry && matchesSearch;
+              });
+
               if (facebaseCategories) {
                   renderFacebasesGallery(filteredItems, facebaseCategories);
               }
@@ -866,8 +900,9 @@
                   return matchesCategory && searchCorpus.includes(searchTerm);
               });
               renderMusicCodes(filteredCodes);
-          } else if (activeTab === 'favorites') { // NUEVO FILTRO DE FAVORITOS
+          } else if (activeTab === 'favorites') { 
               const favorites = getFavorites();
+              // Combinar todos los arrays de ítems globales
               const allItems = [
                   ...allFacebaseItems.map(item => ({...item, type: 'facebase'})),
                   ...allAvatarItems.map(item => ({...item, type: 'avatar'})),
@@ -889,6 +924,7 @@
           }
       };
 
+      // Se agrega listener para el filtro de país (la función initializeFacebasesTab lo pobla y agrega el listener de 'change')
       searchBar.addEventListener('input', debounce(filterContent, 300));
       musicCategoryFilter.addEventListener('change', filterContent);
 
