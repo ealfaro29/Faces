@@ -286,7 +286,7 @@
     <header class="panel flex flex-col md:flex-row items-center justify-between p-4 gap-4">
         <h1 class="text-3xl lg:text-4xl title-fancy gold-title">Fashion Muse Collection</h1>
         <nav class="flex items-center justify-center flex-wrap gap-2">
-            <button class="tab-nav-button active" data-tab="favorites">Favorites</button>
+            <button class="tab-nav-button active" data-tab="favorites">❤️</button>
             <button class="tab-nav-button" data-tab="facebases">Facebases</button>
             <button class="tab-nav-button" data-tab="avatar">Avatar</button>
             <button class="tab-nav-button" data-tab="textures">Textures</button>
@@ -367,9 +367,10 @@
             isNowFavorite = true;
         }
 
+        // PERSISTENCIA: Guarda en localStorage inmediatamente
         localStorage.setItem(FAVORITES_KEY, JSON.stringify(Array.from(favorites)));
 
-        // Actualizar el icono en el botón (MODIFICADO: Corazón)
+        // MODIFICACIÓN 2: Usar ❤️ (activo) y 🖤 (desactivado)
         if (buttonElement) {
             buttonElement.innerHTML = isNowFavorite ? '❤️' : '🖤'; 
             buttonElement.classList.toggle('is-favorite', isNowFavorite);
@@ -407,20 +408,63 @@
       let allTextureItems = [];
       let allMusicCodes = [];
       
-      // Obtener el nuevo filtro de país
+      // DECLARACIÓN DE LA BARRA DE BÚSQUEDA Y FILTROS
+      const searchBar = document.getElementById('search-bar');
       const facebaseCountryFilter = document.getElementById('facebase-country-filter');
       const musicCategoryFilter = document.getElementById('music-category-filter');
       
+      let globalDataLoaded = false; 
+      
       passwordInput.value = '';
+      
+      // --- Función Central de Carga de Datos (Asegura que todos los arrays estén llenos) ---
+      function initializeAllData() {
+          if (globalDataLoaded) return Promise.resolve();
+
+          return Promise.all([
+              fetch('photos/facebases/facebases.json').then(res => res.json()),
+              fetch('photos/facebases/categories.json').then(res => res.json()),
+              fetch('photos/items/items.json').then(res => res.json()),
+              fetch('music.json').then(res => res.json())
+          ]).then(([facebasesBasenames, categoriesData, itemBasenames, musicData]) => {
+              // 1. Facebases
+              facebaseCategories = categoriesData;
+              allFacebaseItems = facebasesBasenames.map(basename => parseItemName(basename, 'photos/facebases'));
+              
+              // 2. Items & Textures
+              const itemBasePrefix = 'photos/items/';
+              const avatarBasenames = itemBasenames.filter(basename => !basename.startsWith('Texture-')); 
+              const textureBasenames = itemBasenames.filter(basename => basename.startsWith('Texture-'));
+              allAvatarItems = avatarBasenames.map(basename => parseItemName(basename, itemBasePrefix));
+              allTextureItems = textureBasenames.map(basename => parseItemName(basename, itemBasePrefix));
+
+              // 3. Music
+              allMusicCodes = musicData;
+              
+              // 4. Inicializar filtros dependientes de datos cargados
+              populateCountryFilter(facebaseCategories);
+              populateMusicCategoryFilter(allMusicCodes);
+
+              globalDataLoaded = true;
+          }).catch(error => {
+              console.error("Failed to load critical app data:", error);
+              // Podrías mostrar un mensaje de error crítico aquí
+          });
+      }
 
       const startApp = () => {
-        // Al iniciar, inicializa Favorites primero para que filterContent() tenga los datos
-        if (!facebasesTabInitialized) initializeFacebasesTab();
-        if (!musicTabInitialized) initializeMusicTab();
-        if (!timeConverterInitialized) initializeTimeConverter();
-        if (!avatarTabInitialized) initializeAvatarTab();
-        if (!texturesTabInitialized) initializeTexturesTab();
-        if (!favoritesTabInitialized) initializeFavoritesTab(); 
+          initializeAllData().then(() => {
+              // Una vez que los datos están garantizados, inicializa las pestañas de renderizado
+              if (!facebasesTabInitialized) initializeFacebasesTab();
+              if (!musicTabInitialized) initializeMusicTab();
+              if (!timeConverterInitialized) initializeTimeConverter();
+              if (!avatarTabInitialized) initializeAvatarTab();
+              if (!texturesTabInitialized) initializeTexturesTab();
+              if (!favoritesTabInitialized) initializeFavoritesTab(); 
+
+              // El tab "Favorites" está activo por defecto, por lo que filterContent() se ejecuta aquí
+              filterContent();
+          });
       };
 
       const checkAuthentication = () => {
@@ -483,16 +527,13 @@
       const contentAreas = document.querySelectorAll('.tab-content');
       
       const updateSearchUI = (activeTab) => {
-          const musicCategoryFilter = document.getElementById('music-category-filter');
-          const facebaseCountryFilter = document.getElementById('facebase-country-filter');
-
           searchBar.value = '';
           facebaseCountryFilter.style.display = 'none';
           musicCategoryFilter.style.display = 'none';
 
           if (activeTab === 'facebases') {
               searchBar.placeholder = 'Search by name...';
-              facebaseCountryFilter.style.display = 'block'; // Mostrar filtro de país
+              facebaseCountryFilter.style.display = 'block';
           } else if (activeTab === 'music') {
               searchBar.placeholder = 'Search by artist, title, or marker...';
               musicCategoryFilter.style.display = 'block';
@@ -584,37 +625,25 @@
       function initializeFacebasesTab() {
         if (facebasesTabInitialized) return;
         facebasesTabInitialized = true;
-        
-        // Función auxiliar para poblar el dropdown de países
-        const populateCountryFilter = (categoriesData) => {
-            const filter = document.getElementById('facebase-country-filter');
-            filter.innerHTML = '<option value="all">All Countries</option>';
-            
-            categoriesData.countries.forEach(country => {
-                const option = document.createElement('option');
-                option.value = country.name;
-                option.textContent = country.name;
-                filter.appendChild(option);
-            });
-            
-            // Agregar listener solo una vez
-            filter.addEventListener('change', filterContent);
-        };
-
-        Promise.all([
-          fetch('photos/facebases/facebases.json').then(res => res.json()),
-          fetch('photos/facebases/categories.json').then(res => res.json())
-        ]).then(([imageBasenames, categoriesData]) => {
-          facebaseCategories = categoriesData;
-          allFacebaseItems = imageBasenames.map(basename => parseItemName(basename, 'photos/facebases'));
-          
-          populateCountryFilter(facebaseCategories); // Poblar el dropdown
-          renderFacebasesGallery(allFacebaseItems, facebaseCategories);
-        }).catch(error => {
-          console.error("Failed to load facebase data:", error);
-          document.getElementById('gallery-container').innerHTML = `<p class="text-red-400 text-center">Error loading data. Check if JSON files are correct.</p>`;
-        });
+        // Solo renderiza, confía en que los datos ya están cargados.
+        renderFacebasesGallery(allFacebaseItems, facebaseCategories);
       }
+      
+      // Función auxiliar para poblar el dropdown de países
+      const populateCountryFilter = (categoriesData) => {
+          const filter = document.getElementById('facebase-country-filter');
+          filter.innerHTML = '<option value="all">All Countries</option>';
+          
+          categoriesData.countries.forEach(country => {
+              const option = document.createElement('option');
+              option.value = country.name;
+              option.textContent = country.name;
+              filter.appendChild(option);
+          });
+          
+          // Agrega listener
+          filter.addEventListener('change', filterContent);
+      };
       
       // --- Avatar Tab Logic ---
       function renderAvatarGallery(itemsToRender) {
@@ -649,17 +678,7 @@
       function initializeAvatarTab() {
           if (avatarTabInitialized) return;
           avatarTabInitialized = true;
-          
-          fetch('photos/items/items.json')
-            .then(res => res.json())
-            .then(imageBasenames => {
-                const avatarBasenames = imageBasenames.filter(basename => !basename.startsWith('Texture-')); 
-                allAvatarItems = avatarBasenames.map(basename => parseItemName(basename, 'photos/items'));
-                renderAvatarGallery(allAvatarItems);
-            }).catch(error => {
-                console.error("Failed to load avatar data:", error);
-                document.getElementById('avatar-gallery-container').innerHTML = `<p class="text-red-400 text-center">Error al cargar datos de avatar. Verifique si items.json es correcto.</p>`;
-            });
+          renderAvatarGallery(allAvatarItems);
       }
 
       // --- Textures Tab Logic ---
@@ -695,19 +714,20 @@
       function initializeTexturesTab() {
           if (texturesTabInitialized) return;
           texturesTabInitialized = true;
-          
-          fetch('photos/items/items.json') 
-            .then(res => res.json())
-            .then(imageBasenames => {
-                const textureBasenames = imageBasenames.filter(basename => basename.startsWith('Texture-'));
-                allTextureItems = textureBasenames.map(basename => parseItemName(basename, 'photos/items'));
-                renderTextureGallery(allTextureItems);
-            }).catch(error => {
-                console.error("Failed to load texture data:", error);
-                document.getElementById('textures-gallery-container').innerHTML = `<p class="text-red-400 text-center">Error al cargar datos de texturas. Asegúrese de que items.json existe y es correcto.</p>`;
-            });
+          renderTextureGallery(allTextureItems);
       }
-
+      
+      // Función auxiliar para poblar el dropdown de categorías de música
+      const populateMusicCategoryFilter = (codes) => {
+          const categories = [...new Set(codes.map(code => code.category))].filter(Boolean); 
+          categories.sort().forEach(category => { 
+            const option = document.createElement('option'); 
+            option.value = category; 
+            option.textContent = category; 
+            musicCategoryFilter.appendChild(option); 
+          }); 
+          musicCategoryFilter.addEventListener('change', filterContent);
+      };
 
       // --- Music Tab Logic ---
       const renderMusicCodes = (codes) => {
@@ -723,7 +743,7 @@
             <div class="music-card rounded-lg p-4 flex flex-col justify-between gap-3 relative"> 
                 <div class="favorite-container !top-2 !right-2 !bg-transparent !backdrop-filter-none !w-auto !h-auto">
                     <button class="favorite-btn" data-id="${code.id}" onclick="toggleFavorite('${code.id}', this)">
-                        ${isFav ? '❤️' : '🖤'}
+                        ${isFavorite(code.id) ? '❤️' : '🖤'}
                     </button>
                 </div>
                 <div class="flex-grow"> 
@@ -746,33 +766,7 @@
       function initializeMusicTab() {
         if (musicTabInitialized) return;
         musicTabInitialized = true;
-        
-        const resultsContainer = document.getElementById('music-results-container');
-        
-        const populateCategories = (codes) => { 
-          const categories = [...new Set(codes.map(code => code.category))].filter(Boolean); 
-          categories.sort().forEach(category => { 
-            const option = document.createElement('option'); 
-            option.value = category; 
-            option.textContent = category; 
-            musicCategoryFilter.appendChild(option); 
-          }); 
-        };
-        
-        fetch('music.json')
-          .then(response => response.ok ? response.json() : [])
-          .then(data => { 
-            allMusicCodes = data; 
-            if (data.length > 0) {
-              musicCategoryFilter.innerHTML = '<option value="all">All Categories</option>';
-              populateCategories(allMusicCodes); 
-              renderMusicCodes(allMusicCodes); 
-            }
-          })
-          .catch(error => { 
-            console.error('Error loading music codes:', error); 
-            resultsContainer.innerHTML = `<p class="text-red-400 text-center col-span-full">Failed to load music codes.</p>`; 
-          });
+        renderMusicCodes(allMusicCodes);
       }
 
       // --- Favorites Tab Logic ---
@@ -781,7 +775,7 @@
           galleryContainer.innerHTML = '';
           
           if (itemsToRender.length === 0) {
-              // MODIFICACIÓN: Mensaje con corazón
+              // MODIFICACIÓN: Mensaje de guía
               galleryContainer.innerHTML = `<p class="text-zinc-500 text-center col-span-full pt-4">No has marcado ningún ítem como favorito todavía. Busca en las otras pestañas y usa el corazón (❤️).</p>`;
               return;
           }
@@ -848,8 +842,7 @@
       function initializeFavoritesTab() {
           if (favoritesTabInitialized) return;
           favoritesTabInitialized = true;
-          // Esto asegura que la pestaña se cargue con el filtro aplicado.
-          filterContent(); 
+          // Solo se ejecuta filterContent en el flujo principal después de cargar los datos
       }
       
       // --- Search and Filter Logic ---
@@ -862,6 +855,8 @@
       };
       
       const filterContent = () => {
+          if (!globalDataLoaded) return; // Prevenir la ejecución si los datos no están listos
+          
           const activeTab = document.querySelector('.tab-nav-button.active')?.dataset.tab;
           const searchTerm = searchBar.value.toLowerCase().trim();
           
@@ -924,9 +919,7 @@
           }
       };
 
-      // Se agrega listener para el filtro de país (la función initializeFacebasesTab lo pobla y agrega el listener de 'change')
       searchBar.addEventListener('input', debounce(filterContent, 300));
-      musicCategoryFilter.addEventListener('change', filterContent);
 
       const setupModal = (openBtnId, closeBtnId, modalId) => { 
         const openBtn = document.getElementById(openBtnId);
