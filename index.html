@@ -78,10 +78,22 @@
     /* Carousel Styles */
     .swiper { width: 100%; height: auto; padding-left: 4px; padding-right: 4px;}
     .swiper-slide { width: auto; }
+    
+    /* ESTILOS MODIFICADOS PARA EL HOVER */
     .facebase-card { width: 180px; transition: all 0.2s ease; }
-    .facebase-card:hover { transform: translateY(-4px); box-shadow: 0 8px 20px rgba(0,0,0,0.3); }
-    .swiper-button-next, .swiper-button-prev { top: 50%; transform: translateY(-50%); }
-
+    .facebase-card:hover { 
+        transform: none;
+        box-shadow: 0 0 10px rgba(213, 184, 90, 0.5); 
+        border-color: var(--gold2);
+    }
+    
+    .music-card:hover {
+        transform: none;
+        border-color: var(--gold2);
+        box-shadow: 0 0 8px rgba(213, 184, 90, 0.2);
+    }
+    /* FIN ESTILOS MODIFICADOS */
+    
     .country-row { border-bottom: 1px solid var(--border); padding-bottom: 1.5rem; }
     .country-row:last-child { border-bottom: none; }
     .flag-aesthetic { height: 32px; border-radius: .4rem; object-fit: cover; }
@@ -210,10 +222,6 @@
         border: 1px solid var(--border);
         transition: all 0.2s ease;
     }
-    .music-card:hover {
-        transform: translateY(-4px);
-        border-color: rgba(213, 184, 90, 0.4);
-    }
 
     /* Estilos de Desplazador de Conversor de Tiempo */
     .hour-scroller { height:200px; overflow-y:scroll; scroll-snap-type:y mandatory; -ms-overflow-style:none; scrollbar-width:none; position:relative; }
@@ -286,7 +294,7 @@
     <header class="panel flex flex-col md:flex-row items-center justify-between p-4 gap-4">
         <h1 class="text-3xl lg:text-4xl title-fancy gold-title">Fashion Muse Collection</h1>
         <nav class="flex items-center justify-center flex-wrap gap-2">
-            <button class="tab-nav-button active" data-tab="favorites">🤍</button>
+            <button class="tab-nav-button active" data-tab="favorites">❤️</button>
             <button class="tab-nav-button" data-tab="facebases">Facebases</button>
             <button class="tab-nav-button" data-tab="avatar">Avatar</button>
             <button class="tab-nav-button" data-tab="textures">Textures</button>
