@@ -126,6 +126,31 @@
         justify-content: center;
         backdrop-filter: blur(2px);
     }
+
+    /* ESTILOS TOAST/TOOLTIP MODIFICADOS para seguir al cursor */
+    #custom-toast {
+      position: fixed; /* Usar fixed para posicionamiento relativo al viewport */
+      background-color: var(--gold2);
+      color: #121317; /* Dark text for contrast */
+      padding: 6px 12px; 
+      border-radius: var(--radius-md);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+      z-index: 5000;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.1s linear, visibility 0.1s linear; /* Transición más rápida */
+      font-weight: 600;
+      pointer-events: none; /* Crucial para no bloquear el ratón */
+      white-space: nowrap;
+      /* Propiedades de posición inicial (se sobrescriben por JS) */
+      top: 0;
+      left: 0;
+    }
+    #custom-toast.show {
+      opacity: 1;
+      visibility: visible;
+    }
+    /* FIN ESTILOS TOAST/TOOLTIP */
     
     /* Estilos de Modales */
     .modal-overlay {
@@ -290,11 +315,11 @@
     </div>
   </div>
 
-  <div class="container" id="app-container">
+  <div id="custom-toast"></div> <div class="container" id="app-container">
     <header class="panel flex flex-col md:flex-row items-center justify-between p-4 gap-4">
         <h1 class="text-3xl lg:text-4xl title-fancy gold-title">Fashion Muse Collection</h1>
         <nav class="flex items-center justify-center flex-wrap gap-2">
-            <button class="tab-nav-button active" data-tab="favorites">🤍</button>
+            <button class="tab-nav-button active" data-tab="favorites">❤️</button>
             <button class="tab-nav-button" data-tab="facebases">Facebases</button>
             <button class="tab-nav-button" data-tab="avatar">Avatar</button>
             <button class="tab-nav-button" data-tab="textures">Textures</button>
@@ -378,7 +403,7 @@
         // PERSISTENCIA: Guarda en localStorage inmediatamente
         localStorage.setItem(FAVORITES_KEY, JSON.stringify(Array.from(favorites)));
 
-        // MODIFICACIÓN 2: Usar ❤️ (activo) y 🖤 (desactivado)
+        // MODIFICACIÓN: Usar ❤️ (activo) y 🖤 (desactivado)
         if (buttonElement) {
             buttonElement.innerHTML = isNowFavorite ? '❤️' : '🖤'; 
             buttonElement.classList.toggle('is-favorite', isNowFavorite);
@@ -391,6 +416,36 @@
         }
     };
     // ------------------------------------
+
+    // --- LÓGICA TOAST (NOTIFICACIÓN) MODIFICADA ---
+    let toastTimeout;
+    window.showFlagToast = (message, event) => { 
+        const toast = document.getElementById('custom-toast');
+        if (!toast) return;
+
+        clearTimeout(toastTimeout);
+        
+        // 1. Calcular posición cerca del cursor
+        const x = event.clientX;
+        const y = event.clientY;
+
+        // 2. Establecer posición (un poco abajo y a la derecha del cursor)
+        toast.style.left = `${x + 15}px`; 
+        toast.style.top = `${y + 15}px`; 
+
+        // 3. Mostrar inmediatamente
+        toast.textContent = message;
+        toast.classList.add('show');
+    };
+
+    window.hideFlagToast = () => {
+         const toast = document.getElementById('custom-toast');
+         if (toast) {
+             toast.classList.remove('show');
+         }
+    };
+    // ------------------------------------
+
 
     document.addEventListener('DOMContentLoaded', () => {
       // Configuraciones y Elementos Iniciales
@@ -585,10 +640,14 @@
         const galleryContainer = document.getElementById('gallery-container');
         galleryContainer.innerHTML = ''; // Limpiar contenido
         
-        // Mapeo para buscar ISO por nombre de país/grupo
-        const isoMap = categoriesData.countries.reduce((map, country) => {
-            map[country.name] = country.iso;
-            return map;
+        // Mapeo integral para banderas (ISO y Custom)
+        const flagLookup = [...categoriesData.countries, ...categoriesData.others].reduce((acc, cat) => {
+            if (cat.iso) {
+                acc[cat.name] = { src: `https://flagcdn.com/h20/${cat.iso.toLowerCase()}.png`, name: cat.name };
+            } else if (cat.flag) {
+                acc[cat.name] = { src: cat.flag, name: cat.name };
+            }
+            return acc;
         }, {});
         
         if (itemsToRender.length === 0) {
@@ -597,13 +656,18 @@
         }
 
         const gridItemsHTML = itemsToRender.map(it => {
-            const iso = isoMap[it.group] || '';
-            const flagSrc = iso 
-                ? `https://flagcdn.com/h20/${iso.toLowerCase()}.png` // Bandera de 20px de altura
-                : '';
-            const flagTag = flagSrc 
-                ? `<img src="${flagSrc}" alt="${it.group} flag" class="flag-aesthetic !h-5 !w-auto rounded shadow">`
-                : `<span class="text-xs text-zinc-500">${it.group}</span>`; // Muestra el nombre si no hay bandera
+            const lookupResult = flagLookup[it.group];
+            
+            let flagTag = `<span class="text-xs text-zinc-500">${it.group}</span>`; // Default fallback
+            let flagName = it.group;
+
+            if (lookupResult) {
+                flagName = lookupResult.name;
+                // MODIFICACIÓN: Pasar el evento 'event' y añadir onmouseout
+                const toastEvents = `onmouseover="window.showFlagToast('${flagName}', event)" onmouseout="window.hideFlagToast()"`; 
+                
+                flagTag = `<img src="${lookupResult.src}" alt="${flagName} flag" title="${flagName}" ${toastEvents} class="flag-aesthetic !h-5 !w-auto rounded shadow cursor-pointer">`;
+            }
 
             return `
                 <div class="music-card facebase-card bg-[#151722] rounded-xl shadow-xl ring-1 ring-[var(--border)] overflow-hidden flex flex-col p-1.5 space-y-1.5 !w-full relative">
@@ -633,7 +697,6 @@
       function initializeFacebasesTab() {
         if (facebasesTabInitialized) return;
         facebasesTabInitialized = true;
-        // Solo renderiza, confía en que los datos ya están cargados.
         renderFacebasesGallery(allFacebaseItems, facebaseCategories);
       }
       
@@ -783,8 +846,8 @@
           galleryContainer.innerHTML = '';
           
           if (itemsToRender.length === 0) {
-              // MODIFICACIÓN: Mensaje de guía
-              galleryContainer.innerHTML = `<p class="text-zinc-500 text-center col-span-full pt-4">You have nothing as Favorite (❤️).</p>`;
+              // Mensaje de guía
+              galleryContainer.innerHTML = `<p class="text-zinc-500 text-center col-span-full pt-4">No has marcado ningún ítem como favorito todavía. Busca en las otras pestañas y usa el corazón (❤️).</p>`;
               return;
           }
 
@@ -815,11 +878,20 @@
               } else { 
                     // Es una tarjeta de Facebase/Avatar/Texture
                     const iso = facebaseCategories?.countries.find(c => c.name === item.group)?.iso || '';
-                    const flagSrc = iso 
-                        ? `https://flagcdn.com/h20/${iso.toLowerCase()}.png`
-                        : '';
+                    
+                    // Modificación: Buscar en 'others' si no es país
+                    let flagSrc;
+                    let flagName = item.group;
+                    const customFlag = facebaseCategories?.others.find(o => o.name === item.group)?.flag;
+                    
+                    if (iso) {
+                        flagSrc = `https://flagcdn.com/h20/${iso.toLowerCase()}.png`;
+                    } else if (customFlag) {
+                        flagSrc = customFlag;
+                    }
+
                     const flagTag = flagSrc 
-                        ? `<img src="${flagSrc}" alt="${item.group} flag" class="flag-aesthetic !h-5 !w-auto rounded shadow">`
+                        ? `<img src="${flagSrc}" alt="${flagName} flag" title="${flagName}" onmouseover="window.showFlagToast('${flagName}', event)" onmouseout="window.hideFlagToast()" class="flag-aesthetic !h-5 !w-auto rounded shadow cursor-pointer">`
                         : `<span class="text-xs text-zinc-500">${item.group}</span>`;
                         
                     const cardHTML = `
@@ -907,9 +979,9 @@
               const favorites = getFavorites();
               // Combinar todos los arrays de ítems globales
               const allItems = [
-                  ...allFacebaseItems.map(item => ({...item, type: 'facebase'})),
-                  ...allAvatarItems.map(item => ({...item, type: 'avatar'})),
-                  ...allTextureItems.map(item => ({...item, type: 'texture'})),
+                  ...allFacebaseItems.map(item => ({...item, type: 'facebase', path: 'photos/facebases'})),
+                  ...allAvatarItems.map(item => ({...item, type: 'avatar', path: 'photos/items'})),
+                  ...allTextureItems.map(item => ({...item, type: 'texture', path: 'photos/items'})),
                   ...allMusicCodes.map(item => ({...item, type: 'music'})),
               ];
 
@@ -939,6 +1011,17 @@
       };
 
       // --- Photos Modal Logic ---
+      function initializeAvatarTab() {
+          if (avatarTabInitialized) return;
+          avatarTabInitialized = true;
+          renderAvatarGallery(allAvatarItems);
+      }
+      function initializeTexturesTab() {
+          if (texturesTabInitialized) return;
+          texturesTabInitialized = true;
+          renderTextureGallery(allTextureItems);
+      }
+
       const openPhotosBtn = document.getElementById('openPhotosBtn');
       const closePhotosBtn = document.getElementById('closePhotosBtn');
       const photosModal = document.getElementById('photosModal');
