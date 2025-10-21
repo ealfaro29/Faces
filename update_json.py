@@ -32,7 +32,7 @@ ISO_COUNTRY_CODES = {
     "Macedonia, The Former Yugoslav Republic of": "MK", "Madagascar": "MG", "Malawi": "MW", "Malaysia": "MY",
     "Maldives": "MV", "Mali": "ML", "Malta": "MT", "Marshall Islands": "MH", "Martinique": "MQ",
     "Mauritania": "MR", "Mauritius": "MU", "Mayotte": "YT", "Mexico": "MX", "Micronesia, Federated States of": "FM",
-    "Moldova, Republic of": "MD", "Monaco": "MC", "Mongolia": "MN", "Montenegro": "ME", "Montserrat": "MS",
+    "Moldova, Republic of": "MD", "Monaco": "MC", "Mongolia": "MN", "Montserrat": "MS",
     "Morocco": "MA", "Mozambique": "MZ", "Myanmar": "MM", "Namibia": "NA", "Nauru": "NR", "Nepal": "NP",
     "Netherlands": "NL", "Netherlands Antilles": "AN", "New Caledonia": "NC", "New Zealand": "NZ",
     "Nicaragua": "NI", "Niger": "NE", "Nigeria": "NG", "Niue": "NU", "Norfolk Island": "NF",
@@ -58,9 +58,14 @@ ISO_COUNTRY_CODES = {
 
 def write_json_file(file_path, data):
     """Escribe datos en un archivo JSON de forma legible."""
-    with open(file_path, 'w') as f:
-        json.dump(data, f, indent=2)
-    print(f"✅ ¡Éxito! Se ha creado/actualizado el archivo '{file_path}'.")
+    try:
+        os.makedirs(os.path.dirname(file_path), exist_ok=True)
+        with open(file_path, 'w') as f:
+            json.dump(data, f, indent=2)
+        print(f"✅ ¡Éxito! Se ha creado/actualizado el archivo '{file_path}'.")
+    except Exception as e:
+        print(f"❌ Error al escribir el archivo '{file_path}': {e}")
+
 
 def generate_facebases_files(root_dir):
     """Genera facebases.json y categories.json."""
@@ -96,15 +101,40 @@ def generate_facebases_files(root_dir):
 
 
 def generate_items_file(root_dir):
-    """Genera items.json."""
+    """Genera items.json (solo avatares/accesorios, NO texturas)."""
     items_dir = os.path.join(root_dir, 'photos', 'items')
     if not os.path.isdir(items_dir):
         print(f"⚠️  Advertencia: No se encontró el directorio '{items_dir}'. Saltando la generación de ítems.")
         return
 
-    nombres_items = [os.path.splitext(filename)[0] for filename in sorted(os.listdir(items_dir)) if filename.endswith(".png")]
+    nombres_items = []
+    for filename in sorted(os.listdir(items_dir)):
+        if filename.endswith(".png"):
+            nombre_sin_extension = os.path.splitext(filename)[0]
+            # Excluir cualquier archivo de textura con el formato antiguo (Texture-...)
+            # La limpieza manual de esta carpeta es la forma más segura.
+            if nombre_sin_extension.lower().startswith("texture-"):
+                print(f"⚠️  Advertencia: El archivo '{filename}' parece ser una textura antigua. Debe moverlo/renombrarlo.")
+                continue
+            nombres_items.append(nombre_sin_extension)
     
     write_json_file(os.path.join(items_dir, 'items.json'), nombres_items)
+
+
+def generate_textures_file(root_dir):
+    """
+    Genera textures.json a partir de los archivos PNG en 'photos/textures'.
+    Asume que los nombres han sido renombrados (e.g., de Texture-M-Dress_... a M-Dress_...).
+    """
+    textures_dir = os.path.join(root_dir, 'photos', 'textures')
+    if not os.path.isdir(textures_dir):
+        print(f"⚠️  Advertencia: No se encontró el directorio '{textures_dir}'. Saltando la generación de texturas.")
+        return
+
+    nombres_texturas = [os.path.splitext(filename)[0] for filename in sorted(os.listdir(textures_dir)) if filename.endswith(".png")]
+    
+    # Escribir textures.json
+    write_json_file(os.path.join(textures_dir, 'textures.json'), nombres_texturas)
 
 
 if __name__ == "__main__":
@@ -112,7 +142,16 @@ if __name__ == "__main__":
     project_root_directory = os.path.dirname(os.path.abspath(__file__))
     
     print("--- Iniciando la generación de archivos JSON ---")
+    
+    # 1. Generar Facebases (no se altera)
     generate_facebases_files(project_root_directory)
     print("-" * 20)
+    
+    # 2. Generar Items (Avatares/Accesorios)
     generate_items_file(project_root_directory)
+    print("-" * 20)
+    
+    # 3. Generar Textures (NUEVO)
+    generate_textures_file(project_root_directory)
+    
     print("--- Proceso completado ---")
