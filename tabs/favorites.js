@@ -2,6 +2,7 @@
 
 import { getTextureIconPath } from './textures.js'; 
 import { getFlagEmoji } from '../utils/flag.js';
+import { getMusicIconPath } from './music.js'; // <-- 1. IMPORTAR LA NUEVA FUNCIÓN
 
 // --- Funciones de Lógica de Favoritos (Exportadas desde aquí) ---
 
@@ -47,30 +48,39 @@ export function renderFavoritesGallery(itemsToRender, categoriesData) {
     itemsToRender.forEach(item => {
         let cardHTML;
         
+        // --- 2. MODIFICAR ESTE BLOQUE ---
         if (item.type === 'music') { 
             // Renderizado de Música
+            const iconSrc = getMusicIconPath(item.category);
+            const pitchTag = (item.pitch && item.pitch !== 0) 
+                ? `<span class="ml-2 text-xs font-semibold text-cyan-400" title="Pitch: ${item.pitch}">[PITCH]</span>` 
+                : '';
+
             cardHTML = ` 
-                <div class="music-card rounded-lg p-4 flex flex-col justify-between gap-3 relative"> 
-                    <div class="favorite-container !top-2 !right-2 !bg-transparent !backdrop-filter-none !w-auto !h-auto">
+                <div class="music-card facebase-card bg-[#151722] rounded-xl shadow-xl ring-1 ring-[var(--border)] overflow-hidden flex flex-col p-1.5 space-y-1.5 !w-full relative">
+                    
+                    <div class="favorite-container">
                         <button class="favorite-btn" data-id="${item.id}" onclick="window.toggleFavorite('${item.id}', this)">
                             ❤️
                         </button>
                     </div>
-                    <div class="flex-grow"> 
-                        <h3 class="font-semibold text-zinc-100 truncate" title="${item.title}">${item.title} ${ (item.pitch && item.pitch !== 0) ? `<span class="ml-2 text-xs font-semibold text-cyan-400" title="Pitch: ${item.pitch}">[PITCH]</span>` : ''}</h3> 
-                        <p class="text-sm text-zinc-400 truncate" title="${item.artist}">${item.artist || 'Unknown Artist'}</p> 
-                        <p class="text-xs text-[var(--gold2)] opacity-80 mt-2">${item.category || 'Uncategorized'}</p> 
-                        ${ (item.markers && item.markers.length > 0) ? `<div class="flex flex-wrap gap-1.5 mt-2">${item.markers.map(marker => `<span class="text-xs font-medium bg-zinc-700 text-zinc-300 px-2 py-0.5 rounded-full">${marker}</span>`).join('')}</div>` : ''} 
-                    </div> 
-                    <div class="flex items-center gap-2 mt-2"> 
-                        <input readonly type="text" value="${item.id}" class="flex-grow w-0 h-9 px-2 text-xs dark-input rounded-md font-mono"> 
-                        <button class="copy-btn flex-shrink-0 w-9 h-9 flex items-center justify-center bg-[#1b1d24] text-zinc-200 rounded-md border border-[var(--border)] hover:bg-[#222533] transition" data-id="${item.id}" title="Copy ID"> 
+                    
+                    <div class="text-xs text-zinc-200 font-medium px-1 h-8 flex items-center justify-start gap-1">
+                        <span class="truncate" title="${item.title}">${item.title}</span>
+                        ${pitchTag}
+                    </div>
+                    
+                    <img src="${iconSrc}" alt="${item.category}" loading="lazy" class="w-full h-auto object-cover aspect-square rounded-md">
+                    
+                    <div class="flex items-center gap-1.5 p-1">
+                        <input readonly type="text" value="${item.id}" placeholder="${item.artist || 'Unknown Artist'}" class="flex-grow w-0 h-8 px-2 text-xs dark-input rounded-md" title="Artist: ${item.artist || 'Unknown Artist'}">
+                        <button class="copy-btn flex-shrink-0 w-8 h-8 flex items-center justify-center bg-[#1b1d24] text-zinc-200 rounded-md border border-[var(--border)] hover:bg-[#222533] transition" title="Copy ID"> 
                             <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z"/><path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h3zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3z"/></svg> 
                         </button> 
                     </div> 
                 </div>`;
         } else {
-            // Renderizado de Facebase/Avatar/Texture
+            // Renderizado de Facebase/Avatar/Texture (Sin cambios)
             const isTexture = item.type === 'texture';
             
             let iconGroupHTML;
@@ -131,7 +141,7 @@ export function renderFavoritesGallery(itemsToRender, categoriesData) {
                     <img src="${item.src}" alt="${item.displayName}" loading="lazy" class="w-full h-auto object-cover aspect-square rounded-md">
                     <div class="flex items-center gap-1.5 p-1">
                         <input readonly type="text" value="${item.codeId || ''}" placeholder="…" class="flex-grow w-0 h-8 px-2 text-xs dark-input rounded-md">
-                        <button class="copy-btn flex-shrink-0 w-8 h-8 flex items-center justify-center bg-[#1b1d24] text-zinc-200 rounded-md border border-[var(--border)] hover:bg-[#222533] transition" data-id="${item.id}" title="Copy ID"> 
+                        <button class="copy-btn flex-shrink-0 w-8 h-8 flex items-center justify-center bg-[#1b1d24] text-zinc-200 rounded-md border border-[var(--border)] hover:bg-[#222533] transition" title="Copy ID"> 
                             <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z"/><path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h3zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3z"/></svg> 
                         </button> 
                     </div> 
