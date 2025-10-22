@@ -1,3 +1,12 @@
+/* --- INICIO DE LA MODIFICACIÓN: Cargar la fuente de emojis local --- */
+@font-face {
+    font-family: 'FlagEmojiFont'; /* Le damos un nombre personalizado */
+    src: url('utils/Apple Color Emoji.woff') format('woff'); /* Ruta al archivo */
+    font-weight: normal;
+    font-style: normal;
+}
+/* --- FIN DE LA MODIFICACIÓN --- */
+
 :root {
     /* Variables de color y tamaño */
     --ink: #e5e7eb; --muted: #a1a1aa;
@@ -13,7 +22,8 @@
 
 /* --- REGLA CRÍTICA PARA MOSTRAR LOS EMOJIS DE BANDERA --- */
 .flag-emoji {
-    font-family: "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", "Segoe UI Symbol", "Noto Sans Symbols", sans-serif;
+    /* MODIFICACIÓN: Se añade la fuente local 'FlagEmojiFont' al principio de la lista */
+    font-family: "FlagEmojiFont", "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", "Segoe UI Symbol", "Noto Sans Symbols", sans-serif;
     line-height: 1; /* Asegura que el emoji no interfiera con el texto circundante */
 }
 /* -------------------------------------------------------- */

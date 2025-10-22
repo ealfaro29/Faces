@@ -33,12 +33,13 @@ export function renderFavoritesGallery(itemsToRender, categoriesData) {
 
     // Crear lookup de banderas (Emojis + Locales)
     const flagLookup = categoriesData ? [...categoriesData.countries, ...categoriesData.others].reduce((acc, cat) => {
+        const key = cat.name.toUpperCase(); // <-- CORRECCIÓN APLICADA
         if (cat.iso) {
             // USANDO EMOJI
-            acc[cat.name] = { src: getFlagEmoji(cat.iso), name: cat.name, isEmoji: true };
+            acc[key] = { src: getFlagEmoji(cat.iso), name: cat.name, isEmoji: true };
         } else if (cat.flag) {
             // Ruta local
-            acc[cat.name] = { src: cat.flag, name: cat.name, isEmoji: false };
+            acc[key] = { src: cat.flag, name: cat.name, isEmoji: false };
         }
         return acc;
     }, {}) : {};
