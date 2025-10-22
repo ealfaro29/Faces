@@ -1,5 +1,21 @@
 // tabs/avatar.js
 
+export function populateAvatarFilter(items) {
+    const filter = document.getElementById('avatar-category-filter');
+    if (!filter) return;
+
+    const categories = [...new Set(items.map(item => item.group))].filter(Boolean);
+    
+    filter.innerHTML = '<option value="all">All Categories</option>';
+    categories.sort().forEach(category => {
+        const option = document.createElement('option');
+        option.value = category;
+        // Capitalizar para mostrar (ej: "CHEST" -> "Chest")
+        option.textContent = category.charAt(0).toUpperCase() + category.slice(1).toLowerCase();
+        filter.appendChild(option);
+    });
+}
+
 export function renderAvatarGallery(itemsToRender) {
     const galleryContainer = document.getElementById('avatar-gallery-container');
     if (!galleryContainer) return;

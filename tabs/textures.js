@@ -1,5 +1,29 @@
 // tabs/textures.js
 
+export function populateTextureFilter(items) {
+    const filter = document.getElementById('texture-category-filter');
+    if (!filter) return;
+
+    const categories = [...new Set(items.map(item => item.group))].filter(Boolean);
+    
+    filter.innerHTML = '<option value="all">All Categories</option>';
+    
+    // Mapeo para nombres amigables
+    const typeMap = {
+        'M': 'Mesh (M)',
+        'T': 'Translucid (T)',
+        'S': 'Solid (S)',
+    };
+
+    categories.sort().forEach(category => {
+        const option = document.createElement('option');
+        option.value = category;
+        option.textContent = typeMap[category] || category; // Usar nombre amigable
+        filter.appendChild(option);
+    });
+}
+
+
 export const getTextureIconPath = (typeCode) => {
     const typeMap = {
         'M': { src: 'photos/app/mesh.png', name: 'Mesh' },

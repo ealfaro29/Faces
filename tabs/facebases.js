@@ -2,15 +2,26 @@
 
 import { getFlagEmoji } from '../utils/flag.js';
 
-export const populateCountryFilter = (categoriesData) => {
-    const filter = document.getElementById('facebase-country-filter');
+export const populateFacebaseFilter = (categoriesData) => {
+    const filter = document.getElementById('facebase-category-filter');
     if (!filter) return;
-    filter.innerHTML = '<option value="all">All Countries</option>';
     
+    // Limpiar opciones existentes y añadir "All"
+    filter.innerHTML = '<option value="all">All Categories</option>';
+    
+    // Añadir Países
     categoriesData.countries.forEach(country => {
         const option = document.createElement('option');
         option.value = country.name;
         option.textContent = country.name;
+        filter.appendChild(option);
+    });
+
+    // Añadir Otras categorías (como Drag)
+    categoriesData.others.forEach(other => {
+        const option = document.createElement('option');
+        option.value = other.name;
+        option.textContent = other.name;
         filter.appendChild(option);
     });
 };

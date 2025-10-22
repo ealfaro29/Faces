@@ -1,9 +1,9 @@
 // app.js
 
 import { initializeAllData } from './data-loader.js';
-import { renderFacebasesGallery, populateCountryFilter } from './tabs/facebases.js';
-import { renderAvatarGallery } from './tabs/avatar.js';
-import { renderTextureGallery, getTextureIconPath } from './tabs/textures.js';
+import { renderFacebasesGallery, populateFacebaseFilter } from './tabs/facebases.js';
+import { renderAvatarGallery, populateAvatarFilter } from './tabs/avatar.js';
+import { renderTextureGallery, getTextureIconPath, populateTextureFilter } from './tabs/textures.js';
 import { renderMusicCodes, populateMusicCategoryFilter } from './tabs/music.js';
 import { renderFavoritesGallery, getFavorites, isFavorite } from './tabs/favorites.js'; // <-- CORREGIDO
 import { setupPhotosModal } from './modals/photos.js';
@@ -98,29 +98,45 @@ const filterContent = () => {
     const activeTab = document.querySelector('.tab-nav-button.active')?.dataset.tab;
     const searchBar = document.getElementById('search-bar');
     const searchTerm = searchBar?.value.toLowerCase().trim() || '';
-    const facebaseCountryFilter = document.getElementById('facebase-country-filter');
+    
+    // Obtener todos los filtros
+    const facebaseCategoryFilter = document.getElementById('facebase-category-filter');
+    const avatarCategoryFilter = document.getElementById('avatar-category-filter');
+    const textureCategoryFilter = document.getElementById('texture-category-filter');
     const musicCategoryFilter = document.getElementById('music-category-filter');
 
     if (activeTab === 'facebases') {
-        const selectedCountry = facebaseCountryFilter?.value || 'all';
+        const selectedCategory = facebaseCategoryFilter?.value || 'all';
         const filteredItems = appData.allFacebaseItems.filter(item => {
-            const matchesCountry = selectedCountry === 'all' || item.group === selectedCountry;
+            // Comparamos el .group ("BRAZIL") con el .value ("Brazil") convirtiéndolo
+            const matchesCategory = selectedCategory === 'all' || item.group === selectedCategory.toUpperCase();
             const matchesSearch = searchTerm === '' || item.displayName.toLowerCase().includes(searchTerm) || item.group.toLowerCase().includes(searchTerm);
-            return matchesCountry && matchesSearch;
+            return matchesCategory && matchesSearch;
         });
         renderFacebasesGallery(filteredItems, appData.facebaseCategories);
+    
     } else if (activeTab === 'avatar') {
-        const filteredItems = appData.allAvatarItems.filter(item =>
-            item.group.toLowerCase().includes(searchTerm) ||
-            item.displayName.toLowerCase().includes(searchTerm)
-        );
+        const selectedCategory = avatarCategoryFilter?.value || 'all';
+        const filteredItems = appData.allAvatarItems.filter(item => {
+            const matchesCategory = selectedCategory === 'all' || item.group === selectedCategory;
+            const matchesSearch = searchTerm === '' || 
+                item.group.toLowerCase().includes(searchTerm) ||
+                item.displayName.toLowerCase().includes(searchTerm);
+            return matchesCategory && matchesSearch;
+        });
         renderAvatarGallery(filteredItems);
+    
     } else if (activeTab === 'textures') {
-        const filteredItems = appData.allTextureItems.filter(item =>
-            item.group.toLowerCase().includes(searchTerm) ||
-            item.displayName.toLowerCase().includes(searchTerm)
-        );
+        const selectedCategory = textureCategoryFilter?.value || 'all';
+        const filteredItems = appData.allTextureItems.filter(item => {
+            const matchesCategory = selectedCategory === 'all' || item.group === selectedCategory;
+            const matchesSearch = searchTerm === '' ||
+                item.group.toLowerCase().includes(searchTerm) ||
+                item.displayName.toLowerCase().includes(searchTerm);
+            return matchesCategory && matchesSearch;
+        });
         renderTextureGallery(filteredItems);
+    
     } else if (activeTab === 'music') {
         const selectedCategory = musicCategoryFilter?.value || 'all';
         const filteredCodes = appData.allMusicCodes.filter(code => {
@@ -129,6 +145,7 @@ const filterContent = () => {
             return matchesCategory && searchCorpus.includes(searchTerm);
         });
         renderMusicCodes(filteredCodes);
+    
     } else if (activeTab === 'favorites') {
         const favorites = getFavorites();
         const allItems = [
@@ -179,7 +196,9 @@ const startApp = async () => {
         if (appContainer) appContainer.classList.add('loaded');
 
         // 2. Inicialización de filtros y módulos
-        populateCountryFilter(appData.facebaseCategories);
+        populateFacebaseFilter(appData.facebaseCategories);
+        populateAvatarFilter(appData.allAvatarItems);
+        populateTextureFilter(appData.allTextureItems);
         populateMusicCategoryFilter(appData.allMusicCodes);
         initializeTimeConverter();
         setupPhotosModal(); 
@@ -259,6 +278,13 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Inicialización de UI y Listeners ---
     if (searchBar) searchBar.addEventListener('input', debounce(filterContent, 300));
 
+    // Añadir listeners a TODOS los filtros
+    document.getElementById('facebase-category-filter').addEventListener('change', filterContent);
+    document.getElementById('avatar-category-filter').addEventListener('change', filterContent);
+    document.getElementById('texture-category-filter').addEventListener('change', filterContent);
+    document.getElementById('music-category-filter').addEventListener('change', filterContent);
+
+
     tabs.forEach(tab => {
         tab.addEventListener('click', () => {
             const target = tab.dataset.tab;
@@ -273,21 +299,41 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     const updateSearchUI = (activeTab) => {
-        const facebaseCountryFilter = document.getElementById('facebase-country-filter');
+        // Obtener todos los filtros
+        const facebaseCategoryFilter = document.getElementById('facebase-category-filter');
+        const avatarCategoryFilter = document.getElementById('avatar-category-filter');
+        const textureCategoryFilter = document.getElementById('texture-category-filter');
         const musicCategoryFilter = document.getElementById('music-category-filter');
         
         if (searchBar) searchBar.value = '';
-        if (facebaseCountryFilter) facebaseCountryFilter.style.display = 'none';
+
+        // Ocultar todos los filtros
+        if (facebaseCategoryFilter) facebaseCategoryFilter.style.display = 'none';
+        if (avatarCategoryFilter) avatarCategoryFilter.style.display = 'none';
+        if (textureCategoryFilter) textureCategoryFilter.style.display = 'none';
         if (musicCategoryFilter) musicCategoryFilter.style.display = 'none';
 
+
+        // Mostrar el filtro correcto
         if (activeTab === 'facebases') {
             if (searchBar) searchBar.placeholder = 'Search by name...';
-            if (facebaseCountryFilter) facebaseCountryFilter.style.display = 'block';
+            if (facebaseCategoryFilter) facebaseCategoryFilter.style.display = 'block';
+        
+        } else if (activeTab === 'avatar') {
+            if (searchBar) searchBar.placeholder = 'Search by name or category...';
+            if (avatarCategoryFilter) avatarCategoryFilter.style.display = 'block';
+
+        } else if (activeTab === 'textures') {
+            if (searchBar) searchBar.placeholder = 'Search by name or category...';
+            if (textureCategoryFilter) textureCategoryFilter.style.display = 'block';
+
         } else if (activeTab === 'music') {
             if (searchBar) searchBar.placeholder = 'Search by artist, title, or marker...';
             if (musicCategoryFilter) musicCategoryFilter.style.display = 'block';
-        } else if (activeTab === 'avatar' || activeTab === 'textures' || activeTab === 'favorites') {
-            if (searchBar) searchBar.placeholder = 'Search by name or category...';
+        
+        } else if (activeTab === 'favorites') {
+            if (searchBar) searchBar.placeholder = 'Search favorites...';
+        
         } else {
             if (searchBar) searchBar.placeholder = 'Search...';
         }
