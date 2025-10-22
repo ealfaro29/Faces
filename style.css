@@ -11,6 +11,13 @@
     --swiper-navigation-color: var(--gold2);
 }
 
+/* --- REGLA CRÍTICA PARA MOSTRAR LOS EMOJIS DE BANDERA --- */
+.flag-emoji {
+    font-family: "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", "Segoe UI Symbol", "Noto Sans Symbols", sans-serif;
+    line-height: 1; /* Asegura que el emoji no interfiera con el texto circundante */
+}
+/* -------------------------------------------------------- */
+
 html, body {
     font-family: var(--font-family-sans);
     background-color: #12111700;
