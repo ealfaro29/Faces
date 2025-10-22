@@ -226,6 +226,44 @@ document.addEventListener('DOMContentLoaded', () => {
     const searchBar = document.getElementById('search-bar');
     const tabs = document.querySelectorAll('.tab-nav-button');
     const contentAreas = document.querySelectorAll('.tab-content');
+    
+    // *** INICIO DE LA CORRECCIÓN: Lógica para copiar ID ***
+    const tabContentWrapper = document.getElementById('tab-content-wrapper');
+
+    if (tabContentWrapper) {
+        tabContentWrapper.addEventListener('click', (event) => {
+            // Usamos .closest() para encontrar el botón de copia, incluso si se hizo clic en el SVG
+            const copyButton = event.target.closest('.copy-btn');
+
+            if (copyButton) {
+                // El input está justo antes que el botón en el HTML
+                const inputToCopy = copyButton.previousElementSibling;
+
+                if (inputToCopy && inputToCopy.tagName === 'INPUT') {
+                    const textToCopy = inputToCopy.value;
+
+                    if (textToCopy) {
+                        navigator.clipboard.writeText(textToCopy).then(() => {
+                            // Éxito: añade la clase 'copied' (definida en style.css)
+                            copyButton.classList.add('copied');
+                            // Quita la clase después de 1.5 segundos
+                            setTimeout(() => {
+                                copyButton.classList.remove('copied');
+                            }, 1500);
+                        }).catch(err => {
+                            console.error('Error al copiar el texto: ', err);
+                            alert('No se pudo copiar el ID.');
+                        });
+                    } else {
+                        // El input está vacío (probablemente un placeholder '…')
+                        console.warn('Intento de copiar un valor vacío.');
+                    }
+                }
+            }
+        });
+    }
+    // *** FIN DE LA CORRECCIÓN ***
+
 
     // --- Autenticación y Cierre ---
     const checkAuthentication = () => {
