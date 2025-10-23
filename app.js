@@ -1,6 +1,6 @@
 // app.js
 
-import { initializeAllData, parseItemName } from './data-loader.js'; // <-- MODIFICADO: Importar parseItemName
+import { initializeAllData, parseItemName } from './data-loader.js';
 import { renderFacebasesGallery, populateFacebaseFilter } from './tabs/facebases.js';
 import { renderAvatarGallery, populateAvatarFilter } from './tabs/avatar.js';
 import { renderTextureGallery, getTextureIconPath, populateTextureFilter, groupTextureVariants } from './tabs/textures.js';
@@ -60,7 +60,9 @@ window.toggleFavorite = (id, buttonElement) => {
     }
 
     const activeTab = document.querySelector('.tab-nav-button.active')?.dataset.tab;
-    if (activeTab === 'favorites' || activeTab === 'textures') {
+    // FIX: Solo se llama a filterContent() si la pestaña es 'favorites' para que se actualice la lista.
+    // En 'textures', el botón ya se actualizó localmente y no queremos perder la variante seleccionada.
+    if (activeTab === 'favorites') {
         filterContent();
     }
 };
@@ -163,7 +165,7 @@ const filterContent = () => {
         const allItems = [
             ...appData.allFacebaseItems,
             ...appData.allAvatarItems,
-            ...appData.allTextureItems, // Se usa la lista plana de texturas aquí (objetos)
+            ...appData.allTextureItems, // Se usa la lista plana de texturas aquí (objetos con ID=codeId)
             ...appData.allMusicCodes.map(item => ({...item, type: 'music'})),
         ];
 
@@ -212,6 +214,7 @@ const startApp = async () => {
         
         // 2. Procesar datos de texturas
         // Crear la lista de objetos planos para la pestaña de Favoritos (que usa el formato plano)
+        // parseItemName ahora garantiza que el ID de la textura sea el codeId
         appData.allTextureItems = appData.allTextureBasenames.map(basename => 
             parseItemName(basename, TEXTURES_PATH)
         );

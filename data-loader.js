@@ -32,8 +32,11 @@ export const parseItemName = (basename, pathPrefix) => {
         displayName = label.replace(new RegExp('^' + group + '-'), '').replace(/[-_]/g,' ');
     }
     
+    // MODIFICACIÓN: Usar codeId como 'id' principal si es una textura para que coincida con Favorites.
+    const itemId = (pathPrefix === TEXTURES_PATH && codeId) ? codeId : name;
+
     return { 
-        id: name, 
+        id: itemId, // <-- Cambiado: usa codeId para texturas, nombre completo para otros
         group: group.toUpperCase(), 
         displayName, 
         codeId, 

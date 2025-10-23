@@ -161,6 +161,9 @@ export function renderTextureGallery(itemsToRender) {
         const iconTag = getTextureIconPath(main.group);
         const hasVariants = group.variants.length > 1;
         const variantName = main.displayName.split(' ').pop(); // e.g. "Red"
+        
+        // MODIFICACIÓN: Calcular la cantidad de variantes adicionales (N-1)
+        const otherVariantsCount = group.variants.length - 1; 
 
         // Renderizar las miniaturas de las variantes
         const variantsThumbnailsHTML = hasVariants ? group.variants.map(variant => {
@@ -191,8 +194,7 @@ export function renderTextureGallery(itemsToRender) {
                     
                     ${hasVariants ? `
                         <button class="variant-indicator-btn" title="Ver ${group.variants.length} variantes" onclick="this.closest('.texture-group-card').classList.toggle('show-variants')">
-                            ${group.variants.length}+
-                        </button>
+                            ${otherVariantsCount}+ </button>
                     ` : ''}
                 </div>
 
