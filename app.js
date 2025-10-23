@@ -1,9 +1,9 @@
 // app.js
 
-import { initializeAllData } from './data-loader.js';
+import { initializeAllData, parseItemName } from './data-loader.js'; // <-- MODIFICADO: Importar parseItemName
 import { renderFacebasesGallery, populateFacebaseFilter } from './tabs/facebases.js';
 import { renderAvatarGallery, populateAvatarFilter } from './tabs/avatar.js';
-import { renderTextureGallery, getTextureIconPath, populateTextureFilter } from './tabs/textures.js';
+import { renderTextureGallery, getTextureIconPath, populateTextureFilter, groupTextureVariants } from './tabs/textures.js';
 import { renderMusicCodes, populateMusicCategoryFilter } from './tabs/music.js';
 import { renderFavoritesGallery, getFavorites, isFavorite } from './tabs/favorites.js'; // <-- CORREGIDO
 import { setupPhotosModal } from './modals/photos.js';
@@ -15,13 +15,16 @@ const AUTH_KEY = 'isAuthenticated';
 const LAST_AUTH_KEY = 'lastAuthTime';
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
 const FAVORITES_KEY = 'fashion_muse_favorites';
+const TEXTURES_PATH = 'photos/textures'; // <-- NUEVO: Constante para el path de texturas
 
 // --- Contenedor de Datos y Estado de Inicialización ---
 let appData = {
     allFacebaseItems: [],
     facebaseCategories: null,
     allAvatarItems: [],
-    allTextureItems: [],
+    allTextureBasenames: [], // NUEVO: Lista de nombres base (strings) de texturas
+    allTextureItems: [], // Lista plana de texturas (objetos, para 'favorites')
+    allTextureGroups: [], // Lista de grupos de texturas (para 'textures' tab)
     allMusicCodes: [],
     globalDataLoaded: false,
     initializedTabs: {
@@ -128,13 +131,22 @@ const filterContent = () => {
     
     } else if (activeTab === 'textures') {
         const selectedCategory = textureCategoryFilter?.value || 'all';
-        const filteredItems = appData.allTextureItems.filter(item => {
+        
+        // MODIFICACIÓN: Filtrar la lista de GRUPOS (allTextureGroups)
+        const filteredItems = appData.allTextureGroups.filter(group => {
+            // Se usa el mainVariant del grupo para realizar la búsqueda
+            const item = group.mainVariant;
+            if (!item) return false;
+
             const matchesCategory = selectedCategory === 'all' || item.group === selectedCategory;
+            // La búsqueda debe coincidir con el baseName (Geneve) o el nombre completo (Geneve Red)
             const matchesSearch = searchTerm === '' ||
                 item.group.toLowerCase().includes(searchTerm) ||
+                item.baseName.toLowerCase().includes(searchTerm) ||
                 item.displayName.toLowerCase().includes(searchTerm);
             return matchesCategory && matchesSearch;
         });
+        // renderTextureGallery ahora espera una lista de GRUPOS
         renderTextureGallery(filteredItems);
     
     } else if (activeTab === 'music') {
@@ -151,7 +163,7 @@ const filterContent = () => {
         const allItems = [
             ...appData.allFacebaseItems,
             ...appData.allAvatarItems,
-            ...appData.allTextureItems,
+            ...appData.allTextureItems, // Se usa la lista plana de texturas aquí (objetos)
             ...appData.allMusicCodes.map(item => ({...item, type: 'music'})),
         ];
 
@@ -179,7 +191,8 @@ function initializeTab(tabName, renderFunction, data, optionalData) {
 
 function initializeFacebasesTab() { initializeTab('facebases', renderFacebasesGallery, appData.allFacebaseItems, appData.facebaseCategories); }
 function initializeAvatarTab() { initializeTab('avatar', renderAvatarGallery, appData.allAvatarItems); }
-function initializeTexturesTab() { initializeTab('textures', renderTextureGallery, appData.allTextureItems); }
+// MODIFICACIÓN CRÍTICA: Usar la lista de GRUPOS (allTextureGroups)
+function initializeTexturesTab() { initializeTab('textures', renderTextureGallery, appData.allTextureGroups); }
 function initializeMusicTab() { initializeTab('music', renderMusicCodes, appData.allMusicCodes); }
 function initializeFavoritesTab() { initializeTab('favorites', renderFavoritesGallery, [], appData.facebaseCategories); }
 
@@ -189,28 +202,44 @@ const startApp = async () => {
     try {
         // 1. Cargar datos
         const data = await initializeAllData();
-        Object.assign(appData, data);
+        
+        // Asignar datos iniciales
+        appData.allFacebaseItems = data.allFacebaseItems;
+        appData.facebaseCategories = data.facebaseCategories;
+        appData.allAvatarItems = data.allAvatarItems;
+        appData.allTextureBasenames = data.allTextureBasenames; // <-- RAW STRINGS
+        appData.allMusicCodes = data.allMusicCodes;
+        
+        // 2. Procesar datos de texturas
+        // Crear la lista de objetos planos para la pestaña de Favoritos (que usa el formato plano)
+        appData.allTextureItems = appData.allTextureBasenames.map(basename => 
+            parseItemName(basename, TEXTURES_PATH)
+        );
+        // Agrupar la lista de strings (Basenames) para la pestaña de Texturas
+        appData.allTextureGroups = groupTextureVariants(appData.allTextureBasenames); // <-- PASAMOS STRINGS
+        
         appData.globalDataLoaded = true;
 
         const appContainer = document.getElementById('app-container');
         if (appContainer) appContainer.classList.add('loaded');
 
-        // 2. Inicialización de filtros y módulos
+        // 3. Inicialización de filtros y módulos
         populateFacebaseFilter(appData.facebaseCategories);
         populateAvatarFilter(appData.allAvatarItems);
-        populateTextureFilter(appData.allTextureItems);
+        // Pasar la lista de grupos para poblar el filtro
+        populateTextureFilter(appData.allTextureGroups); 
         populateMusicCategoryFilter(appData.allMusicCodes);
         initializeTimeConverter();
         setupPhotosModal(); 
 
-        // 3. Inicialización de pestañas (el primer renderizado)
+        // 4. Inicialización de pestañas (el primer renderizado)
         initializeFacebasesTab();
         initializeAvatarTab();
-        initializeTexturesTab();
+        initializeTexturesTab(); // Usa la lista agrupada
         initializeMusicTab();
         initializeFavoritesTab();
 
-        // 4. Establecer el estado de búsqueda y filtro inicial (por defecto, Favorites)
+        // 5. Establecer el estado de búsqueda y filtro inicial (por defecto, Favorites)
         filterContent();
     } catch (error) {
         console.error("APP_FLOW: Error crítico al iniciar la aplicación:", error);

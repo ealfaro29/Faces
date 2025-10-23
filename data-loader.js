@@ -53,21 +53,23 @@ export async function initializeAllData() {
         fetch(`${FACEBASES_PATH}/facebases.json`).then(res => res.json()),
         fetch(`${FACEBASES_PATH}/categories.json`).then(res => res.json()),
         fetch(`${ITEMS_PATH}/items.json`).then(res => res.json()),
-        fetch(`${TEXTURES_PATH}/textures.json`).then(res => res.json()),
+        fetch(`${TEXTURES_PATH}/textures.json`).then(res => res.json()), // textureBasenames es ahora la lista cruda de strings
         fetch('music.json').then(res => res.json())
     ]);
 
     const allFacebaseItems = facebasesBasenames.map(basename => parseItemName(basename, FACEBASES_PATH));
     const allAvatarItems = itemBasenames.map(basename => parseItemName(basename, ITEMS_PATH));
-    const allTextureItems = textureBasenames.map(basename => parseItemName(basename, TEXTURES_PATH));
+    
+    // MODIFICACION: allTextureBasenames es la lista de strings (filenames) que groupTextureVariants espera.
+    const allTextureBasenames = textureBasenames; 
 
-    console.log(`DATA_LOADER: Éxito en la carga. Facebases: ${allFacebaseItems.length}, Avatars: ${allAvatarItems.length}, Textures: ${allTextureItems.length}`);
+    console.log(`DATA_LOADER: Éxito en la carga. Facebases: ${allFacebaseItems.length}, Avatars: ${allAvatarItems.length}, Textures: ${allTextureBasenames.length}`);
 
     return {
         allFacebaseItems,
         facebaseCategories: categoriesData,
         allAvatarItems,
-        allTextureItems,
+        allTextureBasenames, // <-- Devolvemos la lista de strings
         allMusicCodes: musicData
     };
 }
