@@ -7,7 +7,7 @@ import { renderTextureGallery, getTextureIconPath, populateTextureFilter, groupT
 import { renderMusicCodes, populateMusicCategoryFilter } from './tabs/music.js';
 import { renderFavoritesGallery, getFavorites, isFavorite } from './tabs/favorites.js'; // <-- CORREGIDO
 import { setupPhotosModal } from './modals/photos.js';
-import { initializeTimeConverter, setupModal } from './modals/time-converter.js';
+import { initializeTimeConverter, setupModal } from './modals/time-converter.js'; // <-- setupModal importado
 
 // --- Constantes Globales ---
 const SECRET_B64 = 'bWFuY2hpdGFz';
@@ -232,7 +232,7 @@ const startApp = async () => {
         // Pasar la lista de grupos para poblar el filtro
         populateTextureFilter(appData.allTextureGroups); 
         populateMusicCategoryFilter(appData.allMusicCodes);
-        initializeTimeConverter();
+        initializeTimeConverter(); // Solo inicializa la lógica interna de conversión
         setupPhotosModal(); 
 
         // 4. Inicialización de pestañas (el primer renderizado)
@@ -353,6 +353,9 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('avatar-category-filter').addEventListener('change', filterContent);
     document.getElementById('texture-category-filter').addEventListener('change', filterContent);
     document.getElementById('music-category-filter').addEventListener('change', filterContent);
+    
+    // CORRECCIÓN CRÍTICA: Usar los IDs correctos que terminan en 'Btn'
+    setupModal('openTimeConverterBtn', 'closeTimeConverterBtn', 'timeConverterModal'); 
 
 
     tabs.forEach(tab => {
