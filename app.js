@@ -357,6 +357,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // CORRECCIÓN CRÍTICA: Usar los IDs correctos que terminan en 'Btn'
     setupModal('openTimeConverterBtn', 'closeTimeConverterBtn', 'timeConverterModal'); 
 
+    // --- NUEVO MODAL ---
+    // Conectar el nuevo botón de carga de Drive
+    setupModal('openDriveModalBtn', 'closeDriveModalBtn', 'googleDriveModal');
+    // --- FIN NUEVO MODAL ---
 
     tabs.forEach(tab => {
         tab.addEventListener('click', () => {
@@ -396,7 +400,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (searchBar) searchBar.placeholder = 'Search by name or category...';
             if (avatarCategoryFilter) avatarCategoryFilter.style.display = 'block';
 
-        } else if (activeTab === 'textures') {
+        } else if (activeFqab === 'textures') {
             if (searchBar) searchBar.placeholder = 'Search by name or category...';
             if (textureCategoryFilter) textureCategoryFilter.style.display = 'block';
 
