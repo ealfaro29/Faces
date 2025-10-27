@@ -162,15 +162,23 @@ const filterContent = () => {
     
     } else if (activeTab === 'favorites') {
         const favorites = getFavorites();
+
+        // --- INICIO DE LA CORRECCIÓN ---
+        // Asegurarse de que todos los items tengan una propiedad 'id' consistente
+        // para que 'favorites.has(item.id)' funcione.
+        // Asumimos que 'codeId' es el identificador único para facebase/avatar si 'id' no existe.
         const allItems = [
-            ...appData.allFacebaseItems,
-            ...appData.allAvatarItems,
-            ...appData.allTextureItems, // Se usa la lista plana de texturas aquí (objetos con ID=codeId)
-            ...appData.allMusicCodes.map(item => ({...item, type: 'music'})),
+            ...appData.allFacebaseItems.map(item => ({...item, id: item.id || item.codeId })),
+            ...appData.allAvatarItems.map(item => ({...item, id: item.id || item.codeId })),
+            ...appData.allTextureItems, // .id ya está seteado por parseItemName
+            ...appData.allMusicCodes.map(item => ({...item, type: 'music'})), // .id ya existe, solo añadimos 'type'
         ];
+        // --- FIN DE LA CORRECCIÓN ---
 
         const favoritedItems = allItems.filter(item => {
-            const isFav = favorites.has(item.id);
+            // Asegurarnos que item.id no sea undefined antes de chequear
+            const isFav = item.id ? favorites.has(item.id) : false;
+            
             const matchesSearch = searchTerm === '' || 
                 (item.displayName?.toLowerCase().includes(searchTerm)) ||
                 (item.group?.toLowerCase().includes(searchTerm)) ||
@@ -400,7 +408,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (searchBar) searchBar.placeholder = 'Search by name or category...';
             if (avatarCategoryFilter) avatarCategoryFilter.style.display = 'block';
 
-        } else if (activeFqab === 'textures') {
+        } else if (activeTab === 'textures') { // <-- CORRECCIÓN DE TYPO (era activeFqab)
             if (searchBar) searchBar.placeholder = 'Search by name or category...';
             if (textureCategoryFilter) textureCategoryFilter.style.display = 'block';
 
