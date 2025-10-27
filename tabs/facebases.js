@@ -89,6 +89,14 @@ export function renderFacebasesGallery(groupsToRender, categoriesData) {
             variantButtonsHTML += '</div>';
         }
 
+        // --- NUEVO: Recolectar todos los IDs de variantes para el botón de '❤️' ---
+        // Usamos .filter(Boolean) para eliminar 'undefined' si 'X' o 'S' no existen
+        const allVariantIds = Object.values(group.variants).map(v => v.id).filter(Boolean);
+        // Usamos comillas simples para el atributo HTML
+        const variantIdsJSON = JSON.stringify(allVariantIds);
+        // --- FIN MODIFICACIÓN ---
+
+
         // --- HTML de la Card (Modificado) ---
         return `
             <div class="music-card facebase-card bg-[#151722] rounded-xl shadow-xl ring-1 ring-[var(--border)] overflow-hidden flex flex-col p-1.5 space-y-1.5 !w-full relative"
@@ -97,10 +105,13 @@ export function renderFacebasesGallery(groupsToRender, categoriesData) {
                  data-default-code-id="${it.codeId || ''}">
                 
                 <div class="favorite-container">
-                    <button class="favorite-btn" data-id="${it.id}" onclick="window.toggleFavorite('${it.id}', this)">
+                    <button class="favorite-btn" 
+                            data-id="${it.id}" 
+                            data-variant-ids='${variantIdsJSON}'
+                            onclick="window.toggleFavorite('${it.id}', this)">
                         ${window.isFavorite(it.id) ? '❤️' : '🖤'}
                     </button>
-                </div>
+                    </div>
                 
                 <div class="text-xs text-zinc-200 font-medium px-1 h-8 flex items-center justify-start gap-1">
                     ${flagTag}
@@ -118,7 +129,6 @@ export function renderFacebasesGallery(groupsToRender, categoriesData) {
             </div>
         `;
     }).join('');
-    // --- FIN DE LA MODIFICACIÓN ---
     
     galleryContainer.innerHTML = gridItemsHTML;
 }

@@ -42,31 +42,52 @@ window.getTextureIconPath = getTextureIconPath;
 window.appData = appData;
 
 // Toggling Favorites Logic
-window.toggleFavorite = (id, buttonElement) => {
+// --- INICIO DE LA MODIFICACIÓN ---
+window.toggleFavorite = (passedId, buttonElement) => {
+    // Usamos el data-id del botón como la fuente de verdad, ya que se actualiza con las variantes
+    const currentId = buttonElement.dataset.id; 
     const favorites = getFavorites();
     let isNowFavorite = false;
+    let idsToToggle = [];
 
-    if (favorites.has(id)) {
-        favorites.delete(id);
+    // Verificamos si el botón tiene el atributo data-variant-ids (solo las facebases lo tendrán)
+    const variantIdsJSON = buttonElement.dataset.variantIds;
+
+    if (variantIdsJSON) {
+        // Es un grupo de facebase, parseamos el array de IDs
+        idsToToggle = JSON.parse(variantIdsJSON);
     } else {
-        favorites.add(id);
-        isNowFavorite = true;
+        // Es un item normal (avatar, textura, etc.), solo usamos su ID actual
+        idsToToggle = [currentId];
     }
 
+    // Decidimos si agregar o quitar basados en el estado del ID actual
+    if (favorites.has(currentId)) {
+        // Está favorito, quitamos TODOS los IDs del grupo
+        isNowFavorite = false;
+        idsToToggle.forEach(vid => favorites.delete(vid));
+    } else {
+        // No está favorito, agregamos TODOS los IDs del grupo
+        isNowFavorite = true;
+        idsToToggle.forEach(vid => favorites.add(vid));
+    }
+
+    // Guardamos los cambios
     localStorage.setItem(FAVORITES_KEY, JSON.stringify(Array.from(favorites)));
 
+    // Actualizamos el botón presionado
     if (buttonElement) {
         buttonElement.innerHTML = isNowFavorite ? '❤️' : '🖤';
         buttonElement.classList.toggle('is-favorite', isNowFavorite);
     }
 
+    // Si estamos en la pestaña de favoritos, la refrescamos para mostrar/ocultar el grupo
     const activeTab = document.querySelector('.tab-nav-button.active')?.dataset.tab;
-    // FIX: Solo se llama a filterContent() si la pestaña es 'favorites' para que se actualice la lista.
-    // En 'textures', el botón ya se actualizó localmente y no queremos perder la variante seleccionada.
     if (activeTab === 'favorites') {
         filterContent();
     }
 };
+// --- FIN DE LA MODIFICACIÓN ---
 
 // Toast/Tooltip Logic
 window.showFlagToast = (message, event) => {
@@ -210,17 +231,15 @@ const filterContent = () => {
     } else if (activeTab === 'favorites') {
         const favorites = getFavorites();
 
-        // --- INICIO DE LA CORRECCIÓN ---
-        // Asegurarse de que todos los items tengan una propiedad 'id' consistente
-        // para que 'favorites.has(item.id)' funcione.
-        // Asumimos que 'codeId' es el identificador único para facebase/avatar si 'id' no existe.
+        // --- INICIO DE LA MODIFICACIÓN (Añadir 'type' para 'favorites') ---
         const allItems = [
-            ...appData.allFacebaseItems.map(item => ({...item, id: item.id || item.codeId })),
-            ...appData.allAvatarItems.map(item => ({...item, id: item.id || item.codeId })),
-            ...appData.allTextureItems, // .id ya está seteado por parseItemName
-            ...appData.allMusicCodes.map(item => ({...item, type: 'music'})), // .id ya existe, solo añadimos 'type'
+            // Añadimos 'type' para que la galería de favoritos sepa qué es
+            ...appData.allFacebaseItems.map(item => ({...item, id: item.id || item.codeId, type: 'facebase' })),
+            ...appData.allAvatarItems.map(item => ({...item, id: item.id || item.codeId, type: 'avatar' })),
+            ...appData.allTextureItems.map(item => ({...item, type: 'texture' })), // .id ya está seteado
+            ...appData.allMusicCodes.map(item => ({...item, type: 'music'})), // .id ya existe
         ];
-        // --- FIN DE LA CORRECCIÓN ---
+        // --- FIN DE LA MODIFICACIÓN ---
 
         const favoritedItems = allItems.filter(item => {
             // Asegurarnos que item.id no sea undefined antes de chequear
@@ -353,8 +372,8 @@ document.addEventListener('DOMContentLoaded', () => {
         tabContentWrapper.addEventListener('click', (event) => {
             // Usamos .closest() para encontrar los botones
             const copyButton = event.target.closest('.copy-btn');
-            const variantButton = event.target.closest('.variant-button'); // <-- AÑADIDO
-            const card = event.target.closest('.facebase-card'); // <-- AÑADIDO
+            const variantButton = event.target.closest('.variant-button'); 
+            const card = event.target.closest('.facebase-card'); 
 
             if (copyButton) {
                 // El input está justo antes que el botón en el HTML
@@ -385,7 +404,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 event.stopPropagation(); // Evita que el clic se propague al card
                 if (!card) return;
 
-                // --- INICIO DE LA MODIFICACIÓN (TOGGLE) ---
                 if (variantButton.classList.contains('active-variant')) {
                     // Ya está activo, revertir a default
                     revertToDefault(card);
@@ -411,7 +429,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     card.querySelectorAll('.variant-button').forEach(btn => btn.classList.remove('active-variant'));
                     variantButton.classList.add('active-variant');
                 }
-                // --- FIN DE LA MODIFICACIÓN (TOGGLE) ---
 
             } else if (card && !event.target.closest('.favorite-btn') && !event.target.closest('.copy-btn')) { 
                 // --- REVERTIR AL DEFAULT (AHORA USA LA FUNCIÓN HELPER) ---
