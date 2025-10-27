@@ -20,6 +20,7 @@ const TEXTURES_PATH = 'photos/textures'; // <-- NUEVO: Constante para el path de
 // --- Contenedor de Datos y Estado de Inicialización ---
 let appData = {
     allFacebaseItems: [],
+    allFacebaseGroups: [], // <-- MODIFICADO
     facebaseCategories: null,
     allAvatarItems: [],
     allTextureBasenames: [], // NUEVO: Lista de nombres base (strings) de texturas
@@ -97,6 +98,46 @@ const debounce = (func, delay) => {
     };
 };
 
+// --- NUEVA FUNCIÓN PARA AGRUPAR VARIANTES DE FACEBASE ---
+const groupFacebaseVariants = (items) => {
+    const grouped = {};
+    // Regex para encontrar variantes en el displayName. Ej: "Bronze X" o "Light S"
+    const variantRegex = /^(.*?)( S| X)$/i; 
+
+    for (const item of items) {
+        let baseDisplayName = item.displayName;
+        let variant = 'default';
+        
+        const match = item.displayName.match(variantRegex);
+        
+        if (match) {
+            baseDisplayName = match[1].trim(); // Ej: "Bronze"
+            variant = match[2].trim().toUpperCase(); // Ej: "X"
+        }
+        
+        // Creamos una clave única por grupo y nombre base
+        const key = `${item.group}-${baseDisplayName}`; 
+        
+        if (!grouped[key]) {
+            grouped[key] = {
+                group: item.group,
+                baseDisplayName: baseDisplayName,
+                // Guardamos el item 'default' en la raíz para acceso rápido
+                defaultItem: null, 
+                variants: {}
+            };
+        }
+        
+        grouped[key].variants[variant] = item;
+        if (variant === 'default') {
+            grouped[key].defaultItem = item;
+        }
+    }
+    
+    // Convertir el objeto de grupos en un array
+    return Object.values(grouped).filter(g => g.defaultItem); // Solo incluir grupos que tengan una variante default
+};
+
 const filterContent = () => {
     if (!appData.globalDataLoaded) return;
     
@@ -112,12 +153,18 @@ const filterContent = () => {
 
     if (activeTab === 'facebases') {
         const selectedCategory = facebaseCategoryFilter?.value || 'all';
-        const filteredItems = appData.allFacebaseItems.filter(item => {
-            // Comparamos el .group ("BRAZIL") con el .value ("Brazil") convirtiéndolo
-            const matchesCategory = selectedCategory === 'all' || item.group === selectedCategory.toUpperCase();
-            const matchesSearch = searchTerm === '' || item.displayName.toLowerCase().includes(searchTerm) || item.group.toLowerCase().includes(searchTerm);
+        
+        // MODIFICADO: Filtramos la lista de GRUPOS (allFacebaseGroups)
+        const filteredItems = appData.allFacebaseGroups.filter(group => {
+            // Usamos los datos del grupo (group.group y group.baseDisplayName)
+            const matchesCategory = selectedCategory === 'all' || group.group === selectedCategory.toUpperCase();
+            const matchesSearch = searchTerm === '' || 
+                group.baseDisplayName.toLowerCase().includes(searchTerm) || 
+                group.group.toLowerCase().includes(searchTerm);
             return matchesCategory && matchesSearch;
         });
+        
+        // renderFacebasesGallery ahora recibe una lista de GRUPOS
         renderFacebasesGallery(filteredItems, appData.facebaseCategories);
     
     } else if (activeTab === 'avatar') {
@@ -199,7 +246,8 @@ function initializeTab(tabName, renderFunction, data, optionalData) {
     appData.initializedTabs[tabName] = true;
 }
 
-function initializeFacebasesTab() { initializeTab('facebases', renderFacebasesGallery, appData.allFacebaseItems, appData.facebaseCategories); }
+// MODIFICADO:
+function initializeFacebasesTab() { initializeTab('facebases', renderFacebasesGallery, appData.allFacebaseGroups, appData.facebaseCategories); }
 function initializeAvatarTab() { initializeTab('avatar', renderAvatarGallery, appData.allAvatarItems); }
 // MODIFICACIÓN CRÍTICA: Usar la lista de GRUPOS (allTextureGroups)
 function initializeTexturesTab() { initializeTab('textures', renderTextureGallery, appData.allTextureGroups); }
@@ -229,6 +277,9 @@ const startApp = async () => {
         // Agrupar la lista de strings (Basenames) para la pestaña de Texturas
         appData.allTextureGroups = groupTextureVariants(appData.allTextureBasenames); // <-- PASAMOS STRINGS
         
+        // MODIFICADO: Procesar facebases
+        appData.allFacebaseGroups = groupFacebaseVariants(appData.allFacebaseItems);
+
         appData.globalDataLoaded = true;
 
         const appContainer = document.getElementById('app-container');
@@ -244,7 +295,7 @@ const startApp = async () => {
         setupPhotosModal(); 
 
         // 4. Inicialización de pestañas (el primer renderizado)
-        initializeFacebasesTab();
+        initializeFacebasesTab(); // Usa la lista agrupada
         initializeAvatarTab();
         initializeTexturesTab(); // Usa la lista agrupada
         initializeMusicTab();
@@ -267,13 +318,43 @@ document.addEventListener('DOMContentLoaded', () => {
     const tabs = document.querySelectorAll('.tab-nav-button');
     const contentAreas = document.querySelectorAll('.tab-content');
     
-    // *** INICIO DE LA CORRECCIÓN: Lógica para copiar ID ***
+    // *** INICIO DE LA MODIFICACIÓN ***
+
+    // --- NUEVA FUNCIÓN HELPER para revertir a default ---
+    const revertToDefault = (cardElement) => {
+        if (!cardElement) return;
+
+        const defaultSrc = cardElement.dataset.defaultSrc;
+        const defaultId = cardElement.dataset.defaultId;
+        const defaultCodeId = cardElement.dataset.defaultCodeId || '';
+        
+        if (!defaultSrc) return; // No es un card con variantes
+
+        const mainImg = cardElement.querySelector('.facebase-main-img');
+        const idInput = cardElement.querySelector('input[readonly]');
+        const favButton = cardElement.querySelector('.favorite-btn');
+
+        if (mainImg) mainImg.src = defaultSrc;
+        if (idInput) idInput.value = defaultCodeId;
+
+        if (favButton) {
+            favButton.dataset.id = defaultId;
+            favButton.innerHTML = window.isFavorite(defaultId) ? '❤️' : '🖤';
+        }
+        
+        // Quitar marca activa de botones
+        cardElement.querySelectorAll('.variant-button').forEach(btn => btn.classList.remove('active-variant'));
+    };
+    // --- FIN FUNCIÓN HELPER ---
+
     const tabContentWrapper = document.getElementById('tab-content-wrapper');
 
     if (tabContentWrapper) {
         tabContentWrapper.addEventListener('click', (event) => {
-            // Usamos .closest() para encontrar el botón de copia, incluso si se hizo clic en el SVG
+            // Usamos .closest() para encontrar los botones
             const copyButton = event.target.closest('.copy-btn');
+            const variantButton = event.target.closest('.variant-button'); // <-- AÑADIDO
+            const card = event.target.closest('.facebase-card'); // <-- AÑADIDO
 
             if (copyButton) {
                 // El input está justo antes que el botón en el HTML
@@ -299,10 +380,46 @@ document.addEventListener('DOMContentLoaded', () => {
                         console.warn('Intento de copiar un valor vacío.');
                     }
                 }
+            } else if (variantButton) {
+                // --- LÓGICA DE VARIANTE (CON TOGGLE) ---
+                event.stopPropagation(); // Evita que el clic se propague al card
+                if (!card) return;
+
+                // --- INICIO DE LA MODIFICACIÓN (TOGGLE) ---
+                if (variantButton.classList.contains('active-variant')) {
+                    // Ya está activo, revertir a default
+                    revertToDefault(card);
+                } else {
+                    // No está activo, activarlo
+                    const mainImg = card.querySelector('.facebase-main-img');
+                    const idInput = card.querySelector('input[readonly]');
+                    const favButton = card.querySelector('.favorite-btn');
+
+                    const newSrc = variantButton.dataset.src;
+                    const newId = variantButton.dataset.id;
+                    const newCodeId = variantButton.dataset.codeId || '';
+
+                    if (mainImg) mainImg.src = newSrc;
+                    if (idInput) idInput.value = newCodeId;
+                    
+                    if (favButton) {
+                        favButton.dataset.id = newId;
+                        favButton.innerHTML = window.isFavorite(newId) ? '❤️' : '🖤';
+                    }
+                    
+                    // Marcar como activo
+                    card.querySelectorAll('.variant-button').forEach(btn => btn.classList.remove('active-variant'));
+                    variantButton.classList.add('active-variant');
+                }
+                // --- FIN DE LA MODIFICACIÓN (TOGGLE) ---
+
+            } else if (card && !event.target.closest('.favorite-btn') && !event.target.closest('.copy-btn')) { 
+                // --- REVERTIR AL DEFAULT (AHORA USA LA FUNCIÓN HELPER) ---
+                revertToDefault(card);
             }
         });
     }
-    // *** FIN DE LA CORRECCIÓN ***
+    // *** FIN DE LA MODIFICACIÓN ***
 
 
     // --- Autenticación y Cierre ---

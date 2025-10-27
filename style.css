@@ -392,3 +392,56 @@ main.panel {
 }
 
 /* --- FIN DE LA MODIFICACIÓN: Estilos para la galería de variantes de texturas --- */
+
+
+/* --- INICIO DE LA MODIFICACIÓN: Estilos para Botones de Variantes de Facebase --- */
+
+.variant-buttons {
+    position: absolute;
+    bottom: 6px; /* Posición sobre la imagen, no sobre el footer */
+    right: 6px;
+    display: flex;
+    flex-direction: row;
+    gap: 4px;
+    z-index: 15; /* Por encima de la imagen */
+    
+    /* MODIFICADO: Botones siempre visibles */
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+    transition: all 0.2s ease-in-out;
+}
+
+/* ELIMINADA la regla de hover para mostrar los botones */
+
+
+.variant-button {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    /* MODIFICADO: Fondo más transparente */
+    background-color: rgba(0, 0, 0, 0.3);
+    border: 2px solid rgba(255, 255, 255, 0.5); /* Borde también más sutil */
+    cursor: pointer;
+    transition: all 0.15s ease;
+    box-sizing: border-box; 
+    padding: 4px; 
+}
+
+.variant-button:hover {
+    transform: scale(1.1);
+    box-shadow: 0 0 8px rgba(0, 0, 0, 0.5);
+    /* MODIFICADO: Hover más sutil */
+    background-color: rgba(0, 0, 0, 0.6);
+    border-color: rgba(255, 255, 255, 0.8);
+}
+
+/* Estilo para el botón activo */
+.variant-button.active-variant {
+    border-color: var(--gold2);
+    box-shadow: 0 0 10px rgba(213, 184, 90, 0.7);
+    background-color: rgba(213, 184, 90, 0.2); /* Fondo con acento dorado */
+    transform: scale(1.05);
+}
+
+/* --- FIN DE LA MODIFICACIÓN --- */
