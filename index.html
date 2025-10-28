@@ -90,6 +90,34 @@
             </a>
         </div>
     </div>
+
+    <div id="ticketModal" class="modal-overlay">
+        <div class="modal-content p-6 pt-8 relative">
+            <button id="closeTicketModalBtn" class="absolute top-2 right-2 text-zinc-400 hover:text-white transition text-3xl z-10">&times;</button>
+            <h2 class="text-center text-xl font-semibold title-fancy gold-title mb-6">Copiar Nombre de Ticket</h2>
+            
+            <div id="ticket-buttons-container" class="flex flex-col gap-3">
+                <button class="copy-ticket-btn" data-copy-text="🇪🇸 SPAIN - FashionMuseDoll">
+                    <span class="flag-emoji">🇪🇸</span> SPAIN - FashionMuseDoll
+                </button>
+                <button class="copy-ticket-btn" data-copy-text="🇧🇷 BRAZIL - FashionMuseDoll">
+                    <span class="flag-emoji">🇧🇷</span> BRAZIL - FashionMuseDoll
+                </button>
+                <button class="copy-ticket-btn" data-copy-text="🇬🇧 UNITED KINGDOM - FashionMuseDoll">
+                    <span class="flag-emoji">🇬🇧</span> UNITED KINGDOM - FashionMuseDoll
+                </button>
+                <button class="copy-ticket-btn" data-copy-text="🇨🇷 COSTA RICA - FashionMuseDoll">
+                    <span class="flag-emoji">🇨🇷</span> COSTA RICA - FashionMuseDoll
+                </button>
+                <button class="copy-ticket-btn" data-copy-text="🇮🇹 ITALY - FashionMuseDoll">
+                    <span class="flag-emoji">🇮🇹</span> ITALY - FashionMuseDoll
+                </button>
+                <button class="copy-ticket-btn" data-copy-text="🇹🇭 THAILAND - FashionMuseDoll">
+                    <span class="flag-emoji">🇹🇭</span> THAILAND - FashionMuseDoll
+                </button>
+            </div>
+        </div>
+    </div>
     <div id="custom-toast"></div> 
     <div class="container" id="app-container">
         <header class="panel flex flex-col md:flex-row items-center justify-between p-4 gap-4">
@@ -106,9 +134,10 @@
             <div class="flex items-center gap-2">
                 <button id="openPhotosBtn" title="Download Photos" class="w-10 h-10 flex items-center justify-center bg-black/20 text-[var(--gold2)] rounded-full border border-transparent hover:border-[var(--border)] hover:scale-110 transition-all"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16"><path d="M6.002 5.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0"/><path d="M2.002 1a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2h-12zm12 1a1 1 0 0 1 1 1v6.5l-3.777-1.947a.5.5 0 0 0-.577.093l-3.71 3.71-2.66-1.772a.5.5 0 0 0-.63.062L1.002 12V3a1 1 0 0 1 1-1h12z"/></svg></button>
                 <button id="openTimeConverterBtn" title="Time Converter" class="w-10 h-10 flex items-center justify-center bg-black/20 text-[var(--gold2)] rounded-full border border-transparent hover:border-[var(--border)] hover:scale-110 transition-all"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16"><path d="M8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71V3.5z"/><path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16m7-8A7 7 0 1 1 1 8a7 7 0 0 1 14 0"/></svg></button>
-                
                 <button id="openDriveModalBtn" title="Subir a Drive" class="w-10 h-10 flex items-center justify-center bg-black/20 text-[var(--gold2)] rounded-full border border-transparent hover:border-[var(--border)] hover:scale-110 transition-all"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/><path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708l3-3z"/></svg></button>
-            </div>
+                
+                <button id="openTicketModalBtn" title="Ticket Names" class="w-10 h-10 flex items-center justify-center bg-black/20 text-[var(--gold2)] rounded-full border border-transparent hover:border-[var(--border)] hover:scale-110 transition-all text-xl">🎫</button>
+                </div>
         </header>
 
         <main class="panel">

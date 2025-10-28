@@ -42,7 +42,6 @@ window.getTextureIconPath = getTextureIconPath;
 window.appData = appData;
 
 // Toggling Favorites Logic
-// --- INICIO DE LA MODIFICACIÓN ---
 window.toggleFavorite = (passedId, buttonElement) => {
     // Usamos el data-id del botón como la fuente de verdad, ya que se actualiza con las variantes
     const currentId = buttonElement.dataset.id; 
@@ -87,7 +86,6 @@ window.toggleFavorite = (passedId, buttonElement) => {
         filterContent();
     }
 };
-// --- FIN DE LA MODIFICACIÓN ---
 
 // Toast/Tooltip Logic
 window.showFlagToast = (message, event) => {
@@ -178,7 +176,7 @@ const filterContent = () => {
         // MODIFICADO: Filtramos la lista de GRUPOS (allFacebaseGroups)
         const filteredItems = appData.allFacebaseGroups.filter(group => {
             // Usamos los datos del grupo (group.group y group.baseDisplayName)
-            const matchesCategory = selectedCategory === 'all' || group.group === selectedCategory.toUpperCase();
+            const matchesCategory = selectedCategory === 'all' || group.group === selectedCatergory.toUpperCase();
             const matchesSearch = searchTerm === '' || 
                 group.baseDisplayName.toLowerCase().includes(searchTerm) || 
                 group.group.toLowerCase().includes(searchTerm);
@@ -496,13 +494,42 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('texture-category-filter').addEventListener('change', filterContent);
     document.getElementById('music-category-filter').addEventListener('change', filterContent);
     
-    // CORRECCIÓN CRÍTICA: Usar los IDs correctos que terminan en 'Btn'
+    // --- INICIO DE LA MODIFICACIÓN: Configuración de Modales ---
     setupModal('openTimeConverterBtn', 'closeTimeConverterBtn', 'timeConverterModal'); 
-
-    // --- NUEVO MODAL ---
-    // Conectar el nuevo botón de carga de Drive
     setupModal('openDriveModalBtn', 'closeDriveModalBtn', 'googleDriveModal');
-    // --- FIN NUEVO MODAL ---
+    setupModal('openTicketModalBtn', 'closeTicketModalBtn', 'ticketModal'); // <-- AÑADIDO
+    // --- FIN DE LA MODIFICACIÓN ---
+
+    // --- INICIO DE LA MODIFICACIÓN: Lógica de copiado para Ticket Modal ---
+    const ticketContainer = document.getElementById('ticket-buttons-container');
+    if (ticketContainer) {
+        ticketContainer.addEventListener('click', (event) => {
+            const copyButton = event.target.closest('.copy-ticket-btn');
+            if (!copyButton) return;
+
+            const textToCopy = copyButton.dataset.copyText;
+            const originalText = copyButton.innerHTML; // Guardar el contenido original
+
+            if (textToCopy) {
+                navigator.clipboard.writeText(textToCopy).then(() => {
+                    // Éxito: cambia el contenido y añade la clase
+                    copyButton.innerHTML = '¡Copiado!';
+                    copyButton.classList.add('copied');
+                    
+                    // Quita la clase y restaura el texto después de 1.5 segundos
+                    setTimeout(() => {
+                        copyButton.innerHTML = originalText;
+                        copyButton.classList.remove('copied');
+                    }, 1500);
+                }).catch(err => {
+                    console.error('Error al copiar el texto: ', err);
+                    alert('No se pudo copiar el texto.');
+                });
+            }
+        });
+    }
+    // --- FIN DE LA MODIFICACIÓN ---
+
 
     tabs.forEach(tab => {
         tab.addEventListener('click', () => {
@@ -542,7 +569,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (searchBar) searchBar.placeholder = 'Search by name or category...';
             if (avatarCategoryFilter) avatarCategoryFilter.style.display = 'block';
 
-        } else if (activeTab === 'textures') { // <-- CORRECCIÓN DE TYPO (era activeFqab)
+        } else if (activeTaqb === 'textures') { // <-- CORRECCIÓN DE TYPO (era activeFqab)
             if (searchBar) searchBar.placeholder = 'Search by name or category...';
             if (textureCategoryFilter) textureCategoryFilter.style.display = 'block';
 
