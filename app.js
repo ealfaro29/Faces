@@ -10,7 +10,7 @@ import { setupPhotosModal } from './modals/photos.js';
 import { initializeTimeConverter, setupModal } from './modals/time-converter.js';
 
 // --- Constantes Globales ---
-const REQUIRE_LOGIN = true; 
+const REQUIRE_LOGIN = false; 
 const SECRET_B64 = 'bWFuY2hpdGFz';
 const AUTH_KEY = 'isAuthenticated';
 const LAST_AUTH_KEY = 'lastAuthTime';
