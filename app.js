@@ -10,6 +10,7 @@ import { setupPhotosModal } from './modals/photos.js';
 import { initializeTimeConverter, setupModal } from './modals/time-converter.js'; // <-- setupModal importado
 
 // --- Constantes Globales ---
+const REQUIRE_LOGIN = false; // <-- MODIFICACIÓN: Poner en 'false' para desactivar el login
 const SECRET_B64 = 'bWFuY2hpdGFz';
 const AUTH_KEY = 'isAuthenticated';
 const LAST_AUTH_KEY = 'lastAuthTime';
@@ -439,6 +440,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Autenticación y Cierre ---
     const checkAuthentication = () => {
+        
+        // --- INICIO DE LA MODIFICACIÓN (Login Switch) ---
+        // Si REQUIRE_LOGIN es false, saltar toda la lógica de autenticación
+        if (!REQUIRE_LOGIN) {
+            console.warn("Autenticación desactivada. Saltando login.");
+            if (loginOverlay) loginOverlay.classList.remove('show');
+            setTimeout(startApp, 500); // Iniciar la app directamente
+            return; // Salir de la función
+        }
+        // --- FIN DE LA MODIFICACIÓN ---
+
+        // Lógica de autenticación original (solo se ejecuta si REQUIRE_LOGIN es true)
         const isAuthenticated = localStorage.getItem(AUTH_KEY) === 'true';
         const lastAuthTime = localStorage.getItem(LAST_AUTH_KEY);
         const now = Date.now();
@@ -585,5 +598,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     
+    // Esta es la llamada que inicia la lógica de autenticación o la salta
     checkAuthentication();
 });
