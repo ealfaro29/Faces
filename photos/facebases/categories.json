@@ -33,6 +33,10 @@
     {
       "name": "Drag",
       "flag": "photos/app/Drag.png"
+    },
+    {
+      "name": "Mesh",
+      "flag": "photos/app/Mesh.png"
     }
   ]
 }
