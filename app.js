@@ -159,7 +159,7 @@ const filterContent = () => {
         const selectedCategory = facebaseCategoryFilter?.value || 'all';
 
         const filteredItems = appData.allFacebaseGroups.filter(group => {
-            const matchesCategory = selectedCategory === 'all' || group.group === selectedCatergory.toUpperCase();
+            const matchesCategory = selectedCategory === 'all' || group.group === selectedCategory.toUpperCase();
             const matchesSearch = searchTerm === '' ||
                 group.baseDisplayName.toLowerCase().includes(searchTerm) ||
                 group.group.toLowerCase().includes(searchTerm);
