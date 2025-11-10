@@ -172,30 +172,87 @@ class Particle {
 }
 
 (function(){
-  let CONTESTANTS = []; // Ahora almacenará objetos {name, code}
+  let CONTESTANTS = []; // Almacenará objetos {name, code}
   const RANK_MAP = new Map(); // rank -> {name, code}
   let CURRENT_DRAG = null;
   const RANGES = { A: [30,29,28,27,26,25,24,23,22,21], B: [20,19,18,17,16,15,14,13,12,11], C: [10,9,8,7,6,5,4], D: [3,2,1] };
 
   function init() {
+    // 1. Crear los slots vacíos
     for (const band in RANGES) {
       const col = document.getElementById(`col-${band}`); col.innerHTML = '';
       RANGES[band].forEach(rank => col.appendChild(createSlotEl(band, rank)));
     }
-    loadFromStorage();
     
-    // --- CAMBIO AQUÍ ---
-    // Se ha cambiado 'contestants.json' por 'MUTop.json' según tu solicitud.
-    fetch('MUTop.json').then(r=>r.json()).then(data => {
-      // Normalizamos por si acaso alguna entrada antigua es solo string
+    // 2. Intentar cargar la sesión guardada por el usuario
+    loadFromStorage();
+
+    // 3. Cargar la lista MAESTRA de delegadas
+    fetch('contestants.json').then(r=>r.json()).then(data => {
+      // Normalizamos y ordenamos la lista maestra
       CONTESTANTS = data.map(d => typeof d === 'string' ? {name:d, code:''} : d)
                         .sort((a,b) => a.name.localeCompare(b.name));
-      updateUI();
-    }).catch(e => { console.error(e); document.getElementById('status-text').textContent = 'Error cargando MUTop.json'; });
-    // --- FIN DEL CAMBIO ---
-
-    setupGlobalListeners(); setupButtons();
+      
+      // 4. LÓGICA DE CARGA:
+      // Si loadFromStorage() no encontró nada (RANK_MAP está vacío),
+      // entonces cargamos el MUTop.json por defecto.
+      if (RANK_MAP.size === 0) {
+        console.log("No hay sesión guardada, cargando MUTop.json por defecto...");
+        loadDefaultTop(); // Carga el top por defecto y luego llama a updateUI()
+      } else {
+        // Si ya había una sesión, simplemente actualizamos la UI con ella
+        console.log("Sesión cargada desde localStorage.");
+        updateUI();
+      }
+    }).catch(e => { 
+      console.error(e); 
+      document.getElementById('status-text').textContent = 'Error cargando contestants.json'; 
+      updateUI(); // Actualizar de todos modos, aunque sea vacío
+    });
+    
+    setupGlobalListeners(); 
+    setupButtons();
   }
+
+  // --- NUEVA FUNCIÓN ---
+  // Carga el top por defecto desde MUTop.json
+  function loadDefaultTop() {
+    fetch('MUTop.json')
+      .then(r => r.json())
+      .then(defaultTop => {
+        // El JSON exportado es un objeto: {"1": "Nombre1", "2": "Nombre2", ...}
+        for (const rankStr in defaultTop) {
+          const rank = Number(rankStr);
+          const name = defaultTop[rankStr];
+          
+          if (name) {
+            // Buscamos la delegada en la lista maestra (CONTESTANTS)
+            // para obtener su 'code' (para la bandera)
+            const cData = CONTESTANTS.find(c => c.name === name);
+            
+            if (cData) {
+              // Si la encontramos, la añadimos al RANK_MAP
+              RANK_MAP.set(rank, cData);
+            } else {
+              // Si no se encuentra en contestants.json (por un typo, etc.)
+              // la añadimos solo con el nombre
+              console.warn(`Delegada "${name}" de MUTop.json no encontrada en contestants.json.`);
+              RANK_MAP.set(rank, { name: name, code: '' });
+            }
+          }
+        }
+        // Una vez poblado el RANK_MAP con los datos por defecto,
+        // guardamos este estado en localStorage y actualizamos la UI.
+        save();
+        updateUI();
+      })
+      .catch(e => {
+        console.error("Error al cargar MUTop.json por defecto.", e);
+        // Si falla, solo actualizamos la UI (estará vacía)
+        updateUI();
+      });
+  }
+  // --- FIN DE NUEVA FUNCIÓN ---
 
   function flagURL(code) { return code ? `https://flagcdn.com/w40/${code.toLowerCase()}.png` : ''; }
 
@@ -280,16 +337,12 @@ class Particle {
     } catch(e){}
   }
   function setupButtons() {
-    // Evitar 'confirm' ya que puede no funcionar en todos los entornos
+    // Se elimina el 'confirm()' porque puede ser bloqueado.
     document.getElementById('btn-clear').onclick = () => { 
-      // Reemplazamos confirm con una acción directa o un modal personalizado si es necesario
-      // Por ahora, lo haremos directo para evitar bloqueos.
       console.log('Limpiando el top...');
       RANK_MAP.clear(); 
       updateUI(); 
       save(); 
-      // Si realmente se necesita confirmación, se debería implementar un modal HTML/CSS
-      // if(confirm('¿Reiniciar predicción?')) { RANK_MAP.clear(); updateUI(); save(); }
     };
     document.getElementById('btn-shuffle').onclick = () => { CONTESTANTS.sort(()=>Math.random()-.5); updateUI(); };
     document.getElementById('btn-sort').onclick = () => { CONTESTANTS.sort((a,b)=>a.name.localeCompare(b.name)); updateUI(); };

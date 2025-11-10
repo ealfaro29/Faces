@@ -28,16 +28,16 @@
     "code": "bs"
   },
   {
-    "name": "Bahrain",
-    "code": "bh"
-  },
-  {
     "name": "Bangladesh",
     "code": "bd"
   },
   {
     "name": "Belgium",
     "code": "be"
+  },
+   {
+    "name": "Belarus",
+    "code": "by"
   },
   {
     "name": "Belize",
@@ -71,9 +71,9 @@
     "name": "Cambodia",
     "code": "kh"
   },
-  {
-    "name": "Cameroon",
-    "code": "cm"
+    {
+    "name": "Cape Verde",
+    "code": "cv"
   },
   {
     "name": "Canada",
@@ -112,16 +112,16 @@
     "code": "cw"
   },
   {
-    "name": "Cyprus",
-    "code": "cy"
-  },
-  {
     "name": "Czech Republic",
     "code": "cz"
   },
   {
     "name": "Côte d'Ivoire",
     "code": "ci"
+  },
+    {
+    "name": "Democratic Republic of the Congo",
+    "code": "cd"
   },
   {
     "name": "Denmark",
@@ -152,10 +152,6 @@
     "code": "ee"
   },
   {
-    "name": "Fiji",
-    "code": "fj"
-  },
-  {
     "name": "Finland",
     "code": "fi"
   },
@@ -168,8 +164,8 @@
     "code": "de"
   },
   {
-    "name": "Gibraltar",
-    "code": "gi"
+    "name": "Ghana",
+    "code": "gh"
   },
   {
     "name": "Great Britain",
@@ -199,6 +195,10 @@
     "name": "Honduras",
     "code": "hn"
   },
+    {
+    "name": "Haiti",
+    "code": "ht"
+  },
   {
     "name": "Hong Kong",
     "code": "hk"
@@ -214,6 +214,10 @@
   {
     "name": "Indonesia",
     "code": "id"
+  },
+    {
+    "name": "Irak",
+    "code": "iq"
   },
   {
     "name": "Ireland",
@@ -240,10 +244,6 @@
     "code": "kz"
   },
   {
-    "name": "Kenya",
-    "code": "ke"
-  },
-  {
     "name": "Kosovo",
     "code": "xk"
   },
@@ -263,6 +263,10 @@
     "name": "Lebanon",
     "code": "lb"
   },
+    {
+    "name": "Macau",
+    "code": "mo"
+  },
   {
     "name": "Malaysia",
     "code": "my"
@@ -270,6 +274,10 @@
   {
     "name": "Malta",
     "code": "mt"
+  },
+    {
+    "name": "Martinique",
+    "code": "mq"
   },
   {
     "name": "Mauritius",
@@ -286,10 +294,6 @@
   {
     "name": "Moldova",
     "code": "md"
-  },
-  {
-    "name": "Mongolia",
-    "code": "mn"
   },
   {
     "name": "Myanmar",
@@ -367,13 +371,13 @@
     "name": "Russia",
     "code": "ru"
   },
+    {
+    "name": "Rwanda",
+    "code": "rw"
+  },
   {
     "name": "Saint Lucia",
     "code": "lc"
-  },
-  {
-    "name": "Samoa",
-    "code": "ws"
   },
   {
     "name": "Senegal",
@@ -390,6 +394,10 @@
   {
     "name": "Slovakia",
     "code": "sk"
+  },
+    {
+    "name": "Slovenia",
+    "code": "si"
   },
   {
     "name": "South Africa",
@@ -414,6 +422,14 @@
   {
     "name": "Switzerland",
     "code": "ch"
+  },
+    {
+    "name": "Sweden",
+    "code": "se"
+  },
+    {
+    "name": "Tanzania",
+    "code": "tz"
   },
   {
     "name": "Thailand",
@@ -458,6 +474,10 @@
   {
     "name": "Zimbabwe",
     "code": "zw"
+  },
+    {
+    "name": "Zambia",
+    "code": "zm"
   },
   {
     "name": "MU Latina",
