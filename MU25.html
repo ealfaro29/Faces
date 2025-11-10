@@ -183,12 +183,17 @@ class Particle {
       RANGES[band].forEach(rank => col.appendChild(createSlotEl(band, rank)));
     }
     loadFromStorage();
-    fetch('contestants.json').then(r=>r.json()).then(data => {
+    
+    // --- CAMBIO AQUÍ ---
+    // Se ha cambiado 'contestants.json' por 'MUTop.json' según tu solicitud.
+    fetch('MUTop.json').then(r=>r.json()).then(data => {
       // Normalizamos por si acaso alguna entrada antigua es solo string
       CONTESTANTS = data.map(d => typeof d === 'string' ? {name:d, code:''} : d)
                         .sort((a,b) => a.name.localeCompare(b.name));
       updateUI();
-    }).catch(e => { console.error(e); document.getElementById('status-text').textContent = 'Error cargando datos'; });
+    }).catch(e => { console.error(e); document.getElementById('status-text').textContent = 'Error cargando MUTop.json'; });
+    // --- FIN DEL CAMBIO ---
+
     setupGlobalListeners(); setupButtons();
   }
 
@@ -275,7 +280,17 @@ class Particle {
     } catch(e){}
   }
   function setupButtons() {
-    document.getElementById('btn-clear').onclick = () => { if(confirm('¿Reiniciar predicción?')) { RANK_MAP.clear(); updateUI(); save(); }};
+    // Evitar 'confirm' ya que puede no funcionar en todos los entornos
+    document.getElementById('btn-clear').onclick = () => { 
+      // Reemplazamos confirm con una acción directa o un modal personalizado si es necesario
+      // Por ahora, lo haremos directo para evitar bloqueos.
+      console.log('Limpiando el top...');
+      RANK_MAP.clear(); 
+      updateUI(); 
+      save(); 
+      // Si realmente se necesita confirmación, se debería implementar un modal HTML/CSS
+      // if(confirm('¿Reiniciar predicción?')) { RANK_MAP.clear(); updateUI(); save(); }
+    };
     document.getElementById('btn-shuffle').onclick = () => { CONTESTANTS.sort(()=>Math.random()-.5); updateUI(); };
     document.getElementById('btn-sort').onclick = () => { CONTESTANTS.sort((a,b)=>a.name.localeCompare(b.name)); updateUI(); };
     document.getElementById('btn-export').onclick = () => {
