@@ -29,7 +29,7 @@
 
   #p5-background { position: fixed; top: 0; left: 0; z-index: -1; opacity: 0.6; }
 
-  .app{max-width:1600px; margin:20px auto 0; padding:0 20px 180px;} /* Ancho aumentado para la nueva columna */
+  .app{max-width:1400px; margin:20px auto 0; padding:0 20px 180px;} /* Ancho revertido */
   .topbar{text-align:center; margin-bottom:30px; padding: 20px; background: linear-gradient(to bottom, #0000, #000a); border-bottom: 1px solid #ffffff20;}
   .title{
     font-family: var(--font-display); font-weight:900; font-size:42px; letter-spacing:2px;
@@ -39,19 +39,16 @@
   }
   .hint{color:#bbb; font-size:16px; font-family:var(--font-display); letter-spacing:1px; margin-top: 8px;}
 
-  /* --- ACTUALIZADO: 5 columnas --- */
-  .grid{display:grid; gap:20px; grid-template-columns:1fr 1fr 0.9fr 0.8fr 0.8fr}
+  /* --- REVERTIDO: 4 columnas --- */
+  .grid{display:grid; gap:20px; grid-template-columns:1fr 1fr 0.9fr 0.8fr}
   .col{background:var(--panel); border:1px solid #ffffff15; border-radius:4px; padding:15px; backdrop-filter: blur(10px); box-shadow: 0 10px 30px #00000050;}
   .col h2{margin:0 0 15px 0; font-size:24px; color:var(--gold-2); text-align:center; font-family: var(--font-display); text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid var(--gold-5); padding-bottom: 10px;}
 
   .slots{min-height: 600px; display:grid; grid-template-rows: repeat(var(--rows), 1fr); gap:10px;}
   
-  /* --- ACTUALIZADO: Media queries para 5 columnas --- */
-  @media (max-width: 1200px){ 
-    .grid{grid-template-columns:1fr 1fr 1fr; gap:15px} 
-    .col:nth-child(4), .col:nth-child(5) { grid-column: span 1; } /* Los últimos 2 en una fila */
-  }
-  @media (max-width: 768px){ .grid{grid-template-columns:1fr} } /* Pasa a 1 columna */
+  /* --- REVERTIDO: Media queries para 4 columnas --- */
+  @media (max-width: 1100px){ .grid{grid-template-columns:1fr 1fr; gap:15px} .col:nth-child(3), .col:nth-child(4) { grid-column: span 1; } }
+  @media (max-width: 768px){ .grid{grid-template-columns:1fr} }
 
   .slot{
     position:relative; display:flex; align-items:center; gap:15px;
@@ -78,15 +75,12 @@
   }
   .slot-flag { width: 24px; height: auto; border-radius: 2px; box-shadow: 0 2px 5px #000; }
   
-  /* --- LÍNEAS ELIMINADAS --- */
-  /* Ya no se muestra la foto en ninguna banda */
-
   .slot.drag-hover { background: #ffffff10 !important; border-color: var(--gold-2) !important; transform: scale(1.03); z-index:10; }
   .slot.occupied { background: linear-gradient(to right, #111, #222); border-color: var(--gold-5); }
   .slot.occupied .name { color: #fff; font-weight: 700; }
   .slot.occupied .num { color: var(--gold-2); text-shadow: 0 0 10px var(--gold-5); }
 
-  /* Estilos para la Banca (columna E) */
+  /* Estilos para la Banca (banda E) */
   .slot[data-band="E"].occupied { background: #1a1a1a; border-color: var(--divider); }
   .slot[data-band="E"].occupied .num { color: var(--silver-3); }
   .slot[data-band="E"] .num { font-size: 16px; }
@@ -107,7 +101,6 @@
   .pool h3{font-family: var(--font-display); color: var(--gold-2); font-size: 22px; margin: 0 0 20px 0; text-transform: uppercase; letter-spacing: 2px;}
   .pool.drag-hover { outline: 2px dashed var(--gold-2); background: #ffffff08; }
   
-  /* --- NUEVO: Barra de Búsqueda --- */
   .pool-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; margin-bottom: 20px; }
   .pool-header h3 { margin: 0; }
   #search-bar {
@@ -118,13 +111,46 @@
   #search-bar::placeholder { color: #999; }
   #search-bar:focus { background: #000; border-color: var(--gold-2); outline: none; }
 
+  /* --- NUEVO: Contenedor de la Banca Horizontal --- */
+  .banca-container {
+    padding: 15px;
+    background: #00000030;
+    border-radius: 4px;
+    border: 1px solid #ffffff10;
+    margin-bottom: 20px;
+  }
+  .banca-container h4 {
+    margin: 0 0 10px 0;
+    font-family: var(--font-display);
+    color: var(--silver-1);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 700;
+  }
+  #banca-slots {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr); /* 5 slots para la banca */
+    gap: 10px;
+    min-height: auto;
+  }
+  @media (max-width: 768px) {
+    #banca-slots {
+      grid-template-columns: repeat(3, 1fr); /* 3 columnas en móvil */
+    }
+  }
+  @media (max-width: 480px) {
+    #banca-slots {
+      grid-template-columns: repeat(2, 1fr); /* 2 columnas en móvil pequeño */
+    }
+  }
+  /* --- FIN NUEVO --- */
+
   .cards{display:flex; flex-wrap:wrap; gap:10px}
   /* --- CARDS (POOL) MEJORADAS PARA LEGIBILIDAD --- */
   .card{
-    /* Fondo mucho más claro y texto oscuro para alto contraste */
     background: linear-gradient(145deg, var(--card-bg-1) 10%, var(--card-bg-2) 90%);
     color: var(--card-text);
-    font-family: var(--font-display); font-weight: 800; /* Negrita extra */
+    font-family: var(--font-display); font-weight: 800;
     font-size: 13px; letter-spacing: 0.5px;
     padding: 8px 14px; cursor: grab; user-select: none;
     border: 1px solid var(--gold-1); border-radius: 3px;
@@ -135,7 +161,7 @@
   .card:hover {
     transform: translateY(-3px) scale(1.02);
     box-shadow: 0 8px 20px #00000080;
-    background: var(--card-bg-1); /* Más brillante al hover */
+    background: var(--card-bg-1);
   }
   .card:active{cursor:grabbing; transform:scale(0.98);}
   .card.ghost { opacity: 0.4; filter: grayscale(1) brightness(0.7); }
@@ -159,16 +185,21 @@
     <div class="hint">Arrastra a tus favoritas hacia la corona</div>
   </div>
   <div class="grid">
-    <section class="col"><h2>Top 30</h2><div id="col-A" class="slots" style="--rows:10"></div></section>
-    <section class="col"><h2>Top 20</h2><div id="col-B" class="slots" style="--rows:10"></div></section>
-    <section class="col"><h2>Top 10</h2> <div id="col-C" class="slots" style="--rows:7"></div></section>
-    <section class="col"><h2>Final Top 3</h2>  <div id="col-D" class="slots" style="--rows:3"></div></section>
-    <section class="col"><h2>Banca</h2>  <div id="col-E" class="slots" style="--rows:5"></div></section>
-  </div>
+    <section class="col"><h2>Top 30</h2><div id="col-A"></div></section>
+    <section class="col"><h2>Top 20</h2><div id="col-B"></div></section>
+    <section class="col"><h2>Top 10</h2> <div id="col-C"></div></section>
+    <section class="col"><h2>Final Top 3</h2>  <div id="col-D"></div></section>
+    </div>
   <section class="pool" id="pool">
     <div class="pool-header">
       <h3>Delegadas Disponibles (<span id="pool-count">0</span>)</h3>
       <input type="search" id="search-bar" placeholder="Buscar delegada...">
+    </div>
+    
+    <div class="banca-container">
+      <h4>Banca</h4>
+      <div id="banca-slots">
+        </div>
     </div>
     <div id="cards" class="cards"></div>
   </section>
@@ -203,7 +234,7 @@ class Particle {
   let CONTESTANTS = []; // Almacenará objetos {name, code}
   const RANK_MAP = new Map(); // rank -> {name, code}
   let CURRENT_DRAG = null;
-  // --- ACTUALIZADO: RANGOS con la Columna E (Banca) ---
+  // --- RANGOS sin cambios, la 'E' se maneja en el init ---
   const RANGES = { 
     A: [30,29,28,27,26,25,24,23,22,21], 
     B: [20,19,18,17,16,15,14,13,12,11], 
@@ -214,10 +245,23 @@ class Particle {
 
   function init() {
     // 1. Crear los slots vacíos
+    // --- ACTUALIZADO: Lógica para encontrar el contenedor correcto ---
     for (const band in RANGES) {
-      const col = document.getElementById(`col-${band}`); col.innerHTML = '';
+      const col = (band === 'E')
+        ? document.getElementById('banca-slots') // Contenedor horizontal de la banca
+        : document.getElementById(`col-${band}`);   // Columnas verticales del Top
+      
+      col.innerHTML = ''; // Limpiar el contenedor
+      
+      if (band !== 'E') {
+        // Aplicar estilos de columna vertical solo a los tops
+        col.classList.add('slots');
+        col.style.setProperty('--rows', RANGES[band].length);
+      }
+      
       RANGES[band].forEach(rank => col.appendChild(createSlotEl(band, rank)));
     }
+    // --- FIN DE ACTUALIZACIÓN ---
     
     // 2. Intentar cargar la sesión guardada por el usuario
     loadFromStorage();
@@ -229,20 +273,17 @@ class Particle {
                         .sort((a,b) => a.name.localeCompare(b.name));
       
       // 4. LÓGICA DE CARGA:
-      // Si loadFromStorage() no encontró nada (RANK_MAP está vacío),
-      // entonces cargamos el MUTop.json por defecto.
       if (RANK_MAP.size === 0) {
         console.log("No hay sesión guardada, cargando MUTop.json por defecto...");
-        loadDefaultTop(); // Carga el top por defecto y luego llama a updateUI()
+        loadDefaultTop(); 
       } else {
-        // Si ya había una sesión, simplemente actualizamos la UI con ella
         console.log("Sesión cargada desde localStorage.");
         updateUI();
       }
     }).catch(e => { 
       console.error(e); 
       document.getElementById('status-text').textContent = 'Error cargando contestants.json'; 
-      updateUI(); // Actualizar de todos modos, aunque sea vacío
+      updateUI(); 
     });
     
     setupGlobalListeners(); 
@@ -254,35 +295,25 @@ class Particle {
     fetch('MUTop.json')
       .then(r => r.json())
       .then(defaultTop => {
-        // El JSON exportado es un objeto: {"1": "Nombre1", "2": "Nombre2", ...}
         for (const rankStr in defaultTop) {
           const rank = Number(rankStr);
           const name = defaultTop[rankStr];
           
           if (name) {
-            // Buscamos la delegada en la lista maestra (CONTESTANTS)
-            // para obtener su 'code' (para la bandera)
             const cData = CONTESTANTS.find(c => c.name === name);
-            
             if (cData) {
-              // Si la encontramos, la añadimos al RANK_MAP
               RANK_MAP.set(rank, cData);
             } else {
-              // Si no se encuentra en contestants.json (por un typo, etc.)
-              // la añadimos solo con el nombre
               console.warn(`Delegada "${name}" de MUTop.json no encontrada en contestants.json.`);
               RANK_MAP.set(rank, { name: name, code: '' });
             }
           }
         }
-        // Una vez poblado el RANK_MAP con los datos por defecto,
-        // guardamos este estado en localStorage y actualizamos la UI.
         save();
         updateUI();
       })
       .catch(e => {
         console.error("Error al cargar MUTop.json por defecto.", e);
-        // Si falla, solo actualizamos la UI (estará vacía)
         updateUI();
       });
   }
@@ -365,12 +396,11 @@ class Particle {
     document.getElementById('pool-count').textContent = CONTESTANTS.length - RANK_MAP.size;
     document.getElementById('status-text').textContent = `${RANK_MAP.size} Top Confirmado`;
     
-    // --- NUEVO: Ejecutar filtro de búsqueda ---
-    // (Se llama después de construir las cards)
+    // Ejecutar filtro de búsqueda
     filterPoolCards();
   }
 
-  // --- NUEVA FUNCIÓN: Filtro de Búsqueda ---
+  // Filtro de Búsqueda
   function filterPoolCards() {
     const searchTerm = document.getElementById('search-bar').value.toLowerCase();
     const cards = document.getElementById('cards').children;
@@ -389,7 +419,6 @@ class Particle {
     try {
       const raw = JSON.parse(localStorage.getItem('mu_ranks_iso')||'[]');
       raw.forEach(([r, data]) => {
-        // Compatibilidad hacia atrás si data era solo un string
         const cData = typeof data === 'string' ? {name: data, code: ''} : data;
         RANK_MAP.set(Number(r), cData);
       });
@@ -397,7 +426,6 @@ class Particle {
   }
   
   function setupButtons() {
-    // Se elimina el 'confirm()' porque puede ser bloqueado.
     document.getElementById('btn-clear').onclick = () => { 
       console.log('Limpiando el top...');
       RANK_MAP.clear(); 
@@ -407,14 +435,13 @@ class Particle {
     document.getElementById('btn-shuffle').onclick = () => { CONTESTANTS.sort(()=>Math.random()-.5); updateUI(); };
     document.getElementById('btn-sort').onclick = () => { CONTESTANTS.sort((a,b)=>a.name.localeCompare(b.name)); updateUI(); };
     document.getElementById('btn-export').onclick = () => {
-      // --- ACTUALIZADO: Exportar solo del 1 al 30 ---
-      // (La banca con ranks negativos no se incluirá)
+      // Exportar solo del 1 al 30 (la banca no se incluye)
       const d={}; for(let i=1;i<=30;i++) { const data = RANK_MAP.get(i); d[i] = data ? data.name : null; }
       const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([JSON.stringify(d,null,2)],{type:'application/json'}));
       a.download='miss_universe_top.json'; a.click();
     };
     
-    // --- NUEVO: Listener para la barra de búsqueda ---
+    // Listener para la barra de búsqueda
     document.getElementById('search-bar').addEventListener('input', filterPoolCards);
   }
   setTimeout(init, 100);
