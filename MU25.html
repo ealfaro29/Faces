@@ -422,8 +422,8 @@ function initTopBuilder() {
       E: [-1,-2,-3,-4,-5]
     };
 
-    // --- *** CAMBIO 1: Nueva clave de guardado *** ---
-    const STORAGE_KEY = 'mu_top_builder_v2'; // Nueva clave
+    // --- *** CLAVE DE GUARDADO NUEVA (Versión Master V3) *** ---
+    const STORAGE_KEY = 'mu_top_master_v3'; 
 
     function init() {
       for (const band in RANGES) {
@@ -438,7 +438,7 @@ function initTopBuilder() {
         RANGES[band].forEach(rank => col.appendChild(createSlotEl(band, rank)));
       }
       
-      // --- *** CAMBIO 2: Nueva lógica de carga *** ---
+      // --- Carga usando delegates.json ---
       fetch('delegates.json')
         .then(r=>r.json())
         .then(data => {
@@ -475,7 +475,6 @@ function initTopBuilder() {
             const rank = Number(rankStr);
             const name = defaultTop[rankStr];
             if (name) {
-              // Buscar por nombre en español
               const cData = CONTESTANTS.find(c => c.name === name);
               if (cData) {
                 RANK_MAP.set(rank, cData);
@@ -485,7 +484,7 @@ function initTopBuilder() {
               }
             }
           }
-          save(); // <-- Importante: Guardar el top por defecto en la primera carga
+          save(); // Guardar estado inicial
           updateUI();
         })
         .catch(e => {
@@ -564,14 +563,11 @@ function initTopBuilder() {
             }
           }
         }
-        
         console.log(`(Importar) Se cargaron ${loadedCount} delegadas.`);
-        
       } catch (e) {
         console.error("Error al procesar el JSON del top:", e);
         alert("Error: El archivo JSON no tiene el formato esperado.");
       }
-      
       updateUI(); 
       save();     
     }
@@ -593,8 +589,7 @@ function initTopBuilder() {
       const assignedNames = new Set([...RANK_MAP.values()].map(d => d.name));
       CONTESTANTS.filter(c => !assignedNames.has(c.name)).forEach(c => {
         const card = document.createElement('div'); card.className = 'card'; card.draggable = true;
-        
-        // --- *** ESTA ES LA LÍNEA CORREGIDA *** ---
+        // Corregido: usar 'c' en lugar de 'cData'
         card.innerHTML = `<img class="card-flag" src="${flagURL(c.code)}" alt="${c.code}"> ${c.name}`; 
         
         card.addEventListener('dragstart', () => { CURRENT_DRAG = { type: 'card', data: c }; card.classList.add('ghost'); });
@@ -617,15 +612,10 @@ function initTopBuilder() {
         if (isVisible) visibleCount++;
       }
     }
-    
-    // --- *** CAMBIO 3: Actualizar funciones de guardado/carga *** ---
-    function save() { 
-      localStorage.setItem(STORAGE_KEY, JSON.stringify([...RANK_MAP])); 
-    }
-    
-    function loadFromStorage(rawData) { // Acepta rawData
+
+    function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify([...RANK_MAP])); }
+    function loadFromStorage(rawData) {
       try {
-        // rawData ya está verificado que no es null
         const raw = JSON.parse(rawData); 
         raw.forEach(([r, data]) => {
           const cData = typeof data === 'string' ? {name: data, code: ''} : data;
@@ -652,14 +642,11 @@ function initTopBuilder() {
       const importBtn = document.getElementById('btn-import');
       const fileInput = document.getElementById('file-import-top');
       
-      importBtn.onclick = () => {
-        fileInput.click(); 
-      };
+      importBtn.onclick = () => { fileInput.click(); };
       
       fileInput.onchange = (e) => {
         const file = e.target.files[0];
         if (!file) return;
-        
         const reader = new FileReader();
         reader.onload = (event) => {
           try {
@@ -676,7 +663,7 @@ function initTopBuilder() {
 
       document.getElementById('search-bar').addEventListener('input', filterPoolCards);
     }
-    init(); // Iniciar esta app
+    init(); 
   })();
 }
 
@@ -688,9 +675,9 @@ function initScoring() {
     let SCORES = {};
     let currentIndex = 0;
     
-    const STORAGE_KEY = 'mu_live_scores';
-    
-    // Elementos del DOM específicos de esta app
+    // --- *** CLAVE DE GUARDADO NUEVA (Versión Master V3) *** ---
+    const STORAGE_KEY = 'mu_scores_master_v3'; 
+
     const container = document.querySelector('#app-scoring #card-container');
     const btnPrev = document.querySelector('#app-scoring #btn-prev');
     const btnNext = document.querySelector('#app-scoring #btn-next');
@@ -698,28 +685,23 @@ function initScoring() {
     const rankingListEl = document.querySelector('#app-scoring #ranking-list');
 
     function init() {
-      if (!container) {
-        console.error("VOTACIONES: No se encontró el contenedor.");
-        return;
-      }
+      if (!container) return;
       loadScores();
-      
       fetch('delegates.json')
         .then(r => r.json())
         .then(data => {
           DELEGATES = data.sort((a, b) => a.name.localeCompare(b.name));
-          console.log(`VOTACIONES: Cargadas ${DELEGATES.length} delegadas.`);
-          container.innerHTML = ''; // Limpiar
+          container.innerHTML = ''; 
           DELEGATES.forEach((delegate, index) => {
             container.appendChild(createCardEl(delegate, index));
           });
           showCard(0);
           setupListeners();
-          updateRankingTable(); // Llenar el ranking al iniciar
+          updateRankingTable(); 
         })
         .catch(e => {
           console.error("VOTACIONES: Error cargando delegates.json", e);
-          counterEl.textContent = "Error al cargar datos.";
+          if(counterEl) counterEl.textContent = "Error al cargar datos.";
         });
     }
     
@@ -728,9 +710,7 @@ function initScoring() {
       el.className = 'score-card';
       el.dataset.index = index;
       el.dataset.name = delegate.name;
-      
       const delegateScores = SCORES[delegate.name] || {};
-      
       el.innerHTML = `
         <div class="card-header">
           <img class="card-flag" src="https://flagcdn.com/w160/${delegate.code.toLowerCase()}.png" alt="${delegate.name}">
@@ -774,10 +754,8 @@ function initScoring() {
     function showCard(index) {
       const cards = container.children;
       if (!cards.length) return;
-      
       const currentCard = cards[currentIndex];
       const newCard = cards[index];
-      
       if (index > currentIndex) {
         if (currentCard) currentCard.classList.add('exiting');
         if (newCard) { newCard.classList.remove('exiting'); newCard.classList.add('active'); }
@@ -785,36 +763,28 @@ function initScoring() {
         if (currentCard) currentCard.classList.remove('active');
         if (newCard) { newCard.classList.remove('exiting'); newCard.classList.add('active'); }
       }
-      
       currentIndex = index;
       updateNav();
     }
     
     function updateNav() {
-      counterEl.textContent = `${currentIndex + 1} / ${DELEGATES.length}`;
-      btnPrev.disabled = (currentIndex === 0);
-      btnNext.disabled = (currentIndex === DELEGATES.length - 1);
+      if(counterEl) counterEl.textContent = `${currentIndex + 1} / ${DELEGATES.length}`;
+      if(btnPrev) btnPrev.disabled = (currentIndex === 0);
+      if(btnNext) btnNext.disabled = (currentIndex === DELEGATES.length - 1);
     }
     
     function setupListeners() {
-      btnNext.onclick = () => {
-        if (currentIndex < DELEGATES.length - 1) { showCard(currentIndex + 1); }
-      };
-      btnPrev.onclick = () => {
-        if (currentIndex > 0) { showCard(currentIndex - 1); }
-      };
-      
+      if(btnNext) btnNext.onclick = () => { if (currentIndex < DELEGATES.length - 1) showCard(currentIndex + 1); };
+      if(btnPrev) btnPrev.onclick = () => { if (currentIndex > 0) showCard(currentIndex - 1); };
       container.addEventListener('input', e => {
         if (e.target.classList.contains('score-input')) {
           const card = e.target.closest('.score-card');
           const delegateName = card.dataset.name;
           const category = e.target.dataset.category;
           let value = parseFloat(e.target.value);
-          
           if (isNaN(value)) { value = ''; } 
           else if (value > 10) { value = 10; e.target.value = 10; }
           else if (value < 0) { value = 0; e.target.value = 0; }
-          
           saveScore(delegateName, category, value);
         }
       });
@@ -824,8 +794,7 @@ function initScoring() {
       if (!SCORES[delegateName]) { SCORES[delegateName] = {}; }
       SCORES[delegateName][category] = value;
       localStorage.setItem(STORAGE_KEY, JSON.stringify(SCORES));
-      
-      updateRankingTable(); // Actualizar el ranking en cada cambio
+      updateRankingTable(); 
     }
     
     function loadScores() {
@@ -833,11 +802,8 @@ function initScoring() {
       if (rawScores) { SCORES = JSON.parse(rawScores); }
     }
 
-    // --- Función para Actualizar el Ranking ---
     function updateRankingTable() {
       if (!rankingListEl) return;
-
-      // 1. Calcular puntajes
       const rankedList = DELEGATES.map(delegate => {
         const scores = SCORES[delegate.name] || {};
         const total = (parseFloat(scores.pre_swim) || 0) +
@@ -847,20 +813,13 @@ function initScoring() {
                       (parseFloat(scores.fin_q) || 0);
         return { ...delegate, totalScore: total };
       });
-
-      // 2. Ordenar y cortar
-      const top30 = rankedList
-        .sort((a, b) => b.totalScore - a.totalScore)
-        .slice(0, 30);
-
-      // 3. Renderizar en el DOM
-      rankingListEl.innerHTML = ''; // Limpiar la lista
+      const top30 = rankedList.sort((a, b) => b.totalScore - a.totalScore).slice(0, 30);
+      rankingListEl.innerHTML = ''; 
       top30.forEach((delegate, index) => {
         const rank = index + 1;
         const row = document.createElement('div');
         row.className = 'rank-row';
         row.dataset.rank = rank;
-        
         row.innerHTML = `
           <span class="rank-pos">${rank}</span>
           <span class="rank-name">
@@ -872,11 +831,9 @@ function initScoring() {
         rankingListEl.appendChild(row);
       });
     }
-
-    init(); // Iniciar esta app
+    init(); 
   })();
 }
-
 
 // --- Manejador del Hub/Pestañas ---
 (function() {
@@ -889,42 +846,29 @@ function initScoring() {
   function switchTab(tabId) {
     contents.forEach(content => {
       content.classList.remove('active');
-      if (content.id === tabId) {
-        content.classList.add('active');
-      }
+      if (content.id === tabId) content.classList.add('active');
     });
     tabs.forEach(tab => {
       tab.classList.remove('active');
-      if (tab.dataset.tab === tabId) {
-        tab.classList.add('active');
-      }
+      if (tab.dataset.tab === tabId) tab.classList.add('active');
     });
 
-    // Iniciar la app de la pestaña solo la primera vez que se visita
     if (tabId === 'app-top-builder' && !isTopBuilderInitialized) {
-      console.log('Iniciando Creador de Top por primera vez...');
       initTopBuilder();
       isTopBuilderInitialized = true;
     }
     if (tabId === 'app-scoring' && !isScoringInitialized) {
-      console.log('Iniciando Votaciones por primera vez...');
       initScoring();
       isScoringInitialized = true;
     }
   }
 
   tabs.forEach(tab => {
-    tab.addEventListener('click', () => {
-      switchTab(tab.dataset.tab);
-    });
+    tab.addEventListener('click', () => { switchTab(tab.dataset.tab); });
   });
 
-  // Cargar la pestaña por defecto (Creador de Top)
-  setTimeout(() => {
-    switchTab('app-top-builder');
-  }, 100);
+  setTimeout(() => { switchTab('app-top-builder'); }, 100);
 })();
-
 </script>
 </body>
 </html>
