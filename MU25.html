@@ -422,6 +422,9 @@ function initTopBuilder() {
       E: [-1,-2,-3,-4,-5]
     };
 
+    // --- *** CAMBIO 1: Nueva clave de guardado *** ---
+    const STORAGE_KEY = 'mu_top_builder_v2'; // Nueva clave
+
     function init() {
       for (const band in RANGES) {
         const col = (band === 'E')
@@ -434,18 +437,24 @@ function initTopBuilder() {
         }
         RANGES[band].forEach(rank => col.appendChild(createSlotEl(band, rank)));
       }
-      loadFromStorage();
       
+      // --- *** CAMBIO 2: Nueva lógica de carga *** ---
       fetch('delegates.json')
         .then(r=>r.json())
         .then(data => {
           CONTESTANTS = data.map(d => typeof d === 'string' ? {name:d, code:''} : d)
                             .sort((a,b) => a.name.localeCompare(b.name));
-          if (RANK_MAP.size === 0) {
-            console.log("TOP BUILDER: No hay sesión guardada, cargando MUTop.json por defecto...");
+          
+          const rawData = localStorage.getItem(STORAGE_KEY);
+          
+          if (rawData === null) {
+            // Primera visita: Cargar el top por defecto
+            console.log("TOP BUILDER: Primera visita, cargando MUTop.json por defecto...");
             loadDefaultTop(); 
           } else {
+            // Visita recurrente: Cargar desde localStorage (incluso si está vacío)
             console.log("TOP BUILDER: Sesión cargada desde localStorage.");
+            loadFromStorage(rawData); // Pasar los datos
             updateUI();
           }
       }).catch(e => { 
@@ -453,6 +462,7 @@ function initTopBuilder() {
         document.getElementById('status-text').textContent = 'Error cargando delegates.json'; 
         updateUI(); 
       });
+      
       setupGlobalListeners(); 
       setupButtons();
     }
@@ -475,7 +485,7 @@ function initTopBuilder() {
               }
             }
           }
-          save();
+          save(); // <-- Importante: Guardar el top por defecto en la primera carga
           updateUI();
         })
         .catch(e => {
@@ -533,11 +543,10 @@ function initTopBuilder() {
     }
     function unassignRank(r) { RANK_MAP.delete(Number(r)); updateUI(); save(); }
 
-    // --- NUEVA FUNCIÓN PARA IMPORTAR ---
     function loadTopFromJSON(topData) {
       if (!topData) return;
       try {
-        RANK_MAP.clear(); // Limpiar el top actual
+        RANK_MAP.clear(); 
         let loadedCount = 0;
         
         for (const rankStr in topData) {
@@ -545,7 +554,6 @@ function initTopBuilder() {
           const countryName = topData[rankStr];
           
           if (countryName && rank >= 1 && rank <= 30) {
-            // Encontrar la delegada en la lista maestra
             const cData = CONTESTANTS.find(c => c.name === countryName);
             
             if (cData) {
@@ -558,15 +566,15 @@ function initTopBuilder() {
         }
         
         console.log(`(Importar) Se cargaron ${loadedCount} delegadas.`);
-        updateUI(); // Actualizar la interfaz
-        save();     // Guardar el nuevo top en localStorage
         
       } catch (e) {
         console.error("Error al procesar el JSON del top:", e);
         alert("Error: El archivo JSON no tiene el formato esperado.");
       }
+      
+      updateUI(); 
+      save();     
     }
-    // --- FIN NUEVA FUNCIÓN ---
 
     function updateUI() {
       document.querySelectorAll('#app-top-builder .slot').forEach(slot => {
@@ -585,7 +593,10 @@ function initTopBuilder() {
       const assignedNames = new Set([...RANK_MAP.values()].map(d => d.name));
       CONTESTANTS.filter(c => !assignedNames.has(c.name)).forEach(c => {
         const card = document.createElement('div'); card.className = 'card'; card.draggable = true;
-        card.innerHTML = `<img class="card-flag" src="${flagURL(c.code)}" alt="${c.code}"> ${cData.name}`;
+        
+        // --- *** ESTA ES LA LÍNEA CORREGIDA *** ---
+        card.innerHTML = `<img class="card-flag" src="${flagURL(c.code)}" alt="${c.code}"> ${c.name}`; 
+        
         card.addEventListener('dragstart', () => { CURRENT_DRAG = { type: 'card', data: c }; card.classList.add('ghost'); });
         card.addEventListener('dragend', () => { card.classList.remove('ghost'); CURRENT_DRAG = null; });
         cardsEl.appendChild(card);
@@ -606,16 +617,23 @@ function initTopBuilder() {
         if (isVisible) visibleCount++;
       }
     }
-
-    function save() { localStorage.setItem('mu_ranks_iso', JSON.stringify([...RANK_MAP])); }
-    function loadFromStorage() {
+    
+    // --- *** CAMBIO 3: Actualizar funciones de guardado/carga *** ---
+    function save() { 
+      localStorage.setItem(STORAGE_KEY, JSON.stringify([...RANK_MAP])); 
+    }
+    
+    function loadFromStorage(rawData) { // Acepta rawData
       try {
-        const raw = JSON.parse(localStorage.getItem('mu_ranks_iso')||'[]');
+        // rawData ya está verificado que no es null
+        const raw = JSON.parse(rawData); 
         raw.forEach(([r, data]) => {
           const cData = typeof data === 'string' ? {name: data, code: ''} : data;
           RANK_MAP.set(Number(r), cData);
         });
-      } catch(e){}
+      } catch(e){
+        console.error("Error al cargar desde localStorage:", e);
+      }
     }
     
     function setupButtons() {
@@ -631,12 +649,11 @@ function initTopBuilder() {
         a.download='miss_universe_top.json'; a.click();
       };
 
-      // --- LÓGICA DE IMPORTACIÓN ---
       const importBtn = document.getElementById('btn-import');
       const fileInput = document.getElementById('file-import-top');
       
       importBtn.onclick = () => {
-        fileInput.click(); // Abrir el diálogo de archivo
+        fileInput.click(); 
       };
       
       fileInput.onchange = (e) => {
@@ -652,12 +669,10 @@ function initTopBuilder() {
             console.error("Error al leer o parsear el archivo:", err);
             alert("Error: El archivo no es un JSON válido.");
           }
-          // Resetear el input para permitir cargar el mismo archivo de nuevo
           e.target.value = null; 
         };
         reader.readAsText(file);
       };
-      // --- FIN LÓGICA DE IMPORTACIÓN ---
 
       document.getElementById('search-bar').addEventListener('input', filterPoolCards);
     }
