@@ -77,9 +77,9 @@
     color: #999; display: flex; align-items: center; gap: 10px;
   }
   .slot-flag { width: 24px; height: auto; border-radius: 2px; box-shadow: 0 2px 5px #000; }
-  .slot[data-band="C"] .photo, .slot[data-band="D"] .photo{display:block}
-  /* Ocultar foto para la nueva columna 'E' (Banca) */
-  .slot[data-band="E"] .photo { display: none; }
+  
+  /* --- LÍNEAS ELIMINADAS --- */
+  /* Ya no se muestra la foto en ninguna banda */
 
   .slot.drag-hover { background: #ffffff10 !important; border-color: var(--gold-2) !important; transform: scale(1.03); z-index:10; }
   .slot.occupied { background: linear-gradient(to right, #111, #222); border-color: var(--gold-5); }
@@ -299,7 +299,9 @@ class Particle {
     else if(rank===2) rankDisplay="2º"; 
     else if(rank===3) rankDisplay="3º";
     
+    // El HTML para 'photo' sigue aquí, pero el CSS (display:none) lo mantiene oculto
     el.innerHTML = `<div class="num">${rankDisplay}</div><div class="photo"><img alt=""></div><div class="name">—</div>`;
+    
     el.addEventListener('dragstart', e => {
       const r = Number(el.dataset.rank); const cData = RANK_MAP.get(r);
       if (!cData) { e.preventDefault(); return; }
@@ -345,7 +347,7 @@ class Particle {
       if (cData) {
         slot.classList.add('occupied');
         nameEl.innerHTML = `<img class="slot-flag" src="${flagURL(cData.code)}" alt="${cData.code}"> ${cData.name}`;
-        if (imgEl) imgEl.src = `photos/${cData.name}.png`;
+        if (imgEl) imgEl.src = `photos/${cData.name}.png`; // El JS aún lo asigna, pero el CSS lo oculta
       } else {
         slot.classList.remove('occupied'); nameEl.textContent = '—';
         if (imgEl) imgEl.removeAttribute('src');
