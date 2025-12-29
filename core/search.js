@@ -82,13 +82,20 @@ export function createFilterFunction(store, renderers) {
         } else if (activeTab === 'textures') {
             const selectedCategory = textureCategoryFilter?.value || 'all';
             const filteredItems = state.allTextureGroups.filter(group => {
-                const item = group.mainVariant;
-                if (!item) return false;
-                const matchesCategory = selectedCategory === 'all' || item.group === selectedCategory;
+                if (!group || !group.variants || group.variants.length === 0) return false;
+
+                // Un grupo coincide con la categoría si alguna de sus variantes pertenece a esa categoría
+                const matchesCategory = selectedCategory === 'all' ||
+                    group.variants.some(variant => variant.group === selectedCategory);
+
+                // Para la búsqueda, verificar si coincide con alguna variante
                 const matchesSearch = searchTerm === '' ||
-                    item.group.toLowerCase().includes(searchTerm) ||
-                    item.baseName.toLowerCase().includes(searchTerm) ||
-                    item.displayName.toLowerCase().includes(searchTerm);
+                    group.baseName.toLowerCase().includes(searchTerm) ||
+                    group.variants.some(variant =>
+                        variant.group.toLowerCase().includes(searchTerm) ||
+                        variant.displayName.toLowerCase().includes(searchTerm)
+                    );
+
                 return matchesCategory && matchesSearch;
             });
             renderers.renderTextureGallery(filteredItems);
