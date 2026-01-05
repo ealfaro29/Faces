@@ -1,19 +1,34 @@
 // tabs/textures.js
 
-// Función auxiliar para obtener la clave de agrupación (ej: "T-Geneve", "S-Indian Stones")
+// Función auxiliar para obtener la clave de agrupación
+// Agrupa texturas sólidas (S-) y transparentes (T-) con el mismo nombre base
+// Ej: "S-Peacock Blue" y "T-Peacock Blue" -> "ST-Peacock"
 const getGroupingKey = (filename) => {
     // 1. Quitar el _[ID code]
     const baseNameWithGroup = filename.substring(0, filename.lastIndexOf('_'));
 
-    // CASO MÁS SENCILLO: La clave de agrupación es la parte antes del ÚLTIMO espacio.
-    // Esto funciona para "M-Milan Blue" -> "M-Milan" y "S-Indian Stones" -> "S-Indian Stones".
-    const lastSpaceIndex = baseNameWithGroup.lastIndexOf(' ');
+    // 2. Extraer el prefijo (M-, S-, T-)
+    const prefix = baseNameWithGroup.split('-')[0];
+
+    // 3. Obtener la parte después del prefijo
+    const nameWithoutPrefix = baseNameWithGroup.substring(baseNameWithGroup.indexOf('-') + 1);
+
+    // 4. Obtener el nombre base (antes del último espacio, que suele ser el color/variante)
+    const lastSpaceIndex = nameWithoutPrefix.lastIndexOf(' ');
+    let baseName;
     if (lastSpaceIndex !== -1) {
-        return baseNameWithGroup.substring(0, lastSpaceIndex);
+        baseName = nameWithoutPrefix.substring(0, lastSpaceIndex);
+    } else {
+        baseName = nameWithoutPrefix;
     }
-    
-    // Si no hay espacio, se usa el nombre completo sin el ID.
-    return baseNameWithGroup;
+
+    // 5. Para texturas S- y T- con el mismo nombre base, usar "ST-" como prefijo unificado
+    // Para máscaras M-, mantener el prefijo original
+    if (prefix === 'S' || prefix === 'T') {
+        return 'ST-' + baseName;
+    } else {
+        return prefix + '-' + baseName;
+    }
 };
 
 // Nueva función para agrupar las texturas por nombre base
@@ -23,13 +38,13 @@ export function groupTextureVariants(rawTextureList) {
 
     rawTextureList.forEach(filename => {
         const fullPath = textureDir + filename + '.png';
-        
+
         // El nombre visible es la parte entre el primer '-' y el último '_'
         const displayName = filename.substring(filename.indexOf('-') + 1, filename.lastIndexOf('_')).trim();
-        
+
         // Extraer el código de grupo (M, T, S)
         const groupCode = filename.split('-')[0].trim();
-        
+
         // Extraer el ID
         const codeId = filename.substring(filename.lastIndexOf('_') + 1);
 
@@ -41,16 +56,16 @@ export function groupTextureVariants(rawTextureList) {
             codeId: codeId,
             filename: filename
         };
-        
+
         const groupingKey = getGroupingKey(filename); // e.g., "T-Geneve"
-        
+
         if (!grouped[groupingKey]) {
             // El nombre base de la textura (e.g., Geneve) para mostrar en la tarjeta
-            const baseName = groupingKey.substring(groupingKey.indexOf('-') + 1); 
-            
+            const baseName = groupingKey.substring(groupingKey.indexOf('-') + 1);
+
             grouped[groupingKey] = {
                 group: groupCode,
-                baseName: baseName, 
+                baseName: baseName,
                 mainVariant: item, // El primer elemento encontrado es la variante principal
                 variants: [item]
             };
@@ -72,12 +87,22 @@ export function populateTextureFilter(items) {
     const filter = document.getElementById('texture-category-filter');
     if (!filter) return;
 
-    // Se agrega un filtro defensivo para evitar el error 'Cannot read properties of undefined (reading 'group')'
-    // si la lista 'items' contiene elementos nulos o undefined.
-    const categories = [...new Set(items.filter(group => group && group.group).map(group => group.group))].filter(Boolean);
-    
+    // Recopilar todas las categorías únicas de las variantes dentro de los grupos
+    const categoriesSet = new Set();
+    items.forEach(group => {
+        if (group && group.variants) {
+            group.variants.forEach(variant => {
+                if (variant && variant.group) {
+                    categoriesSet.add(variant.group);
+                }
+            });
+        }
+    });
+
+    const categories = [...categoriesSet].filter(Boolean);
+
     filter.innerHTML = '<option value="all">All Categories</option>';
-    
+
     // Mapeo para nombres amigables
     const typeMap = {
         'M': 'Mesh (M)',
@@ -101,7 +126,7 @@ export const getTextureIconPath = (typeCode) => {
         'S': { src: 'photos/app/solid.png', name: 'Solid' },
     };
     const data = typeMap[typeCode.toUpperCase()] || null;
-    
+
     if (data) {
         const title = `${data.name} (${typeCode})`;
         const alt = `Icono de textura ${data.name}`;
@@ -110,12 +135,12 @@ export const getTextureIconPath = (typeCode) => {
         img.alt = alt;
         img.title = title;
         img.className = 'texture-type-icon';
-        img.onerror = function() {
-           const span = document.createElement('span');
-           span.className = 'text-xs font-semibold px-2 py-0.5 rounded-full bg-zinc-700 text-zinc-300';
-           span.textContent = typeCode;
-           if (img.parentNode) img.parentNode.replaceChild(span, img);
-           else img.replaceWith(span);
+        img.onerror = function () {
+            const span = document.createElement('span');
+            span.className = 'text-xs font-semibold px-2 py-0.5 rounded-full bg-zinc-700 text-zinc-300';
+            span.textContent = typeCode;
+            if (img.parentNode) img.parentNode.replaceChild(span, img);
+            else img.replaceWith(span);
         };
         return img.outerHTML;
     }
@@ -127,7 +152,7 @@ const renderVariantThumbnail = (variant, isMain) => {
     // El nombre de la variante es la última palabra del displayName (ej. "Red" de "Geneve Red")
     const variantName = variant.displayName.split(' ').pop();
     const className = isMain ? 'variant-thumbnail active' : 'variant-thumbnail';
-    
+
     return `
         <div class="${className}" 
              data-id="${variant.id}" 
@@ -156,14 +181,14 @@ export function renderTextureGallery(itemsToRender) {
     }
 
     // itemsToRender es ahora una lista de GRUPOS de texturas.
-    const gridItemsHTML = validGroups.map(group => { 
+    const gridItemsHTML = validGroups.map(group => {
         const main = group.mainVariant;
         const iconTag = getTextureIconPath(main.group);
         const hasVariants = group.variants.length > 1;
         const variantName = main.displayName.split(' ').pop(); // e.g. "Red"
-        
+
         // MODIFICACIÓN: Calcular la cantidad de variantes adicionales (N-1)
-        const otherVariantsCount = group.variants.length - 1; 
+        const otherVariantsCount = group.variants.length - 1;
 
         // Renderizar las miniaturas de las variantes
         const variantsThumbnailsHTML = hasVariants ? group.variants.map(variant => {
@@ -219,9 +244,9 @@ export function renderTextureGallery(itemsToRender) {
         `}).join('');
 
     galleryContainer.innerHTML = gridItemsHTML;
-    
+
     if (typeof window.setupCopyButtons === 'function') {
-        window.setupCopyButtons(); 
+        window.setupCopyButtons();
     }
 }
 
@@ -232,27 +257,27 @@ window.selectTextureVariant = (element) => {
     const newSrc = element.dataset.src;
     const newDisplayName = element.dataset.displayName;
     const newCodeId = element.dataset.codeId;
-    
+
     // 1. Elementos a actualizar
     const mainImage = card.querySelector('.main-image');
     const mainVariantNameSpan = card.querySelector('.main-variant-name');
     const mainCodeInput = card.querySelector('.main-code-id-input');
     const favoriteBtn = card.querySelector('.favorite-btn');
-    
+
     // 2. Quitar 'active' de todas las miniaturas y añadirlo a la seleccionada
     card.querySelectorAll('.variant-thumbnail').forEach(thumb => thumb.classList.remove('active'));
     element.classList.add('active');
-    
+
     // 3. Actualizar la imagen principal y el texto
     const variantName = newDisplayName.split(' ').pop();
-    
+
     if (mainImage) {
         mainImage.src = newSrc;
         mainImage.alt = newDisplayName;
     }
     if (mainVariantNameSpan) mainVariantNameSpan.textContent = `(${variantName})`;
     if (mainCodeInput) mainCodeInput.value = newCodeId;
-    
+
     // 4. Actualizar IDs en los botones
     if (favoriteBtn) {
         favoriteBtn.dataset.id = newId;

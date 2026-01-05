@@ -1,0 +1,34 @@
+/* Accessibility Utilities */
+
+/* Screen reader only class */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+}
+
+/* Focus visible styles for better keyboard navigation */
+*:focus-visible {
+    outline: 2px solid var(--gold2);
+    outline-offset: 2px;
+}
+
+/* Remove outline for mouse users */
+*:focus:not(:focus-visible) {
+    outline: none;
+}
+
+/* Improve button and link focus states */
+button:focus-visible,
+a:focus-visible,
+.tab-nav-button:focus-visible {
+    outline: 2px solid var(--gold2);
+    outline-offset: 2px;
+    box-shadow: 0 0 0 4px rgba(213, 184, 90, 0.2);
+}
