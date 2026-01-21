@@ -5,7 +5,7 @@ import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 
 // Configuración de Categorías
 const CATEGORIES = {
-    texture: ["M", "S", "T", "ST", "Makeup", "Tattoos", "Skin Details", "Fantasy"],
+    texture: ["Mesh", "Solid", "Translucid", "Mixed", "Makeup", "Tattoos", "Skin Details", "Fantasy"],
     facebase: ["Global", "Brazil", "UK", "USA", "Italy", "Spain", "France", "Japan", "Korea", "China", "Thailand"],
     avatar: ["Hair", "Mesh", "Accessory", "Clothing", "Hats", "Face"]
 };

@@ -118,31 +118,61 @@ export function populateTextureFilter(items) {
 
 
 export const getTextureIconPath = (typeCode) => {
+    // Normalizar entrada (primera letra mayúscula, resto minúscula para palabras, o todo mayúscula para códigos cortos)
+    if (!typeCode) return `<span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-red-700 text-white">?</span>`;
+
+    const code = typeCode.toString();
+
+    // Mapeo Extendido: Mapeamos Palabras y Códigos a nuestros 3 iconos base (por ahora)
+    // Puedes subir más iconos (makeup.webp, tattoo.webp) en el futuro.
     const typeMap = {
+        // MESH
         'M': { src: 'photos/app/Mesh.webp', name: 'Mesh' },
+        'Mesh': { src: 'photos/app/Mesh.webp', name: 'Mesh' },
+
+        // TRANSLUCID
         'T': { src: 'photos/app/trlcd.webp', name: 'Translucid' },
+        'Translucid': { src: 'photos/app/trlcd.webp', name: 'Translucid' },
+
+        // SOLID
         'S': { src: 'photos/app/solid.webp', name: 'Solid' },
+        'Solid': { src: 'photos/app/solid.webp', name: 'Solid' },
+
+        // MIXED
+        'ST': { src: 'photos/app/trlcd.webp', name: 'Mixed' }, // Fallback visual
+
+        // NEW CATEGORIES (Usando iconos genéricos temporalmente)
+        'Makeup': { src: 'photos/app/trlcd.webp', name: 'Makeup' }, // Translucid tiene sentido para makeup
+        'Tattoos': { src: 'photos/app/solid.webp', name: 'Tattoos' }, // Solid para tattoos
+        'Skin Details': { src: 'photos/app/trlcd.webp', name: 'Skin Details' },
+        'Fantasy': { src: 'photos/app/Mesh.webp', name: 'Fantasy' }
     };
-    const data = typeMap[typeCode.toUpperCase()] || null;
+
+    const data = typeMap[code] || typeMap[code.toUpperCase()] || typeMap[code.charAt(0).toUpperCase() + code.slice(1)];
 
     if (data) {
-        const title = `${data.name} (${typeCode})`;
-        const alt = `Icono de textura ${data.name}`;
+        const title = `${data.name}`;
         const img = document.createElement('img');
         img.src = data.src;
-        img.alt = alt;
+        img.alt = data.name;
         img.title = title;
         img.className = 'texture-type-icon';
+        // Fallback si la imagen falla
         img.onerror = function () {
-            const span = document.createElement('span');
-            span.className = 'text-xs font-semibold px-2 py-0.5 rounded-full bg-zinc-700 text-zinc-300';
-            span.textContent = typeCode;
-            if (img.parentNode) img.parentNode.replaceChild(span, img);
-            else img.replaceWith(span);
+            this.replaceWith(createBadge(data.name.substring(0, 2))); // Mostrar "Me", "So"...
         };
         return img.outerHTML;
     }
-    return `<span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-red-700 text-white">?</span>`;
+
+    // Si no encontramos nada, devolvemos un badge con las primeras 2 letras en lugar de "?" rojo feo
+    return createBadge(code.substring(0, 2));
+}
+
+function createBadge(text) {
+    const span = document.createElement('span');
+    span.className = 'text-[10px] font-bold px-1.5 py-0.5 rounded bg-zinc-700 text-zinc-300 border border-zinc-600 uppercase';
+    span.textContent = text;
+    return span.outerHTML;
 }
 
 // Nueva función para generar el HTML de una variante (miniatura)
