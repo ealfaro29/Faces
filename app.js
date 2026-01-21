@@ -19,6 +19,7 @@ import { auth, googleProvider } from './core/firebase.js';
 import { onAuthStateChanged, signInWithPopup } from 'firebase/auth';
 import { runAutoHealer } from './core/auto-healer.js';
 import { initAdminPanel } from './admin/admin-modal.js';
+import { initDeleteHandler } from './admin/admin-delete.js';
 
 window.getTextureIconPath = getTextureIconPath;
 
@@ -152,6 +153,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!isAppInitialized) {
                 startApp();
                 initAdminPanel();
+                initDeleteHandler(); // Enable right-click delete
                 isAppInitialized = true;
             }
 

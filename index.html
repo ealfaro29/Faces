@@ -453,6 +453,32 @@
         </div>
     </div>
 
+    <!-- DELETE CONFIRMATION MODAL -->
+    <div id="delete-confirm-modal" class="modal-overlay hidden z-50">
+        <div
+            class="modal-content p-6 border border-red-900/50 bg-black/90 backdrop-blur-xl shadow-2xl rounded-xl max-w-sm w-full text-center">
+            <div
+                class="w-12 h-12 rounded-full bg-red-900/30 text-red-500 flex items-center justify-center mx-auto mb-4">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
+                    </path>
+                </svg>
+            </div>
+            <h3 class="text-xl font-bold text-white mb-2">Delete Item?</h3>
+            <p id="delete-item-name" class="text-zinc-400 text-sm mb-6">Are you sure you want to remove this item from
+                the database? This action cannot be undone.</p>
+
+            <div class="flex gap-3 justify-center">
+                <button id="cancel-delete-btn"
+                    class="px-4 py-2 bg-zinc-800 text-zinc-300 rounded hover:bg-zinc-700 transition">Cancel</button>
+                <button id="confirm-delete-btn"
+                    class="px-4 py-2 bg-red-600 text-white font-bold rounded hover:bg-red-500 shadow-lg shadow-red-900/20 transition">Delete
+                    Permanently</button>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
 
     <!-- <script type="module" src="./background.js"></script> -->
