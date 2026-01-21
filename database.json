@@ -67,7 +67,8 @@
       "name": "Lines",
       "variant": "Blue",
       "fullName": "Lines Blue",
-      "originalFilename": "S-Lines Blue_103186570918187.webp"
+      "originalFilename": "S-Lines Blue_103186570918187.webp",
+      "remoteUrl": "https://tr.rbxcdn.com/180DAY-643630c4439e5c3876a74b411fcaef4c/420/420/Image/Png/noFilter"
     },
     {
       "id": "80575648529964",
@@ -116,7 +117,8 @@
       "name": "Swirls",
       "variant": "Colors",
       "fullName": "Swirls Colors",
-      "originalFilename": "S-Swirls Colors_115102854722238.webp"
+      "originalFilename": "S-Swirls Colors_115102854722238.webp",
+      "remoteUrl": "https://tr.rbxcdn.com/180DAY-09ccf5d6475341f312c5fe66ba2ed82c/420/420/Image/Png/noFilter"
     },
     {
       "id": "93190872644867",
@@ -145,7 +147,8 @@
       "name": "Testing",
       "variant": "Texture",
       "fullName": "Testing Texture",
-      "originalFilename": "S-Testing Texture_88951585084017.webp"
+      "originalFilename": "S-Testing Texture_88951585084017.webp",
+      "remoteUrl": "https://tr.rbxcdn.com/180DAY-67d1358f0c4b139aea8300117af4b6e4/420/420/Image/Png/noFilter"
     },
     {
       "id": "120687586777104",
@@ -364,7 +367,8 @@
       "name": "Fringe",
       "variant": "Ice",
       "fullName": "Fringe Ice",
-      "originalFilename": "T-Fringe Ice_124855511981530.webp"
+      "originalFilename": "T-Fringe Ice_124855511981530.webp",
+      "remoteUrl": "https://tr.rbxcdn.com/180DAY-372299ba73116fa4f82f385391537c9b/420/420/Image/Png/noFilter"
     },
     {
       "id": "139164221737836",
@@ -443,7 +447,8 @@
       "name": "Geneve",
       "variant": "Red",
       "fullName": "Geneve Red",
-      "originalFilename": "T-Geneve Red_106680490375664.webp"
+      "originalFilename": "T-Geneve Red_106680490375664.webp",
+      "remoteUrl": "https://tr.rbxcdn.com/180DAY-3a63a2d4d0c72537eec3cf382367d3e0/420/420/Image/Png/noFilter"
     },
     {
       "id": "127852939422862",
@@ -482,7 +487,8 @@
       "name": "Ireland",
       "variant": "Gold",
       "fullName": "Ireland Gold",
-      "originalFilename": "T-Ireland Gold_128630757568150.webp"
+      "originalFilename": "T-Ireland Gold_128630757568150.webp",
+      "remoteUrl": "https://tr.rbxcdn.com/180DAY-b2b956adfc309351b34b0241013db8b3/420/420/Image/Png/noFilter"
     },
     {
       "id": "137119082384402",
@@ -611,7 +617,8 @@
       "name": "Pearls",
       "variant": "Golden",
       "fullName": "Pearls Golden",
-      "originalFilename": "T-Pearls Golden_86299462413782.webp"
+      "originalFilename": "T-Pearls Golden_86299462413782.webp",
+      "remoteUrl": "https://tr.rbxcdn.com/180DAY-142aa5108ce54bf1e3f1452ed1432a93/420/420/Image/Png/noFilter"
     },
     {
       "id": "79317907138542",
@@ -884,7 +891,8 @@
       "category": "Ireland",
       "name": "Ireland Blonde X",
       "variant": "Blonde X",
-      "originalFilename": "Ireland-Blonde X_95849228130520.webp"
+      "originalFilename": "Ireland-Blonde X_95849228130520.webp",
+      "remoteUrl": "https://tr.rbxcdn.com/180DAY-9df6422a93bd7caa58ef7959d89253b6/420/420/Image/Png/noFilter"
     },
     {
       "id": "139105976096705",
@@ -1076,6 +1084,24 @@
       "remoteUrl": "https://tr.rbxcdn.com/180DAY-23b380f4fcabff32ec98951c4456d779/420/420/Image/Png/noFilter"
     },
     {
+      "id": "100870124317615",
+      "robloxId": "100870124317615",
+      "category": "Italy",
+      "name": "Italy Bronze",
+      "variant": "Bronze",
+      "originalFilename": "Italy-Bronze_100870124317615.webp",
+      "remoteUrl": "https://tr.rbxcdn.com/180DAY-fba3d15aafe4c5090ec6a735b3d210a8/420/420/Image/Png/noFilter"
+    },
+    {
+      "id": "128918674236416",
+      "robloxId": "128918674236416",
+      "category": "Italy",
+      "name": "Italy Coral",
+      "variant": "Coral",
+      "originalFilename": "Italy-Coral_128918674236416.webp",
+      "remoteUrl": "https://tr.rbxcdn.com/180DAY-c7a92a39a8fee2f5a7dd123cfb45c9a6/420/420/Image/Png/noFilter"
+    },
+    {
       "id": "118695923921607",
       "robloxId": "118695923921607",
       "category": "Italy",
@@ -1218,14 +1244,6 @@
       "variant": "Vampire",
       "originalFilename": "Italy-Vampire_101542137745973.webp",
       "remoteUrl": "https://tr.rbxcdn.com/180DAY-19f43626a39124e60259f4770f1a0364/420/420/Image/Png/noFilter"
-    },
-    {
-      "id": "111114706771695",
-      "robloxId": "111114706771695",
-      "category": "Mesh",
-      "name": "Mesh Clean X",
-      "variant": "Clean X",
-      "originalFilename": "Mesh-Clean X_111114706771695.webp"
     },
     {
       "id": "113032778290919",

@@ -16,26 +16,53 @@ const DB_PATH = 'database.json';
 // }
 
 export async function initializeAllData() {
-    console.log("DATA_LOADER: 🛡️ SAFE MODE - Loading purely from database.json");
+    console.log("DATA_LOADER: Iniciando carga híbrida (Firebase > Local)...");
 
     let sourceData = { textures: [], facebases: [], avatar: [], music: [] };
-    let source = "LOCAL_JSON";
+    let source = "FIREBASE";
 
     try {
-        const dbResponse = await fetch(DB_PATH);
-        if (!dbResponse.ok) throw new Error(`Failed to load database.json: ${dbResponse.statusText}`);
-        sourceData = await dbResponse.json();
+        // 1. Intentar cargar desde Firebase Firestore
+        console.log("DATA_LOADER: Fetching from Firestore...");
+
+        const [texSnap, faceSnap, avSnap] = await Promise.all([
+            getDocs(collection(db, 'textures')),
+            getDocs(collection(db, 'facebases')),
+            getDocs(collection(db, 'avatar'))
+        ]);
+
+        if (texSnap.empty && faceSnap.empty) {
+            console.warn("DATA_LOADER: Firestore appears empty. Using local fallback.");
+            throw new Error("Empty Database");
+        }
+
+        texSnap.forEach(doc => sourceData.textures.push({ ...doc.data(), id: doc.id }));
+        faceSnap.forEach(doc => sourceData.facebases.push(doc.data()));
+        avSnap.forEach(doc => sourceData.avatar.push(doc.data()));
+
+        // Music: Fallback local siempre (por ahora)
+        const jsonFallback = await fetch(DB_PATH).then(res => res.json());
+        sourceData.music = jsonFallback.music || [];
 
     } catch (error) {
-        console.error("DATA_LOADER: CRITICAL ERROR loading local database.", error);
-        throw error;
+        console.warn("DATA_LOADER: Firestore fetch failed or empty:", error.message);
+        console.log("DATA_LOADER: 🛡️ Falling back to local database.json");
+        source = "LOCAL_JSON";
+
+        try {
+            const dbResponse = await fetch(DB_PATH);
+            if (!dbResponse.ok) throw new Error(`Failed to load database.json: ${dbResponse.statusText}`);
+            sourceData = await dbResponse.json();
+        } catch (jsonError) {
+            console.error("DATA_LOADER: CRITICAL - No data available sources.", jsonError);
+            throw jsonError;
+        }
     }
 
     console.log(`DATA_LOADER: Data loaded from [${source}]`);
 
-    // 2. Mapear y Normalizar datos (Igual que antes)
-    const dbData = sourceData; // Mantener compatibilidad de nombres
-    // const sourceData = dbData; // Ya lo tenemos definido arriba
+    // 2. Mapear y Normalizar datos (sourceData ya tiene la estructura correcta)
+    // No necesitamos reasignar variable dbData -> sourceData porque ya usamos sourceData desde el principio.
 
     // TEXTURAS
     const allTextureItems = (sourceData.textures || []).map(item => ({

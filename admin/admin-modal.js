@@ -168,6 +168,25 @@ export function initAdminPanel() {
 
             if (!name || !robloxId) throw new Error("Missing fields");
 
+            // 1. Fetch Real CDN URL (via proxy)
+            let remoteUrl = null;
+            msg.textContent = "🔍 Fetching Roblox URL...";
+            try {
+                // Usamos el proxy configurado en vite.config.js para evitar CORS
+                const res = await fetch(`/api/roblox/v1/assets?assetIds=${robloxId}&size=420x420&format=Png&isCircular=false`);
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.data && data.data.length > 0 && data.data[0].state === 'Completed') {
+                        remoteUrl = data.data[0].imageUrl;
+                        console.log("Got remote URL via Proxy:", remoteUrl);
+                    }
+                } else {
+                    console.warn("Proxy returned status:", res.status);
+                }
+            } catch (fetchErr) {
+                console.warn("Could not fetch automatic URL (is proxy running?)", fetchErr);
+            }
+
             // Define target collection
             let collectionName = 'items';
             if (type === 'texture') collectionName = 'textures';
@@ -181,10 +200,10 @@ export function initAdminPanel() {
                 name: name,
                 category: category,
                 type: type,
-                // For Textures, JSON uses 'fullName' sometimes, but 'name' + category logic handles it in app
-                // We'll store cleaner data now
-                fullName: category === 'M' || category === 'S' ? `${category}-${name}` : name, // Helper for old logic?
-                variant: name, // For facebases
+                // Clean data structure
+                fullName: category === 'M' || category === 'S' ? `${category}-${name}` : name,
+                variant: name,
+                remoteUrl: remoteUrl, // GUARDAMOS LA URL REAL DE LA CDN
                 dateAdded: serverTimestamp()
             });
 
