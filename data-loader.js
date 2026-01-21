@@ -8,39 +8,39 @@ const TEXTURES_PATH = 'photos/textures';
  * Función genérica para parsear nombres de archivo a objetos de datos.
  */
 export const parseItemName = (basename, pathPrefix) => {
-    const name = basename; 
+    const name = basename;
     const lastUnderscore = name.lastIndexOf('_');
     let label = name, codeId = '';
 
-    if (lastUnderscore > -1) { 
-        const maybeId = name.slice(lastUnderscore + 1); 
-        if (!isNaN(maybeId) && maybeId.trim() !== '') { 
-            label = name.slice(0, lastUnderscore); 
-            codeId = maybeId; 
-        } 
+    if (lastUnderscore > -1) {
+        const maybeId = name.slice(lastUnderscore + 1);
+        if (!isNaN(maybeId) && maybeId.trim() !== '') {
+            label = name.slice(0, lastUnderscore);
+            codeId = maybeId;
+        }
     }
 
     let group;
     let displayName;
-    
+
     if (pathPrefix === TEXTURES_PATH) {
         const parts = label.split('-');
         group = parts[0];
-        displayName = parts.slice(1).join('-').replace(/[-_]/g,' ');
+        displayName = parts.slice(1).join('-').replace(/[-_]/g, ' ');
     } else {
         group = label.split('-')[0] || 'Uncategorized';
-        displayName = label.replace(new RegExp('^' + group + '-'), '').replace(/[-_]/g,' ');
+        displayName = label.replace(new RegExp('^' + group + '-'), '').replace(/[-_]/g, ' ');
     }
-    
+
     // MODIFICACIÓN: Usar codeId como 'id' principal si es una textura para que coincida con Favorites.
     const itemId = (pathPrefix === TEXTURES_PATH && codeId) ? codeId : name;
 
-    return { 
+    return {
         id: itemId, // <-- Cambiado: usa codeId para texturas, nombre completo para otros
-        group: group.toUpperCase(), 
-        displayName, 
-        codeId, 
-        src: `${pathPrefix}/${name}.png`,
+        group: group.toUpperCase(),
+        displayName,
+        codeId,
+        src: `${pathPrefix}/${name}.webp`,
         type: pathPrefix.includes('facebases') ? 'facebase' : (pathPrefix.includes('textures') ? 'texture' : 'avatar'),
         path: pathPrefix
     };
@@ -52,7 +52,7 @@ export const parseItemName = (basename, pathPrefix) => {
  */
 export async function initializeAllData() {
     console.log("DATA_LOADER: Iniciando la carga de archivos JSON.");
-    
+
     try {
         const [facebasesBasenames, categoriesData, itemBasenames, textureBasenames, musicData] = await Promise.all([
             fetchWithErrorHandling(`${FACEBASES_PATH}/facebases.json`, 'Facebases'),
@@ -88,28 +88,28 @@ export async function initializeAllData() {
 async function fetchWithErrorHandling(url, resourceName) {
     try {
         const response = await fetch(url);
-        
+
         if (!response.ok) {
             throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
-        
+
         const data = await response.json();
         console.log(`✓ ${resourceName} loaded successfully`);
         return data;
-        
+
     } catch (error) {
         console.error(`✗ Error loading ${resourceName} from ${url}:`, error.message);
-        
+
         // Si es un error de red
         if (error instanceof TypeError && error.message.includes('fetch')) {
             throw new Error(`Network error loading ${resourceName}. Check your connection.`);
         }
-        
+
         // Si es un error de JSON parsing
         if (error instanceof SyntaxError) {
             throw new Error(`Invalid JSON format in ${resourceName}.`);
         }
-        
+
         throw error;
     }
 }

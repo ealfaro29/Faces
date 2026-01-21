@@ -36,11 +36,11 @@
   "others": [
     {
       "name": "Drag",
-      "flag": "photos/app/Drag.png"
+      "flag": "photos/app/Drag.webp"
     },
     {
       "name": "Mesh",
-      "flag": "photos/app/Mesh.png"
+      "flag": "photos/app/Mesh.webp"
     }
   ]
 }

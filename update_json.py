@@ -93,7 +93,7 @@ def generate_facebases_files(root_dir):
     categorias_detectadas = set()
 
     for filename in sorted(os.listdir(facebases_dir)):
-        if filename.endswith(".png"):
+        if filename.endswith(".webp"):
             nombre_sin_extension = os.path.splitext(filename)[0]
             nombres_facebases.append(nombre_sin_extension)
             if '-' in nombre_sin_extension:
@@ -125,7 +125,9 @@ def generate_facebases_files(root_dir):
         else:
             # Categoría no es un país (ej: Drag)
             print(f"ℹ️  Info: '{categoria}' no es un país ISO reconocido, se tratará como categoría 'otra' (debe existir photos/app/{categoria}.png).")
-            estructura_categorias['others'].append({"name": categoria, "flag": f"photos/app/{categoria}.png"})
+            # Nota: Mantenemos png para flags si no se han convertido, o asumimos webp si todo se convirtió.
+            # Asumiremos que las flags en photos/app también se convirtieron.
+            estructura_categorias['others'].append({"name": categoria, "flag": f"photos/app/{categoria}.webp"})
     
     write_json_file(os.path.join(facebases_dir, 'categories.json'), estructura_categorias)
 
@@ -141,7 +143,7 @@ def generate_items_file(root_dir):
 
     nombres_items = []
     for filename in sorted(os.listdir(items_dir)):
-        if filename.endswith(".png"):
+        if filename.endswith(".webp"):
             nombre_sin_extension = os.path.splitext(filename)[0]
             if nombre_sin_extension.lower().startswith("texture-"):
                 print(f"⚠️  Advertencia: El archivo '{filename}' parece ser una textura antigua. Debe moverlo/renombrarlo.")
@@ -158,7 +160,7 @@ def generate_textures_file(root_dir):
         print(f"⚠️  Advertencia: No se encontró el directorio '{textures_dir}'. Saltando la generación de texturas.")
         return
 
-    nombres_texturas = [os.path.splitext(filename)[0] for filename in sorted(os.listdir(textures_dir)) if filename.endswith(".png")]
+    nombres_texturas = [os.path.splitext(filename)[0] for filename in sorted(os.listdir(textures_dir)) if filename.endswith(".webp")]
     
     write_json_file(os.path.join(textures_dir, 'textures.json'), nombres_texturas)
 
