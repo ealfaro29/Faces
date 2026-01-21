@@ -40,10 +40,57 @@
     animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
+/* Skeleton Loader Styles */
+.image-skeleton {
+    position: relative;
+    background: linear-gradient(90deg, #1a1b20 25%, #24252b 50%, #1a1b20 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    aspect-ratio: 1;
+    border-radius: 0.375rem;
+}
+
+@keyframes shimmer {
+    0% {
+        background-position: 200% 0;
+    }
+
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+.image-skeleton::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.04), transparent);
+    animation: shimmer-sweep 1.5s infinite;
+}
+
+@keyframes shimmer-sweep {
+    0% {
+        transform: translateX(-100%);
+    }
+
+    100% {
+        transform: translateX(100%);
+    }
+}
+
+.image-loading {
+    opacity: 0;
+    transition: opacity 0.3s ease-in;
+}
+
+.image-loaded {
+    opacity: 1;
+}
+
 html,
 body {
     font-family: var(--font-family-sans);
-    background-color: #12111700;
+    background-color: #000000;
     color: var(--ink);
     margin: 0;
     padding: var(--space-4);

@@ -44,6 +44,9 @@ export function groupFacebaseVariants(items) {
 }
 
 export function createFilterFunction(store, renderers) {
+    // Cache para evitar re-renders innecesarios
+    let lastFilterKey = '';
+
     return function filterContent() {
         const state = store.getState();
         if (!state.globalDataLoaded) return;
@@ -56,6 +59,18 @@ export function createFilterFunction(store, renderers) {
         const avatarCategoryFilter = document.getElementById('avatar-category-filter');
         const textureCategoryFilter = document.getElementById('texture-category-filter');
         const musicCategoryFilter = document.getElementById('music-category-filter');
+
+        // Crear una cache key para evitar re-renders innecesarios
+        const categoryValue = activeTab === 'facebases' ? (facebaseCategoryFilter?.value || 'all') :
+            activeTab === 'avatar' ? (avatarCategoryFilter?.value || 'all') :
+                activeTab === 'textures' ? (textureCategoryFilter?.value || 'all') :
+                    activeTab === 'music' ? (musicCategoryFilter?.value || 'all') : 'none';
+
+        const currentFilterKey = `${activeTab}-${searchTerm}-${categoryValue}`;
+
+        // Si nada cambió, no re-renderizar
+        if (currentFilterKey === lastFilterKey) return;
+        lastFilterKey = currentFilterKey;
 
         if (activeTab === 'facebases') {
             const selectedCategory = facebaseCategoryFilter?.value || 'all';

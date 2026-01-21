@@ -3,6 +3,7 @@
 import { getTextureIconPath } from './textures.js';
 import { getFlagEmoji } from '../utils/flag.js';
 import { getMusicIconPath } from './music.js';
+import store from '../core/store.js';
 
 // --- Funciones de Lógica de Favoritos (Exportadas desde aquí) ---
 
@@ -44,8 +45,8 @@ export function renderFavoritesGallery(itemsToRender, categoriesData) {
     }, {}) : {};
 
     // --- INICIO DE LA MODIFICACIÓN ---
-    // Accedemos a los grupos de facebases desde el objeto global window.appData
-    const allFacebaseGroups = window.appData.allFacebaseGroups || [];
+    // Accedemos a los grupos de facebases desde el store
+    const allFacebaseGroups = store.getState().allFacebaseGroups || [];
     // Usamos un Set para asegurarnos de renderizar cada GRUPO de facebase solo una vez
     const renderedFacebaseGroups = new Set();
     // --- FIN DE LA MODIFICACIÓN ---

@@ -9,6 +9,7 @@ import { renderFavoritesGallery } from './tabs/favorites.js';
 import { setupPhotosModal } from './modals/photos.js';
 import { initializeTimeConverter, setupModal } from './modals/time-converter.js';
 import { setupAccessibleModal, enhanceKeyboardNavigation, updateTabStates } from './utils/accessibility.js';
+import { initSkeletonLoaders } from './utils/skeleton-loader.js';
 import store from './core/store.js';
 import './core/favorites.js'; // Auto-exports to window
 import { debounce, groupFacebaseVariants, createFilterFunction } from './core/search.js';
@@ -118,6 +119,9 @@ const startApp = async () => {
         initializeFavoritesTab();
 
         filterContent();
+
+        // Inicializar skeleton loaders para lazy loading
+        initSkeletonLoaders();
     } catch (error) {
         console.error("APP_FLOW: Error crítico al iniciar la aplicación:", error);
     }
