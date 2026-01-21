@@ -635,7 +635,7 @@ main.panel {
 
 .variant-buttons {
     position: absolute;
-    bottom: 10px;
+    bottom: 50px;
     /* Posición sobre la imagen, no sobre el footer */
     right: 6px;
     display: flex;
