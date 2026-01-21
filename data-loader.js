@@ -1,137 +1,118 @@
 // data-loader.js
+import { getRobloxThumbnailUrl } from './utils/roblox.js';
 
-const FACEBASES_PATH = 'photos/facebases';
-const ITEMS_PATH = 'photos/items';
-const TEXTURES_PATH = 'photos/textures';
-
-/**
- * Función genérica para parsear nombres de archivo a objetos de datos.
- */
-export const parseItemName = (basename, pathPrefix) => {
-    const name = basename;
-    const lastUnderscore = name.lastIndexOf('_');
-    let label = name, codeId = '';
-
-    if (lastUnderscore > -1) {
-        const maybeId = name.slice(lastUnderscore + 1);
-        if (!isNaN(maybeId) && maybeId.trim() !== '') {
-            label = name.slice(0, lastUnderscore);
-            codeId = maybeId;
-        }
-    }
-
-    let group;
-    let displayName;
-
-    if (pathPrefix === TEXTURES_PATH) {
-        const parts = label.split('-');
-        group = parts[0];
-        displayName = parts.slice(1).join('-').replace(/[-_]/g, ' ');
-    } else {
-        group = label.split('-')[0] || 'Uncategorized';
-        displayName = label.replace(new RegExp('^' + group + '-'), '').replace(/[-_]/g, ' ');
-    }
-
-    // MODIFICACIÓN: Usar codeId como 'id' principal si es una textura para que coincida con Favorites.
-    const itemId = (pathPrefix === TEXTURES_PATH && codeId) ? codeId : name;
-
-    return {
-        id: itemId, // <-- Cambiado: usa codeId para texturas, nombre completo para otros
-        group: group.toUpperCase(),
-        displayName,
-        codeId,
-        src: `${pathPrefix}/${name}.webp`,
-        type: pathPrefix.includes('facebases') ? 'facebase' : (pathPrefix.includes('textures') ? 'texture' : 'avatar'),
-        path: pathPrefix
-    };
-};
+// Rutas de archivos JSON generados
+const DB_PATH = 'database.json'; // O public/database.json dependiendo del deploy, pero en Vite 'public' es raíz.
 
 /**
- * Carga todos los datos JSON de la aplicación con manejo robusto de errores.
- * @returns {Promise<object>} Objeto con todos los datos.
+ * Carga todos los datos JSON de la aplicación.
+ * Ahora centralizado en database.json
  */
 export async function initializeAllData() {
-    console.log("DATA_LOADER: Iniciando la carga de archivos JSON.");
+    console.log("DATA_LOADER: Iniciando carga optimizada desde database.json");
 
     try {
-        const [facebasesBasenames, categoriesData, itemBasenames, textureBasenames, musicData] = await Promise.all([
-            fetchWithErrorHandling(`${FACEBASES_PATH}/facebases.json`, 'Facebases'),
-            fetchWithErrorHandling(`${FACEBASES_PATH}/categories.json`, 'Categories'),
-            fetchWithErrorHandling(`${ITEMS_PATH}/items.json`, 'Items'),
-            fetchWithErrorHandling(`${TEXTURES_PATH}/textures.json`, 'Textures'),
-            fetchWithErrorHandling('music.json', 'Music')
-        ]);
+        const dbResponse = await fetch(DB_PATH);
+        if (!dbResponse.ok) throw new Error(`Failed to load database.json: ${dbResponse.statusText}`);
 
-        const allFacebaseItems = facebasesBasenames.map(basename => parseItemName(basename, FACEBASES_PATH));
-        const allAvatarItems = itemBasenames.map(basename => parseItemName(basename, ITEMS_PATH));
-        const allTextureBasenames = textureBasenames;
+        const db = await dbResponse.json();
 
-        console.log(`DATA_LOADER: Éxito en la carga. Facebases: ${allFacebaseItems.length}, Avatars: ${allAvatarItems.length}, Textures: ${allTextureBasenames.length}`);
+        // Mapear los datos al formato que espera la app
+        // TEXTURAS
+        const allTextureItems = db.textures.map(item => ({
+            id: item.id,
+            group: item.type, // 'ST', 'M', etc.
+            displayName: item.fullName, // "Peacock Blue"
+            codeId: item.robloxId,
+            src: getRobloxThumbnailUrl(item.robloxId), // URL dinámica de Roblox
+            // src: item.originalFilename ? `photos/textures/${item.originalFilename}` : null, // Fallback a local si quisiéramos
+            type: 'texture',
+            baseName: item.name // "Peacock"
+        }));
+
+        // FACEBASES
+        const allFacebaseItems = db.facebases.map(item => ({
+            id: item.id,
+            group: item.category.toUpperCase(), // "BRAZIL"
+            displayName: item.variant, // "Natural"
+            codeId: item.robloxId,
+            src: getRobloxThumbnailUrl(item.robloxId),
+            type: 'facebase'
+        }));
+
+        // AVATAR ITEMS
+        const allAvatarItems = db.avatar.map(item => ({
+            id: item.id,
+            group: item.category.toUpperCase(), // "HAIR"
+            displayName: item.name,
+            codeId: item.robloxId,
+            src: getRobloxThumbnailUrl(item.robloxId),
+            type: 'avatar'
+        }));
+
+        // MUSIC
+        // Music ya viene limpio en el JSON, solo lo pasamos
+        const allMusicCodes = db.music || [];
+
+        // CATEGORIAS (Podríamos generarlas dinámicamente o leerlas si las guardáramos en DB)
+        // Por ahora, regeneramos la estructura de categorías de Facebases basada en los datos cargados
+        const facebaseCategories = generateFacebaseCategories(allFacebaseItems);
+
+        // Texture Basenames (para compatibilidad con lógica antigua si queda alguna)
+        const allTextureBasenames = db.textures.map(t => t.originalFilename?.replace('.webp', '').replace('.png', ''));
+
+        console.log(`DATA_LOADER: Carga exitosa. ${allTextureItems.length} texturas, ${allFacebaseItems.length} facebases.`);
 
         return {
             allFacebaseItems,
-            facebaseCategories: categoriesData,
+            facebaseCategories,
             allAvatarItems,
-            allTextureBasenames,
-            allMusicCodes: musicData
+            allTextureBasenames, // Mantenemos por si acaso, aunque sea redundante
+            allTextureItems,    // EXPORTAMOS LA LISTA IMPORTANTE
+            allMusicCodes,
+            rawDb: db
         };
+
     } catch (error) {
-        console.error('DATA_LOADER: Error crítico durante la carga de datos:', error);
-        showLoadingError('Failed to load application data. Please refresh the page.');
+        console.error('DATA_LOADER: Error crítico cargando base de datos:', error);
+        // Fallback or alert
         throw error;
     }
 }
 
-/**
- * Función auxiliar para fetch con manejo de errores
- */
-async function fetchWithErrorHandling(url, resourceName) {
-    try {
-        const response = await fetch(url);
+// Helper para regenerar categorías de facebases al vuelo
+function generateFacebaseCategories(items) {
+    const countries = new Set();
+    const others = new Set();
 
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    // Lista básica de ISOs conocidos (podríamos mover esto a un config compartido)
+    const knownCountries = ['BRAZIL', 'UK', 'USA', 'ZAMBIA', 'IRELAND', 'ITALY', 'INDIA', 'BELGIUM', 'EGYPT', 'SPAIN', 'FRANCE'];
+
+    items.forEach(item => {
+        const group = item.group;
+        if (knownCountries.includes(group)) {
+            countries.add(group);
+        } else {
+            others.add(group);
         }
+    });
 
-        const data = await response.json();
-        console.log(`✓ ${resourceName} loaded successfully`);
-        return data;
-
-    } catch (error) {
-        console.error(`✗ Error loading ${resourceName} from ${url}:`, error.message);
-
-        // Si es un error de red
-        if (error instanceof TypeError && error.message.includes('fetch')) {
-            throw new Error(`Network error loading ${resourceName}. Check your connection.`);
-        }
-
-        // Si es un error de JSON parsing
-        if (error instanceof SyntaxError) {
-            throw new Error(`Invalid JSON format in ${resourceName}.`);
-        }
-
-        throw error;
-    }
+    return {
+        countries: Array.from(countries).map(name => ({
+            name: name.charAt(0) + name.slice(1).toLowerCase(), // Capitalize "Brazil"
+            iso: getIsoCode(name)
+        })),
+        others: Array.from(others).map(name => ({
+            name: name.charAt(0) + name.slice(1).toLowerCase(),
+            flag: `photos/app/${name.charAt(0) + name.slice(1).toLowerCase()}.webp` // Asumimos que existen los iconos de categoría
+        }))
+    };
 }
 
-/**
- * Muestra un error de carga al usuario
- */
-function showLoadingError(message) {
-    const errorBanner = document.createElement('div');
-    errorBanner.className = 'fixed top-4 left-1/2 transform -translate-x-1/2 z-[9999] bg-red-600 text-white px-6 py-4 rounded-lg shadow-xl max-w-md text-center';
-    errorBanner.innerHTML = `
-        <div class="flex items-center gap-3">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-            </svg>
-            <div class="flex-1">
-                <p class="font-semibold">${message}</p>
-                <button onclick="location.reload()" class="mt-2 px-4 py-1 bg-white text-red-600 rounded hover:bg-gray-100 transition">
-                    Retry
-                </button>
-            </div>
-        </div>
-    `;
-    document.body.appendChild(errorBanner);
+function getIsoCode(name) {
+    const map = { 'BRAZIL': 'BR', 'UK': 'GB', 'USA': 'US', 'ZAMBIA': 'ZM', 'IRELAND': 'IE', 'ITALY': 'IT', 'INDIA': 'IN', 'BELGIUM': 'BE', 'EGYPT': 'EG' };
+    return map[name.toUpperCase()] || 'XX';
 }
+
+// Exportamos parseItemName aunque ya no se use activamente, para no romper imports antiguos si los hay
+export const parseItemName = () => { }; 

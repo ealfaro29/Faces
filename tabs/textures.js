@@ -32,53 +32,51 @@ const getGroupingKey = (filename) => {
 };
 
 // Nueva función para agrupar las texturas por nombre base
-export function groupTextureVariants(rawTextureList) {
+// Nueva función para agrupar las texturas (adaptada para objetos de datos)
+export function groupTextureVariants(textureItems) {
     const grouped = {};
-    const textureDir = 'photos/textures/';
 
-    rawTextureList.forEach(filename => {
-        const fullPath = textureDir + filename + '.webp';
+    textureItems.forEach(item => {
+        // item ya viene parseado del data-loader:
+        // { id, group, displayName, src, baseName, type... }
 
-        // El nombre visible es la parte entre el primer '-' y el último '_'
-        const displayName = filename.substring(filename.indexOf('-') + 1, filename.lastIndexOf('_')).trim();
+        // Si item es un string (legacy), lo ignoramos o manejamos (pero ya no debería ocurrir)
+        if (typeof item === 'string') return;
 
-        // Extraer el código de grupo (M, T, S)
-        const groupCode = filename.split('-')[0].trim();
+        // Construir grouping key
+        // Si el item tiene "baseName" (ej: Peacock), usaremos ese preferiblemente.
+        // Sino, intentamos deducirlo.
 
-        // Extraer el ID
-        const codeId = filename.substring(filename.lastIndexOf('_') + 1);
+        // CORRECCIÓN: En data-loader.js mapeamos 'baseName' a partir de item.name (que es "Peacock" en DB).
+        let groupingKey = item.baseName;
 
-        const item = {
-            id: codeId,
-            group: groupCode,
-            displayName: displayName, // e.g., "Geneve Red"
-            src: fullPath,
-            codeId: codeId,
-            filename: filename
-        };
+        if (!groupingKey) {
+            // Fallback: intentar extraer de displayName "Peacock Blue" -> "Peacock"
+            const parts = item.displayName.split(' ');
+            if (parts.length > 1) parts.pop(); // Quitar variante
+            groupingKey = parts.join(' ');
+        }
 
-        const groupingKey = getGroupingKey(filename); // e.g., "T-Geneve"
+        // Prefijo ST- para solid/translucid
+        const groupPrefix = (item.group === 'S' || item.group === 'T') ? 'ST-' : (item.group + '-');
+        const fullGroupKey = groupPrefix + groupingKey;
 
-        if (!grouped[groupingKey]) {
-            // El nombre base de la textura (e.g., Geneve) para mostrar en la tarjeta
-            const baseName = groupingKey.substring(groupingKey.indexOf('-') + 1);
-
-            grouped[groupingKey] = {
-                group: groupCode,
-                baseName: baseName,
-                mainVariant: item, // El primer elemento encontrado es la variante principal
+        if (!grouped[fullGroupKey]) {
+            grouped[fullGroupKey] = {
+                group: item.group,
+                baseName: groupingKey,
+                mainVariant: item,
                 variants: [item]
             };
-            // Guardar el nombre completo de la variante para la visualización inicial de la variante
-            item.baseName = baseName;
         } else {
-            grouped[groupingKey].variants.push(item);
-            // Guardar el nombre completo de la variante para la visualización inicial de la variante
-            item.baseName = grouped[groupingKey].baseName;
+            grouped[fullGroupKey].variants.push(item);
+
+            // Lógica opcional: Si queremos asegurarnos que el grupo refleje tipos mixtos (S y T)
+            // Si el nuevo item es Main (quizás por orden alfabético)... normalmente el orden de llegada
+            // define el Main.
         }
     });
 
-    // Convertir el objeto de grupos a un array para la renderización
     return Object.values(grouped);
 }
 

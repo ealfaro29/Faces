@@ -1,6 +1,6 @@
 // app.js - Aplicación principal refactorizada
 
-import { initializeAllData, parseItemName } from './data-loader.js';
+import { initializeAllData } from './data-loader.js';
 import { renderFacebasesGallery, populateFacebaseFilter } from './tabs/facebases.js';
 import { renderAvatarGallery, populateAvatarFilter } from './tabs/avatar.js';
 import { renderTextureGallery, getTextureIconPath, populateTextureFilter, groupTextureVariants } from './tabs/textures.js';
@@ -82,9 +82,10 @@ const startApp = async () => {
     try {
         const data = await initializeAllData();
 
-        const allTextureItems = data.allTextureBasenames.map(basename =>
-            parseItemName(basename, TEXTURES_PATH)
-        );
+        // const allTextureItems = ... (YA NO ES NECESARIO SI DATA-LOADER LO DEVUELVE)
+        // Pero data-loader todavía no lo devuelve explícitamente en el return.
+        // Voy a modificar data-loader.js para que devuelva `allTextureItems` en el objeto final.
+
         const allTextureGroups = groupTextureVariants(data.allTextureBasenames);
         const allFacebaseGroups = groupFacebaseVariants(data.allFacebaseItems);
 
