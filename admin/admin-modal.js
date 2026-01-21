@@ -125,7 +125,8 @@ export function initAdminPanel() {
         // Strategy: Try proxies sequentially
         const strategies = [
             `https://api.allorigins.win/raw?url=${encodeURIComponent(robloxApi)}`,
-            `https://corsproxy.io/?${encodeURIComponent(robloxApi)}`
+            `https://corsproxy.io/?${encodeURIComponent(robloxApi)}`,
+            `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(robloxApi)}`
         ];
 
         let foundUrl = null;
@@ -166,10 +167,14 @@ export function initAdminPanel() {
 
             // Fallback: Mostrar mensaje amigable y permitir forzar subida
             previewPlaceholder.innerHTML = `
-                <div class="flex flex-col items-center">
-                    <span class="text-xs text-red-500 font-bold mb-1">PREVIEW FAILED</span>
-                    <span class="text-[10px] text-zinc-500 text-center px-4">However, if ID is correct, it might still work.</span>
-                    <button type="button" id="force-approve-btn" class="mt-2 text-[10px] underline text-zinc-400 hover:text-white">Force Allow</button>
+                <div class="flex flex-col items-center w-full px-4">
+                    <span class="text-xs text-red-400 font-bold mb-1">PREVIEW FAILED</span>
+                    <span class="text-[10px] text-zinc-500 text-center mb-2">Proxy error or Roblox API busy.</span>
+                    <button type="button" id="force-approve-btn" 
+                        class="w-full py-2 bg-zinc-800 border border-zinc-600 rounded hover:bg-zinc-700 text-xs text-white transition-colors">
+                        ⚠️ Force Allow ID
+                    </button>
+                    <span class="text-[9px] text-zinc-600 mt-1">If ID is correct, it will work in app.</span>
                 </div>
             `;
 
