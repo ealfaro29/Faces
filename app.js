@@ -15,7 +15,8 @@ import './core/favorites.js'; // Auto-exports to window
 import { debounce, groupFacebaseVariants, createFilterFunction } from './core/search.js';
 import './ui/toast.js'; // Auto-exports to window
 import { registerHandler, setupEventDelegation, handleCopyButton, handleVariantButton, handleCardClick } from './ui/event-handlers.js';
-import { auth, onAuthStateChanged } from './core/firebase.js';
+import { auth } from './core/firebase.js';
+import { onAuthStateChanged } from 'firebase/auth';
 import { runAutoHealer } from './core/auto-healer.js';
 
 // Constantes Globales
