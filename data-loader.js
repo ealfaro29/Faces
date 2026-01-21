@@ -10,60 +10,39 @@ const DB_PATH = 'database.json';
  * Carga todos los datos JSON de la aplicación.
  * AHORA: Conecta a Firebase, fallback a JSON si falla.
  */
-// export async function initializeAllData() {
-//     console.log("DATA_LOADER: Iniciando carga optimizada...");
-//     // ... (FIREBASE LOGIC COMMENTED OUT FOR STABILITY) ...
-// }
-
 export async function initializeAllData() {
-    console.log("DATA_LOADER: Iniciando carga híbrida (Firebase > Local)...");
+    console.log("DATA_LOADER: ☁️ Starting Cloud Data Load (Firebase ONLY)...");
 
     let sourceData = { textures: [], facebases: [], avatar: [], music: [] };
     let source = "FIREBASE";
 
     try {
-        // 1. Intentar cargar desde Firebase Firestore
         console.log("DATA_LOADER: Fetching from Firestore...");
 
-        const [texSnap, faceSnap, avSnap] = await Promise.all([
+        const [texSnap, faceSnap, avSnap, musicSnap] = await Promise.all([
             getDocs(collection(db, 'textures')),
             getDocs(collection(db, 'facebases')),
-            getDocs(collection(db, 'avatar'))
+            getDocs(collection(db, 'avatar')),
+            getDocs(collection(db, 'music'))
         ]);
 
-        if (texSnap.empty && faceSnap.empty) {
-            console.warn("DATA_LOADER: Firestore appears empty. Using local fallback.");
-            throw new Error("Empty Database");
+        if (texSnap.empty && faceSnap.empty && avSnap.empty) {
+            console.warn("DATA_LOADER: Firestore is empty!");
         }
 
         texSnap.forEach(doc => sourceData.textures.push({ ...doc.data(), id: doc.id }));
         faceSnap.forEach(doc => sourceData.facebases.push(doc.data()));
         avSnap.forEach(doc => sourceData.avatar.push(doc.data()));
-
-        // Music: Fallback local siempre (por ahora)
-        const jsonFallback = await fetch(DB_PATH).then(res => res.json());
-        sourceData.music = jsonFallback.music || [];
+        musicSnap.forEach(doc => sourceData.music.push(doc.data()));
 
     } catch (error) {
-        console.warn("DATA_LOADER: Firestore fetch failed or empty:", error.message);
-        console.log("DATA_LOADER: 🛡️ Falling back to local database.json");
-        source = "LOCAL_JSON";
-
-        try {
-            const dbResponse = await fetch(DB_PATH);
-            if (!dbResponse.ok) throw new Error(`Failed to load database.json: ${dbResponse.statusText}`);
-            sourceData = await dbResponse.json();
-        } catch (jsonError) {
-            console.error("DATA_LOADER: CRITICAL - No data available sources.", jsonError);
-            throw jsonError;
-        }
+        console.error("DATA_LOADER: CRITICAL ERROR - Could not load from Firebase.", error);
+        throw error;
     }
 
-    console.log(`DATA_LOADER: Data loaded from [${source}]`);
+    console.log(`DATA_LOADER: Cloud load complete. Items: T:${sourceData.textures.length} F:${sourceData.facebases.length} A:${sourceData.avatar.length}`);
 
     // 2. Mapear y Normalizar datos (sourceData ya tiene la estructura correcta)
-    // No necesitamos reasignar variable dbData -> sourceData porque ya usamos sourceData desde el principio.
-
     // TEXTURAS
     const allTextureItems = (sourceData.textures || []).map(item => ({
         id: item.id || item.robloxId, // Fallback ID

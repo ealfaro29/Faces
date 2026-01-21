@@ -301,6 +301,14 @@ export function initAdminPanel() {
                     }
                 }
 
+                if (data.music) {
+                    migrateMsg.textContent = "Migrating Music...";
+                    for (const item of data.music) {
+                        await addDoc(collection(db, 'music'), { ...item, migrated: true });
+                        total++;
+                    }
+                }
+
                 migrateMsg.textContent = `✅ Success! Uploaded ${total} items.`;
                 migrateMsg.className = "status-text text-green-400";
                 migrateBtn.textContent = "Migration Complete";
