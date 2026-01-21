@@ -108,7 +108,84 @@ function parseAvatarItemFilename(filename) {
 }
 
 
-function generateDatabase() {
+const https = require('https');
+
+// Helper para hacer requests (Node.js nativo sin dependencias)
+function postRequest(url, data) {
+    return new Promise((resolve, reject) => {
+        const parsedUrl = new URL(url);
+        const options = {
+            hostname: parsedUrl.hostname,
+            path: parsedUrl.pathname + parsedUrl.search,
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Content-Length': data.length
+            }
+        };
+
+        const req = https.request(options, (res) => {
+            let body = '';
+            res.on('data', chunk => body += chunk);
+            res.on('end', () => {
+                try {
+                    const json = JSON.parse(body);
+                    resolve(json);
+                } catch (e) {
+                    resolve({ error: 'Invalid JSON', body });
+                }
+            });
+        });
+
+        req.on('error', (e) => reject(e));
+        req.write(data);
+        req.end();
+    });
+}
+
+// Resuelve una lista de IDs usando el batch endpoint de Roblox
+async function resolveRobloxThumbnails(idList) {
+    if (idList.length === 0) return {};
+
+    // Chunk in groups of 90 (limit is 100)
+    const chunkSize = 90;
+    const url = "https://thumbnails.roblox.com/v1/batch";
+    const resolvedMap = {};
+
+    for (let i = 0; i < idList.length; i += chunkSize) {
+        const chunk = idList.slice(i, i + chunkSize);
+        const payload = chunk.map(id => ({
+            requestId: `${id}`,
+            targetId: parseInt(id),
+            type: "Asset", // Probado que funciona para IDs de 14 dígitos
+            size: "420x420",
+            format: "Png"
+        }));
+
+        try {
+            console.log(`⏳ Fetching batch ${Math.floor(i / chunkSize) + 1}...`);
+            const response = await postRequest(url, JSON.stringify(payload));
+
+            if (response.data) {
+                response.data.forEach(item => {
+                    if (item.state === 'Completed' && item.imageUrl) {
+                        resolvedMap[item.targetId] = item.imageUrl;
+                    } else if (item.state === 'Blocked' && item.imageUrl) {
+                        // A veces devuelve Blocked pero con URL (como vimos en el ejemplo de Avatar)
+                        resolvedMap[item.targetId] = item.imageUrl;
+                    }
+                });
+            } else {
+                console.warn("⚠️ Batch response invalid:", response);
+            }
+        } catch (e) {
+            console.error("❌ Error fetching batch:", e);
+        }
+    }
+    return resolvedMap;
+}
+
+async function generateDatabase() {
     console.log("🛠️ Starting database generation...");
 
     // 1. Textures
@@ -157,6 +234,36 @@ function generateDatabase() {
             console.error("Error reading music.json:", e);
         }
     }
+
+    // 5. RESOLVER URLS DE ROBLOX ASYNC
+    console.log("🌍 Resolving Roblox Thumbnails...");
+
+    // Recolectar todos los IDs únicos
+    const allIds = new Set();
+    database.textures.forEach(i => allIds.add(i.robloxId));
+    database.facebases.forEach(i => allIds.add(i.robloxId));
+    database.avatar.forEach(i => allIds.add(i.robloxId));
+
+    const idList = Array.from(allIds).filter(id => id); // Filter nulls
+    console.log(`🔍 Found ${idList.length} unique IDs to resolve.`);
+
+    const urlMap = await resolveRobloxThumbnails(idList);
+
+    // Asignar URLs
+    let resolvedCount = 0;
+
+    const attachUrl = (item) => {
+        if (item.robloxId && urlMap[item.robloxId]) {
+            item.remoteUrl = urlMap[item.robloxId];
+            resolvedCount++;
+        }
+    };
+
+    database.textures.forEach(attachUrl);
+    database.facebases.forEach(attachUrl);
+    database.avatar.forEach(attachUrl);
+
+    console.log(`✨ Resolved ${resolvedCount} / ${idList.length} thumbnails.`);
 
     // Ensure public dir exists
     const publicDir = path.dirname(OUTPUT_DB_PATH);
