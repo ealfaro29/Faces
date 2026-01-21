@@ -1,35 +1,7 @@
 // tabs/textures.js
 
-// Función auxiliar para obtener la clave de agrupación
-// Agrupa texturas sólidas (S-) y transparentes (T-) con el mismo nombre base
-// Ej: "S-Peacock Blue" y "T-Peacock Blue" -> "ST-Peacock"
-const getGroupingKey = (filename) => {
-    // 1. Quitar el _[ID code]
-    const baseNameWithGroup = filename.substring(0, filename.lastIndexOf('_'));
+// Helper function removed (unused)
 
-    // 2. Extraer el prefijo (M-, S-, T-)
-    const prefix = baseNameWithGroup.split('-')[0];
-
-    // 3. Obtener la parte después del prefijo
-    const nameWithoutPrefix = baseNameWithGroup.substring(baseNameWithGroup.indexOf('-') + 1);
-
-    // 4. Obtener el nombre base (antes del último espacio, que suele ser el color/variante)
-    const lastSpaceIndex = nameWithoutPrefix.lastIndexOf(' ');
-    let baseName;
-    if (lastSpaceIndex !== -1) {
-        baseName = nameWithoutPrefix.substring(0, lastSpaceIndex);
-    } else {
-        baseName = nameWithoutPrefix;
-    }
-
-    // 5. Para texturas S- y T- con el mismo nombre base, usar "ST-" como prefijo unificado
-    // Para máscaras M-, mantener el prefijo original
-    if (prefix === 'S' || prefix === 'T') {
-        return 'ST-' + baseName;
-    } else {
-        return prefix + '-' + baseName;
-    }
-};
 
 // Nueva función para agrupar las texturas por nombre base
 // Nueva función para agrupar las texturas (adaptada para objetos de datos)
@@ -37,43 +9,50 @@ export function groupTextureVariants(textureItems) {
     const grouped = {};
 
     textureItems.forEach(item => {
-        // item ya viene parseado del data-loader:
-        // { id, group, displayName, src, baseName, type... }
-
-        // Si item es un string (legacy), lo ignoramos o manejamos (pero ya no debería ocurrir)
         if (typeof item === 'string') return;
 
-        // Construir grouping key
-        // Si el item tiene "baseName" (ej: Peacock), usaremos ese preferiblemente.
-        // Sino, intentamos deducirlo.
-
-        // CORRECCIÓN: En data-loader.js mapeamos 'baseName' a partir de item.name (que es "Peacock" en DB).
+        // 1. Determinar el Nombre Base (Grouping Key)
         let groupingKey = item.baseName;
 
         if (!groupingKey) {
-            // Fallback: intentar extraer de displayName "Peacock Blue" -> "Peacock"
+            // Estrategia: "Todo menos la última palabra es el grupo"
+            // Ej: "Elegant Red" -> "Elegant"
+            // Ej: "Geneve Long Blue" -> "Geneve Long"
+            // Ej: "Simple" -> "Simple" (se queda solo)
             const parts = item.displayName.split(' ');
-            if (parts.length > 1) parts.pop(); // Quitar variante
-            groupingKey = parts.join(' ');
+
+            if (parts.length > 1) {
+                // Quitamos la última palabra (asumimos que es la variante/color)
+                parts.pop();
+                groupingKey = parts.join(' ');
+            } else {
+                // Si es una sola palabra, esa es la clave.
+                // Pero ojo: si hay "Simple" y "Simple Red", queremos que "Simple" sea parte del grupo también?
+                // Por ahora, asumimos correspondencia exacta de prefijo.
+                groupingKey = item.displayName;
+            }
         }
 
-        // Prefijo ST- para solid/translucid
-        const groupPrefix = (item.group === 'S' || item.group === 'T') ? 'ST-' : (item.group + '-');
-        const fullGroupKey = groupPrefix + groupingKey;
+        // Normalizar clave para evitar duplicados por mayúsculas/espacios
+        const normalizedKey = groupingKey.toLowerCase().trim();
 
-        if (!grouped[fullGroupKey]) {
-            grouped[fullGroupKey] = {
+        // 2. Agrupar
+        // NOTA: Ignoramos el 'item.group' (Tipo) para la clave. 
+        // Así "Mesh-Elegant" y "Translucid-Elegant" se agruparán juntos si comparten nombre base.
+
+        if (!grouped[normalizedKey]) {
+            grouped[normalizedKey] = {
+                // Usamos el tipo del primero como tipo del grupo (para el icono)
                 group: item.group,
-                baseName: groupingKey,
+                baseName: groupingKey, // Nombre visual bonito (con Mayúsculas originales)
                 mainVariant: item,
                 variants: [item]
             };
         } else {
-            grouped[fullGroupKey].variants.push(item);
+            grouped[normalizedKey].variants.push(item);
 
-            // Lógica opcional: Si queremos asegurarnos que el grupo refleje tipos mixtos (S y T)
-            // Si el nuevo item es Main (quizás por orden alfabético)... normalmente el orden de llegada
-            // define el Main.
+            // Opcional: Si encontramos una variante que parece "más principal" (ej: nombre más corto), la promovemos?
+            // Por simplicidad, el primero que llega es el rey.
         }
     });
 
@@ -103,9 +82,9 @@ export function populateTextureFilter(items) {
 
     // Mapeo para nombres amigables
     const typeMap = {
-        'M': 'Mesh (M)',
-        'T': 'Translucid (T)',
-        'S': 'Solid (S)',
+        'M': 'Mesh',
+        'T': 'Translucid',
+        'S': 'Solid',
     };
 
     categories.sort().forEach(category => {
@@ -117,63 +96,8 @@ export function populateTextureFilter(items) {
 }
 
 
-export const getTextureIconPath = (typeCode) => {
-    // Normalizar entrada (primera letra mayúscula, resto minúscula para palabras, o todo mayúscula para códigos cortos)
-    if (!typeCode) return `<span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-red-700 text-white">?</span>`;
+// Icon helper functions removed as requested
 
-    const code = typeCode.toString();
-
-    // Mapeo Extendido: Mapeamos Palabras y Códigos a nuestros 3 iconos base (por ahora)
-    // Puedes subir más iconos (makeup.webp, tattoo.webp) en el futuro.
-    const typeMap = {
-        // MESH
-        'M': { src: 'photos/app/Mesh.webp', name: 'Mesh' },
-        'Mesh': { src: 'photos/app/Mesh.webp', name: 'Mesh' },
-
-        // TRANSLUCID
-        'T': { src: 'photos/app/trlcd.webp', name: 'Translucid' },
-        'Translucid': { src: 'photos/app/trlcd.webp', name: 'Translucid' },
-
-        // SOLID
-        'S': { src: 'photos/app/solid.webp', name: 'Solid' },
-        'Solid': { src: 'photos/app/solid.webp', name: 'Solid' },
-
-        // MIXED
-        'ST': { src: 'photos/app/trlcd.webp', name: 'Mixed' }, // Fallback visual
-
-        // NEW CATEGORIES (Usando iconos genéricos temporalmente)
-        'Makeup': { src: 'photos/app/trlcd.webp', name: 'Makeup' }, // Translucid tiene sentido para makeup
-        'Tattoos': { src: 'photos/app/solid.webp', name: 'Tattoos' }, // Solid para tattoos
-        'Skin Details': { src: 'photos/app/trlcd.webp', name: 'Skin Details' },
-        'Fantasy': { src: 'photos/app/Mesh.webp', name: 'Fantasy' }
-    };
-
-    const data = typeMap[code] || typeMap[code.toUpperCase()] || typeMap[code.charAt(0).toUpperCase() + code.slice(1)];
-
-    if (data) {
-        const title = `${data.name}`;
-        const img = document.createElement('img');
-        img.src = data.src;
-        img.alt = data.name;
-        img.title = title;
-        img.className = 'texture-type-icon';
-        // Fallback si la imagen falla
-        img.onerror = function () {
-            this.replaceWith(createBadge(data.name.substring(0, 2))); // Mostrar "Me", "So"...
-        };
-        return img.outerHTML;
-    }
-
-    // Si no encontramos nada, devolvemos un badge con las primeras 2 letras en lugar de "?" rojo feo
-    return createBadge(code.substring(0, 2));
-}
-
-function createBadge(text) {
-    const span = document.createElement('span');
-    span.className = 'text-[10px] font-bold px-1.5 py-0.5 rounded bg-zinc-700 text-zinc-300 border border-zinc-600 uppercase';
-    span.textContent = text;
-    return span.outerHTML;
-}
 
 // Nueva función para generar el HTML de una variante (miniatura)
 const renderVariantThumbnail = (variant, isMain) => {
@@ -211,7 +135,7 @@ export function renderTextureGallery(itemsToRender) {
     // itemsToRender es ahora una lista de GRUPOS de texturas.
     const gridItemsHTML = validGroups.map(group => {
         const main = group.mainVariant;
-        const iconTag = getTextureIconPath(main.group);
+        // Icon removed
         const hasVariants = group.variants.length > 1;
         const variantName = main.displayName.split(' ').pop(); // e.g. "Red"
 
@@ -229,13 +153,10 @@ export function renderTextureGallery(itemsToRender) {
             <div class="music-card facebase-card bg-[#151722] rounded-xl shadow-xl ring-1 ring-[var(--border)] overflow-hidden flex flex-col p-1.5 space-y-1.5 !w-full relative texture-group-card" 
                  data-group-key="${group.baseName}" data-main-id="${main.id}">
                 
-                <div class="texture-icon-group">
-                    ${iconTag}
-                    <div class="favorite-container !relative !top-0 !right-0 !bg-transparent !backdrop-filter-none !w-auto !h-auto">
-                        <button class="favorite-btn" data-id="${main.id}" onclick="window.toggleFavorite('${main.id}', this)">
-                            ${window.isFavorite(main.id) ? '❤️' : '🖤'}
-                        </button>
-                    </div>
+                <div class="absolute top-1.5 right-1.5 z-10 favorite-container !bg-transparent !backdrop-filter-none !w-auto !h-auto">
+                    <button class="favorite-btn" data-id="${main.id}" onclick="window.toggleFavorite('${main.id}', this)">
+                        ${window.isFavorite(main.id) ? '❤️' : '🖤'}
+                    </button>
                 </div>
 
                 <div class="variant-display-container">
@@ -316,6 +237,9 @@ window.selectTextureVariant = (element) => {
     if (copyBtn) {
         copyBtn.dataset.id = newId;
     }
+
+    // Update main ID for robust deletion logic
+    card.dataset.mainId = newId;
 
     // 5. Cerrar la galería de variantes
     card.classList.remove('show-variants');
