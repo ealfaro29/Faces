@@ -1,8 +1,8 @@
 // tabs/favorites.js
 
-import { getTextureIconPath } from './textures.js'; 
+import { getTextureIconPath } from './textures.js';
 import { getFlagEmoji } from '../utils/flag.js';
-import { getMusicIconPath } from './music.js'; 
+import { getMusicIconPath } from './music.js';
 
 // --- Funciones de Lógica de Favoritos (Exportadas desde aquí) ---
 
@@ -26,7 +26,7 @@ export function renderFavoritesGallery(itemsToRender, categoriesData) {
     const galleryContainer = document.getElementById('favorites-gallery-container');
     if (!galleryContainer) return;
     galleryContainer.innerHTML = '';
-    
+
     if (itemsToRender.length === 0) {
         galleryContainer.innerHTML = `<p class="text-zinc-500 text-center col-span-full pt-4">No has marcado ningún ítem como favorito todavía. Busca en las otras pestañas y usa el corazón (❤️).</p>`;
         return;
@@ -34,7 +34,7 @@ export function renderFavoritesGallery(itemsToRender, categoriesData) {
 
     // Crear lookup de banderas (Emojis + Locales)
     const flagLookup = categoriesData ? [...categoriesData.countries, ...categoriesData.others].reduce((acc, cat) => {
-        const key = cat.name.toUpperCase(); 
+        const key = cat.name.toUpperCase();
         if (cat.iso) {
             acc[key] = { src: getFlagEmoji(cat.iso), name: cat.name, isEmoji: true };
         } else if (cat.flag) {
@@ -53,12 +53,12 @@ export function renderFavoritesGallery(itemsToRender, categoriesData) {
 
     itemsToRender.forEach(item => {
         let cardHTML = '';
-        
-        if (item.type === 'music') { 
+
+        if (item.type === 'music') {
             // Renderizado de Música
             const iconSrc = getMusicIconPath(item.category);
-            const pitchTag = (item.pitch && item.pitch !== 0) 
-                ? `<span class="ml-2 text-xs font-semibold text-cyan-400" title="Pitch: ${item.pitch}">[PITCH]</span>` 
+            const pitchTag = (item.pitch && item.pitch !== 0)
+                ? `<span class="ml-2 text-xs font-semibold text-cyan-400" title="Pitch: ${item.pitch}">[PITCH]</span>`
                 : '';
 
             cardHTML = ` 
@@ -80,15 +80,15 @@ export function renderFavoritesGallery(itemsToRender, categoriesData) {
                         </button> 
                     </div> 
                 </div>`;
-        } 
-        
+        }
+
         // --- INICIO DE LA MODIFICACIÓN: Lógica para renderizar Facebase completa ---
         else if (item.type === 'facebase') {
-            
+
             // 1. Encontrar el grupo al que pertenece este item
-            const group = allFacebaseGroups.find(g => 
-                g.variants.default?.id === item.id || 
-                g.variants.X?.id === item.id || 
+            const group = allFacebaseGroups.find(g =>
+                g.variants.default?.id === item.id ||
+                g.variants.X?.id === item.id ||
                 g.variants.S?.id === item.id
             );
 
@@ -107,7 +107,7 @@ export function renderFavoritesGallery(itemsToRender, categoriesData) {
             // 3. Renderizar la card completa (lógica copiada de tabs/facebases.js)
             const it = group.defaultItem; // La card se basa en el item default
             const lookupResult = flagLookup[it.group];
-            
+
             // Lógica de Bandera
             let flagTag = `<span class="text-xs text-zinc-500">${it.group}</span>`;
             let flagName = it.group;
@@ -120,7 +120,7 @@ export function renderFavoritesGallery(itemsToRender, categoriesData) {
                     flagTag = `<img src="${lookupResult.src}" alt="${flagName} flag" title="${flagName}" ${toastEvents} class="flag-aesthetic !h-5 !w-auto rounded shadow cursor-pointer">`;
                 }
             }
-            
+
             // Lógica de Botones de Variante
             let variantButtonsHTML = '';
             const variantX = group.variants.X;
@@ -128,11 +128,11 @@ export function renderFavoritesGallery(itemsToRender, categoriesData) {
             if (variantX || variantS) {
                 variantButtonsHTML = '<div class="variant-buttons">';
                 if (variantX) {
-                    variantButtonsHTML += `<img src="photos/app/x.png" class="variant-button" title="Ojos Cerrados" 
-                        data-src="${variantX.src}" data-id="${variantX.id}" data-code-id="${variantX.codeId || ''}">`;
+                    variantButtonsHTML += `<img src="photos/app/x.webp" class="variant-button" title="Ojos Cerrados" 
+                        data-src="${variantX.src}" data-id="${variantX.id}" data-code-id="${variantX.codeId || ''}"`;
                 }
                 if (variantS) {
-                    variantButtonsHTML += `<img src="photos/app/s.png" class="variant-button" title="Ojos de Lado" 
+                    variantButtonsHTML += `<img src="photos/app/s.webp" class="variant-button" title="Ojos de Lado" 
                         data-src="${variantS.src}" data-id="${variantS.id}" data-code-id="${variantS.codeId || ''}">`;
                 }
                 variantButtonsHTML += '</div>';
@@ -178,18 +178,18 @@ export function renderFavoritesGallery(itemsToRender, categoriesData) {
             `;
         }
         // --- FIN DE LA MODIFICACIÓN ---
-        
+
         else {
             // Renderizado de Avatar y Texture (lógica anterior)
             const isTexture = item.type === 'texture';
-            
+
             let iconGroupHTML;
             let headerContentHTML;
             const lookupResult = flagLookup[item.group];
 
             if (isTexture) {
-                const iconTag = window.getTextureIconPath(item.group); 
-                
+                const iconTag = window.getTextureIconPath(item.group);
+
                 iconGroupHTML = `
                     <div class="texture-icon-group">
                         ${iconTag}
@@ -204,11 +204,11 @@ export function renderFavoritesGallery(itemsToRender, categoriesData) {
             } else { // Avatar
                 let flagTag;
                 let flagName = item.group;
-                
+
                 if (lookupResult) {
                     flagName = lookupResult.name;
                     const toastEvents = `onmouseover="window.showFlagToast('${flagName}', event)" onmouseout="window.hideFlagToast()"`;
-                    
+
                     if (lookupResult.isEmoji) {
                         flagTag = `<span ${toastEvents} class="text-xl cursor-pointer flag-emoji">${lookupResult.src}</span>`;
                     } else {
@@ -225,10 +225,10 @@ export function renderFavoritesGallery(itemsToRender, categoriesData) {
                             ❤️
                         </button>
                     </div>`;
-                
+
                 headerContentHTML = `<span class="truncate">${item.displayName} (${item.group})</span>`;
             }
-                
+
             cardHTML = `
                 <div class="music-card facebase-card bg-[#151722] rounded-xl shadow-xl ring-1 ring-[var(--border)] overflow-hidden flex flex-col p-1.5 space-y-1.5 !w-full relative">
                     ${iconGroupHTML}

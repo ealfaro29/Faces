@@ -5,10 +5,10 @@ import { getFlagEmoji } from '../utils/flag.js';
 export const populateFacebaseFilter = (categoriesData) => {
     const filter = document.getElementById('facebase-category-filter');
     if (!filter) return;
-    
+
     // Limpiar opciones existentes y añadir "All"
     filter.innerHTML = '<option value="all">All Categories</option>';
-    
+
     // Añadir Países
     categoriesData.countries.forEach(country => {
         const option = document.createElement('option');
@@ -30,10 +30,10 @@ export function renderFacebasesGallery(groupsToRender, categoriesData) {
     const galleryContainer = document.getElementById('gallery-container');
     if (!galleryContainer) return;
     galleryContainer.innerHTML = '';
-    
+
     // CREACIÓN DEL OBJETO DE BÚSQUEDA DE BANDERAS (tu código original)
     const flagLookup = [...categoriesData.countries, ...categoriesData.others].reduce((acc, cat) => {
-        const key = cat.name.toUpperCase(); 
+        const key = cat.name.toUpperCase();
         if (cat.iso) {
             acc[key] = { src: getFlagEmoji(cat.iso), name: cat.name, isEmoji: true };
         } else if (cat.flag) {
@@ -41,7 +41,7 @@ export function renderFacebasesGallery(groupsToRender, categoriesData) {
         }
         return acc;
     }, {});
-    
+
     if (groupsToRender.length === 0) {
         galleryContainer.innerHTML = `<p class="text-zinc-500 text-center col-span-full pt-4">No results found.</p>`;
         return;
@@ -50,9 +50,9 @@ export function renderFacebasesGallery(groupsToRender, categoriesData) {
     // --- INICIO DE LA MODIFICACIÓN ---
     // 'groupsToRender' es ahora una lista de GRUPOS
     const gridItemsHTML = groupsToRender.map(group => {
-        
+
         // Usamos el 'defaultItem' (que filtramos en app.js) como base
-        const it = group.defaultItem; 
+        const it = group.defaultItem;
         if (!it) return ''; // Seguridad, aunque ya no debería pasar
 
         // --- Lógica de Banderas (tu código original) ---
@@ -63,14 +63,14 @@ export function renderFacebasesGallery(groupsToRender, categoriesData) {
         if (lookupResult) {
             flagName = lookupResult.name;
             const toastEvents = `onmouseover="window.showFlagToast('${flagName}', event)" onmouseout="window.hideFlagToast()"`;
-            
+
             if (lookupResult.isEmoji) {
                 flagTag = `<span ${toastEvents} class="text-xl cursor-pointer flag-emoji">${lookupResult.src}</span>`;
             } else {
                 flagTag = `<img src="${lookupResult.src}" alt="${flagName} flag" title="${flagName}" ${toastEvents} class="flag-aesthetic !h-5 !w-auto rounded shadow cursor-pointer">`;
             }
         }
-        
+
         // --- NUEVO: Generar HTML de botones de variantes ---
         let variantButtonsHTML = '';
         const variantX = group.variants.X;
@@ -79,11 +79,11 @@ export function renderFacebasesGallery(groupsToRender, categoriesData) {
         if (variantX || variantS) {
             variantButtonsHTML = '<div class="variant-buttons">';
             if (variantX) {
-                variantButtonsHTML += `<img src="photos/app/x.png" class="variant-button" title="Ojos Cerrados" 
+                variantButtonsHTML += `<img src="photos/app/x.webp" class="variant-button" title="Ojos Cerrados" 
                     data-src="${variantX.src}" data-id="${variantX.id}" data-code-id="${variantX.codeId || ''}">`;
             }
             if (variantS) {
-                variantButtonsHTML += `<img src="photos/app/s.png" class="variant-button" title="Ojos de Lado" 
+                variantButtonsHTML += `<img src="photos/app/s.webp" class="variant-button" title="Ojos de Lado" 
                     data-src="${variantS.src}" data-id="${variantS.id}" data-code-id="${variantS.codeId || ''}">`;
             }
             variantButtonsHTML += '</div>';
@@ -129,6 +129,6 @@ export function renderFacebasesGallery(groupsToRender, categoriesData) {
             </div>
         `;
     }).join('');
-    
+
     galleryContainer.innerHTML = gridItemsHTML;
 }
