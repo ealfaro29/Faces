@@ -6,17 +6,23 @@
  * @returns {string} - La ruta a la imagen PNG.
  */
 export const getMusicIconPath = (category) => {
-    const defaultIcon = 'photos/app/music.jpg'; // Imagen genérica por si falla
-    if (!category) return defaultIcon;
+    const defaultIcon = 'photos/app/music.jpg'; // No se convirtió este archivo específico en la carpeta raíz de photos/app, parece. Verificaré.
+    // Revisando el listado anterior de conversiones, photos/app/music/ tenía las conversiones.
+    // photos/app/music.jpg estaba en la lista de exclusion? No, el script convertía recursivamente.
+    // Un momento, el script convertía .png -> .webp. 
+    // music.jpg es .jpg, así que NO se convirtió. Debe quedarse como .jpg salvo que yo lo convierta manual.
+    // Pero los de dentro de photos/app/music/ eran PNGs? 
+    // Voy a asumir que los de categoryMap eran PNG y se convirtieron.
+    // El defaultIcon es .jpg, ese se queda igual.
 
     const categoryMap = {
-        'Chill & LoFi': 'photos/app/music/chill.png',
-        'Electronic & Remixes': 'photos/app/music/electro.png',
-        'Thematic & Mood': 'photos/app/music/mood.png',
-        'Pop Hits': 'photos/app/music/pop.png',
-        'Runway & Pageant': 'photos/app/music/runway.png',
-        'Upbeat & Energetic': 'photos/app/music/upbeat.png',
-        'World & Cultural': 'photos/app/music/world.png',
+        'Chill & LoFi': 'photos/app/music/chill.webp',
+        'Electronic & Remixes': 'photos/app/music/electro.webp',
+        'Thematic & Mood': 'photos/app/music/mood.webp',
+        'Pop Hits': 'photos/app/music/pop.webp',
+        'Runway & Pageant': 'photos/app/music/runway.webp',
+        'Upbeat & Energetic': 'photos/app/music/upbeat.webp',
+        'World & Cultural': 'photos/app/music/world.webp',
     };
 
     return categoryMap[category] || defaultIcon;
@@ -25,7 +31,7 @@ export const getMusicIconPath = (category) => {
 export const populateMusicCategoryFilter = (codes) => {
     const filter = document.getElementById('music-category-filter');
     if (!filter) return;
-    
+
     const categories = [...new Set(codes.map(code => code.category))].filter(Boolean);
     categories.sort().forEach(category => {
         const option = document.createElement('option');
@@ -44,12 +50,12 @@ export const renderMusicCodes = (codes) => {
         resultsContainer.innerHTML = `<p class="text-zinc-500 text-center col-span-full">No results found.</p>`;
         return;
     }
-    
+
     // Bucle para crear las nuevas tarjetas
     codes.forEach(code => {
         const iconSrc = getMusicIconPath(code.category);
-        const pitchTag = (code.pitch && code.pitch !== 0) 
-            ? `<span class="ml-2 text-xs font-semibold text-cyan-400" title="Pitch: ${code.pitch}">[PITCH]</span>` 
+        const pitchTag = (code.pitch && code.pitch !== 0)
+            ? `<span class="ml-2 text-xs font-semibold text-cyan-400" title="Pitch: ${code.pitch}">[PITCH]</span>`
             : '';
 
         const cardHTML = ` 
