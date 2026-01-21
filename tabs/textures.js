@@ -37,7 +37,7 @@ export function groupTextureVariants(rawTextureList) {
     const textureDir = 'photos/textures/';
 
     rawTextureList.forEach(filename => {
-        const fullPath = textureDir + filename + '.png';
+        const fullPath = textureDir + filename + '.webp';
 
         // El nombre visible es la parte entre el primer '-' y el último '_'
         const displayName = filename.substring(filename.indexOf('-') + 1, filename.lastIndexOf('_')).trim();
@@ -121,9 +121,9 @@ export function populateTextureFilter(items) {
 
 export const getTextureIconPath = (typeCode) => {
     const typeMap = {
-        'M': { src: 'photos/app/mesh.png', name: 'Mesh' },
-        'T': { src: 'photos/app/trlcd.png', name: 'Translucid' },
-        'S': { src: 'photos/app/solid.png', name: 'Solid' },
+        'M': { src: 'photos/app/Mesh.webp', name: 'Mesh' },
+        'T': { src: 'photos/app/trlcd.webp', name: 'Translucid' },
+        'S': { src: 'photos/app/solid.webp', name: 'Solid' },
     };
     const data = typeMap[typeCode.toUpperCase()] || null;
 
