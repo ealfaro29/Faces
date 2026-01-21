@@ -1,4 +1,4 @@
-// app.js - Aplicación principal refactorizada
+// app.js - Principal Application Logic (Secured)
 
 import { initializeAllData } from './data-loader.js';
 import { renderFacebasesGallery, populateFacebaseFilter } from './tabs/facebases.js';
@@ -11,26 +11,17 @@ import { initializeTimeConverter, setupModal } from './modals/time-converter.js'
 import { setupAccessibleModal, enhanceKeyboardNavigation, updateTabStates } from './utils/accessibility.js';
 import { initSkeletonLoaders } from './utils/skeleton-loader.js';
 import store from './core/store.js';
-import './core/favorites.js'; // Auto-exports to window
+import './core/favorites.js';
 import { debounce, groupFacebaseVariants, createFilterFunction } from './core/search.js';
-import './ui/toast.js'; // Auto-exports to window
+import './ui/toast.js';
 import { registerHandler, setupEventDelegation, handleCopyButton, handleVariantButton, handleCardClick } from './ui/event-handlers.js';
-import { auth } from './core/firebase.js';
-import { onAuthStateChanged } from 'firebase/auth';
+import { auth, googleProvider } from './core/firebase.js';
+import { onAuthStateChanged, signInWithPopup } from 'firebase/auth';
 import { runAutoHealer } from './core/auto-healer.js';
+import { initAdminPanel } from './admin/admin-modal.js';
 
-// Constantes Globales
-const REQUIRE_LOGIN = false;
-const SECRET_B64 = 'bWFuY2hpdGFz';
-const AUTH_KEY = 'isAuthenticated';
-const LAST_AUTH_KEY = 'lastAuthTime';
-const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
-const TEXTURES_PATH = 'photos/textures';
-
-// Exponemos funciones necesarias a window
 window.getTextureIconPath = getTextureIconPath;
 
-// Crear función de filtrado con renderers
 const renderers = {
     renderFacebasesGallery,
     renderAvatarGallery,
@@ -41,12 +32,10 @@ const renderers = {
 
 const filterContent = createFilterFunction(store, renderers);
 
-// Registrar event handlers
 registerHandler('.copy-btn', handleCopyButton);
 registerHandler('.variant-button', handleVariantButton);
 registerHandler('.facebase-card', handleCardClick);
 
-// Funciones de tab
 function initializeTab(tabName, renderFunction, data, optionalData) {
     const state = store.getState();
     if (state.initializedTabs[tabName]) return;
@@ -81,24 +70,10 @@ function initializeFavoritesTab() {
     initializeTab('favorites', renderFavoritesGallery, [], state.facebaseCategories);
 }
 
-// Lógica de inicialización principal
-// ... imports
-import { initAdminPanel } from './admin/admin-modal.js';
-
-// ... existing code
-
+// Main App Initialization (Triggered ONLY after Auth)
 const startApp = async () => {
     try {
         const data = await initializeAllData();
-
-        // Initialize Admin Panel
-
-
-        // ... rest of logic
-
-        // const allTextureItems = ... (YA NO ES NECESARIO SI DATA-LOADER LO DEVUELVE)
-        // Pero data-loader todavía no lo devuelve explícitamente en el return.
-        // Voy a modificar data-loader.js para que devuelva `allTextureItems` en el objeto final.
 
         const allTextureGroups = groupTextureVariants(data.allTextureItems);
         const allFacebaseGroups = groupFacebaseVariants(data.allFacebaseItems);
@@ -132,92 +107,93 @@ const startApp = async () => {
         initializeFavoritesTab();
 
         filterContent();
-
-        // Inicializar skeleton loaders para lazy loading
         initSkeletonLoaders();
+
     } catch (error) {
-        console.error("APP_FLOW: Error crítico al iniciar la aplicación:", error);
+        console.error("APP_FLOW: Critical Error:", error);
     }
 };
 
+// --- MAIN ENTRY POINT (SECURE) ---
 document.addEventListener('DOMContentLoaded', () => {
     const loginOverlay = document.getElementById('loginOverlay');
-    const passwordInput = document.getElementById('passwordInput');
-    const loginBtn = document.getElementById('loginBtn');
-    const errorMessage = document.getElementById('errorMessage');
+    const googleLoginBtn = document.getElementById('google-login-btn');
     const searchBar = document.getElementById('search-bar');
     const tabs = document.querySelectorAll('.tab-nav-button[data-tab]');
     const contentAreas = document.querySelectorAll('.tab-content');
+    const loginErrorMsg = document.getElementById('login-error-msg');
 
-    // Setup event delegation
-    setupEventDelegation('#tab-content-wrapper');
+    let isAppInitialized = false;
 
-    // Autenticación
-    const checkAuthentication = () => {
-        if (!REQUIRE_LOGIN) {
-            console.warn("Autenticación desactivada. Saltando login.");
-            if (loginOverlay) loginOverlay.classList.remove('show');
-            setTimeout(startApp, 500);
-            return;
-        }
-
-        const isAuthenticated = localStorage.getItem(AUTH_KEY) === 'true';
-        const lastAuthTime = localStorage.getItem(LAST_AUTH_KEY);
-        const now = Date.now();
-
-        if (isAuthenticated && lastAuthTime && (now - lastAuthTime < THIRTY_DAYS_MS)) {
-            if (loginOverlay) loginOverlay.classList.remove('show');
-            setTimeout(startApp, 500);
-        } else {
-            localStorage.removeItem(AUTH_KEY);
-            localStorage.removeItem(LAST_AUTH_KEY);
-            if (loginOverlay) loginOverlay.classList.add('show');
-        }
-    };
-
-    const authenticate = () => {
-        try {
-            if (passwordInput && passwordInput.value === atob(SECRET_B64)) {
-                localStorage.setItem(AUTH_KEY, 'true');
-                localStorage.setItem(LAST_AUTH_KEY, Date.now());
-
-                if (errorMessage) errorMessage.textContent = '';
-                if (loginOverlay) loginOverlay.classList.remove('show');
-
-                startApp();
-            } else {
-                if (errorMessage) errorMessage.textContent = 'Incorrect password.';
-            }
-        } catch (e) {
-            console.error("Error durante la autenticación:", e);
-            if (errorMessage) errorMessage.textContent = 'Authentication error.';
-        }
-    };
-
-    // Event listeners de autenticación
-    if (loginBtn) loginBtn.addEventListener('click', authenticate);
-    if (passwordInput) {
-        passwordInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                authenticate();
+    // 1. GOOGLE AUTH GUARD
+    if (googleLoginBtn) {
+        googleLoginBtn.addEventListener('click', async () => {
+            if (loginErrorMsg) loginErrorMsg.textContent = "Connecting to Google...";
+            try {
+                await signInWithPopup(auth, googleProvider);
+            } catch (error) {
+                console.error("Login failed:", error);
+                if (loginErrorMsg) loginErrorMsg.textContent = "Login failed: " + error.message;
             }
         });
     }
 
-    // Búsqueda y filtros
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            console.log("✅ ACCESS GRANTED:", user.email);
+
+            // Hide Overlay
+            if (loginOverlay) {
+                loginOverlay.classList.remove('show');
+                setTimeout(() => loginOverlay.classList.add('hidden'), 500);
+            }
+
+            // Init App
+            if (!isAppInitialized) {
+                startApp();
+                initAdminPanel();
+                isAppInitialized = true;
+            }
+
+            // Auto-Healer (Admin Maintenance)
+            console.log("🚑 Starting Auto-Healer scan...");
+            const healerInterval = setInterval(() => {
+                const state = store.getState();
+                if (state.globalDataLoaded) {
+                    clearInterval(healerInterval);
+                    const healingList = [
+                        ...state.textures.map(i => ({ ...i, collectionRef: 'textures' })),
+                        ...state.facebases.map(i => ({ ...i, collectionRef: 'facebases' })),
+                        ...state.avatar.map(i => ({ ...i, collectionRef: 'avatar' }))
+                    ];
+                    runAutoHealer(healingList);
+                }
+            }, 2000);
+
+        } else {
+            console.log("🔒 LOCKED. Waiting for login...");
+            if (loginOverlay) {
+                loginOverlay.classList.remove('hidden');
+                void loginOverlay.offsetWidth; // force reflow
+                loginOverlay.classList.add('show');
+            }
+            if (loginErrorMsg) loginErrorMsg.textContent = "";
+        }
+    });
+
+    // 2. STANDARD SETUP
+    setupEventDelegation('#tab-content-wrapper');
+
     if (searchBar) searchBar.addEventListener('input', debounce(filterContent, 300));
     document.getElementById('facebase-category-filter')?.addEventListener('change', filterContent);
     document.getElementById('avatar-category-filter')?.addEventListener('change', filterContent);
     document.getElementById('texture-category-filter')?.addEventListener('change', filterContent);
     document.getElementById('music-category-filter')?.addEventListener('change', filterContent);
 
-    // Modales con accesibilidad
     setupAccessibleModal('openTimeConverterBtn', 'closeTimeConverterBtn', 'timeConverterModal');
     setupAccessibleModal('openDriveModalBtn', 'closeDriveModalBtn', 'googleDriveModal');
     setupAccessibleModal('openTicketModalBtn', 'closeTicketModalBtn', 'ticketModal');
 
-    // Ticket modal copy logic
     const ticketContainer = document.getElementById('ticket-buttons-container');
     if (ticketContainer) {
         ticketContainer.addEventListener('click', (event) => {
@@ -226,7 +202,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const textToCopy = copyButton.dataset.copyText;
             const originalText = copyButton.innerHTML;
-
             if (textToCopy) {
                 navigator.clipboard.writeText(textToCopy).then(() => {
                     copyButton.innerHTML = '¡Copiado!';
@@ -235,15 +210,11 @@ document.addEventListener('DOMContentLoaded', () => {
                         copyButton.innerHTML = originalText;
                         copyButton.classList.remove('copied');
                     }, 1500);
-                }).catch(err => {
-                    console.error('Error al copiar el texto:', err);
-                    alert('No se pudo copiar el texto.');
                 });
             }
         });
     }
 
-    // Tabs navigation
     tabs.forEach(tab => {
         tab.addEventListener('click', () => {
             const target = tab.dataset.tab;
@@ -259,10 +230,8 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Keyboard navigation
     enhanceKeyboardNavigation();
 
-    // Update search UI
     const updateSearchUI = (activeTab) => {
         const facebaseCategoryFilter = document.getElementById('facebase-category-filter');
         const avatarCategoryFilter = document.getElementById('avatar-category-filter');
@@ -270,7 +239,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const musicCategoryFilter = document.getElementById('music-category-filter');
 
         if (searchBar) searchBar.value = '';
-
         if (facebaseCategoryFilter) facebaseCategoryFilter.style.display = 'none';
         if (avatarCategoryFilter) avatarCategoryFilter.style.display = 'none';
         if (textureCategoryFilter) textureCategoryFilter.style.display = 'none';
@@ -294,29 +262,4 @@ document.addEventListener('DOMContentLoaded', () => {
             if (searchBar) searchBar.placeholder = 'Search...';
         }
     };
-
-    initAdminPanel();
-    checkAuthentication();
-
-    // --- AUTO-HEAL AUTOMATION ---
-    onAuthStateChanged(auth, (user) => {
-        if (user) {
-            console.log("👤 Admin logged in. Checking for broken links...");
-            // Esperar un poco a que los datos carguen si es login inmediato
-            const interval = setInterval(() => {
-                const state = store.getState();
-                if (state.globalDataLoaded) {
-                    clearInterval(interval);
-
-                    const healingList = [
-                        ...state.textures.map(i => ({ ...i, collectionRef: 'textures' })),
-                        ...state.facebases.map(i => ({ ...i, collectionRef: 'facebases' })),
-                        ...state.avatar.map(i => ({ ...i, collectionRef: 'avatar' }))
-                    ];
-
-                    runAutoHealer(healingList);
-                }
-            }, 1000);
-        }
-    });
 });
