@@ -61,9 +61,10 @@ export function initDeleteHandler() {
                 nameSpan.innerHTML = `Are you sure you want to delete <b>"${itemName}"</b>?<br><span class="text-xs text-zinc-500">ID: ${itemId} • Collection: ${collectionName}</span>`;
                 deleteModal.classList.remove('hidden');
 
-                // Animación simple de entrada
-                deleteModal.style.opacity = '0';
-                setTimeout(() => deleteModal.style.opacity = '1', 10);
+                // Animación y Activación de Puntero
+                // Forzar reflow
+                void deleteModal.offsetWidth;
+                deleteModal.classList.add('show');
 
             } else {
                 console.warn("DELETE TOOL: Could not identify item.", { itemId, collectionName });
@@ -115,7 +116,10 @@ export function initDeleteHandler() {
     });
 
     function closeDeleteModal() {
-        deleteModal.classList.add('hidden');
-        itemToDelete = null;
+        deleteModal.classList.remove('show');
+        setTimeout(() => {
+            deleteModal.classList.add('hidden');
+            itemToDelete = null;
+        }, 300); // Wait for CSS transition
     }
 }
