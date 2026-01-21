@@ -95,7 +95,7 @@ const startApp = async () => {
             allAvatarItems: data.allAvatarItems,
             allTextureBasenames: data.allTextureBasenames,
             allMusicCodes: data.allMusicCodes,
-            allTextureItems,
+            allTextureItems: data.allTextureItems,
             allTextureGroups,
             allFacebaseGroups,
             globalDataLoaded: true
