@@ -8,7 +8,7 @@ const FACEBASES_DIR = path.join(PHOTOS_DIR, 'facebases'); // Incluido
 const ITEMS_DIR = path.join(PHOTOS_DIR, 'items'); // Avatar (ítems)
 const MUSIC_JSON_PATH = path.join(__dirname, 'music.json');
 
-const OUTPUT_DB_PATH = path.join(__dirname, 'public', 'database.json');
+const OUTPUT_DB_PATH = path.join(__dirname, 'database.json');
 
 // Base de datos maestra
 const database = {
