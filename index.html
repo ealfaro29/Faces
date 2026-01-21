@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Fashion Muse Doll Base Collection</title>
+
+    <!-- SEO Meta Tags -->
+    <meta name="description"
+        content="Explore a curated collection of fashion doll bases, textures, and accessories from around the world. Discover unique designs inspired by various cultures and styles." />
+    <meta name="keywords"
+        content="fashion dolls, doll bases, doll textures, fashion muse, doll accessories, international dolls" />
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Fashion Muse Doll Base Collection" />
+    <meta property="og:description"
+        content="Explore a curated collection of fashion doll bases, textures, and accessories from around the world." />
+    <meta property="og:image" content="./assets/logo-CJuCUp_T.svg" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Fashion Muse Doll Base Collection" />
+    <meta name="twitter:description" content="Curated collection of fashion doll bases and accessories." />
+
+    <!-- Preconnect to CDNs for faster loading -->
+    <link rel="preconnect" href="https://cdn.tailwindcss.com" />
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" />
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap"
+        rel="stylesheet" />
+
+  <script type="module" crossorigin src="./assets/index-CsCQ2AKU.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-Bt8t27GZ.css">
+</head>
+
+<body>
+
+    <!-- <canvas id="particle-canvas"></canvas> -->
+
+    <div id="loginOverlay" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="login-title">
+        <div class="modal-content p-8 text-center">
+            <img src="./assets/logo-CJuCUp_T.svg" alt="Fashion Muse Logo" class="w-256 h-auto mx-auto mb-6">
+            <h2 id="login-title" class="text-2xl font-bold title-fancy gold-title mb-4">Enter Password</h2>
+            <input id="passwordInput" type="password" class="w-full h-11 px-3 text-center dark-input rounded-md"
+                placeholder=" " aria-label="Password input" aria-required="true">
+            <button id="loginBtn"
+                class="mt-4 h-11 w-full flex items-center justify-center rounded-md bg-[var(--gold2)] text-black font-semibold hover:brightness-110 transition-transform hover:scale-105"
+                aria-label="Unlock application">Unlock</button>
+            <p id="errorMessage" class="mt-2 text-sm text-red-400 h-4" role="alert" aria-live="polite"></p>
+        </div>
+    </div>
+
+    <div id="photosModal" class="modal-overlay overflow-y-auto" role="dialog" aria-modal="true"
+        aria-labelledby="photos-title">
+        <div id="photosModalContent"
+            class="modal-content !max-w-[90vw] !max-h-[90vh] !bg-transparent !border-none !shadow-none p-0 relative">
+            <button id="closePhotosBtn"
+                class="absolute top-4 right-4 text-white/50 hover:text-white transition text-4xl z-20"
+                aria-label="Close photo gallery">&times;</button>
+            <h2 id="photos-title" class="sr-only">Photo Gallery</h2>
+
+            <div id="photo-container" class="py-10" style="min-height: 400px; min-width: 300px;" role="region"
+                aria-label="Photo viewer">
+                <button id="prevPhotoBtn" class="nav-btn left-4 hidden" aria-label="Previous photo">
+                    &lsaquo;
+                </button>
+                <button id="nextPhotoBtn" class="nav-btn right-4 hidden" aria-label="Next photo">
+                    &rsaquo;
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="timeConverterModal" class="modal-overlay" role="dialog" aria-modal="true"
+        aria-labelledby="time-converter-title">
+        <div class="modal-content p-6 pt-8 relative">
+            <button id="closeTimeConverterBtn"
+                class="absolute top-2 right-2 text-zinc-400 hover:text-white transition text-3xl z-10"
+                aria-label="Close time converter">&times;</button>
+            <h2 id="time-converter-title" class="text-center text-xl font-semibold title-fancy gold-title mb-6">Time
+                Converter</h2>
+
+            <div class="grid grid-cols-[1fr_auto_1fr] items-center text-center px-4 pb-4">
+                <div class="flex flex-col gap-2">
+                    <select id="eventTimeZone" class="w-full h-10 px-3 text-sm dark-input rounded-md"></select>
+                    <select id="eventDate" class="w-full h-10 px-3 text-sm dark-input rounded-md"></select>
+                </div>
+                <div class="text-3xl text-[var(--gold2)] px-4">▶</div>
+                <div class="flex flex-col gap-2">
+                    <div class="font-bold text-lg text-zinc-100">SJO Time</div>
+                    <div id="sjoDate" class="text-sm text-zinc-300">-</div>
+                </div>
+            </div>
+
+            <div class="border-t border-[var(--border)] pt-4">
+                <div class="grid grid-cols-[1fr_auto_1fr] items-center">
+                    <div class="relative">
+                        <div id="hour-scroller-input" class="hour-scroller"></div>
+                        <div class="scroller-selection-indicator"></div>
+                    </div>
+                    <div></div>
+                    <div id="sjoTime" class="text-3xl font-bold text-center text-zinc-100">-</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="googleDriveModal" class="modal-overlay" role="dialog" aria-modal="true"
+        aria-labelledby="drive-modal-title">
+        <div class="modal-content p-6 pt-8 relative text-center">
+            <button id="closeDriveModalBtn"
+                class="absolute top-2 right-2 text-zinc-400 hover:text-white transition text-3xl z-10"
+                aria-label="Close Google Drive modal">&times;</button>
+            <h2 id="drive-modal-title" class="text-center text-xl font-semibold title-fancy gold-title mb-6">Contribuir
+                a la Carpeta</h2>
+
+            <p class="text-zinc-300 text-sm mb-6">
+                Haz clic en el botón de abajo para abrir la carpeta de Google Drive en una nueva pestaña. Podrás subir
+                tus archivos allí.
+            </p>
+
+            <a href="https://drive.google.com/drive/folders/1-3l67TJy51ecP-J_0W9O7VrqhHPNZ7l6?usp=sharing"
+                target="_blank" rel="noopener noreferrer"
+                class="h-11 px-6 inline-flex items-center justify-center rounded-md bg-[var(--gold2)] text-black font-semibold hover:brightness-110 transition-transform hover:scale-105">
+                Abrir Google Drive
+            </a>
+        </div>
+    </div>
+
+    <div id="ticketModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="ticket-modal-title">
+        <div class="modal-content p-6 pt-8 relative">
+            <button id="closeTicketModalBtn"
+                class="absolute top-2 right-2 text-zinc-400 hover:text-white transition text-3xl z-10"
+                aria-label="Close ticket modal">&times;</button>
+            <h2 id="ticket-modal-title" class="text-center text-xl font-semibold title-fancy gold-title mb-6">Copiar
+                Nombre de Ticket</h2>
+
+            <div id="ticket-buttons-container" class="flex flex-col gap-3">
+                <button class="copy-ticket-btn" data-copy-text="🇪🇸 SPAIN - FashionMuseDoll">
+                    <span class="flag-emoji">🇪🇸</span> SPAIN - FashionMuseDoll
+                </button>
+                <button class="copy-ticket-btn" data-copy-text="🇧🇷 BRAZIL - FashionMuseDoll">
+                    <span class="flag-emoji">🇧🇷</span> BRAZIL - FashionMuseDoll
+                </button>
+                <button class="copy-ticket-btn" data-copy-text="🇬🇧 UNITED KINGDOM - FashionMuseDoll">
+                    <span class="flag-emoji">🇬🇧</span> UNITED KINGDOM - FashionMuseDoll
+                </button>
+                <button class="copy-ticket-btn" data-copy-text="🇨🇷 COSTA RICA - FashionMuseDoll">
+                    <span class="flag-emoji">🇨🇷</span> COSTA RICA - FashionMuseDoll
+                </button>
+                <button class="copy-ticket-btn" data-copy-text="🇮🇹 ITALY - FashionMuseDoll">
+                    <span class="flag-emoji">🇮🇹</span> ITALY - FashionMuseDoll
+                </button>
+                <button class="copy-ticket-btn" data-copy-text="🇹🇭 THAILAND - FashionMuseDoll">
+                    <span class="flag-emoji">🇹🇭</span> THAILAND - FashionMuseDoll
+                </button>
+            </div>
+        </div>
+    </div>
+    <div id="custom-toast"></div>
+    <div class="container" id="app-container">
+        <header class="panel flex flex-col md:flex-row items-center justify-between p-4 gap-4" role="banner">
+            <a href="https://ealfaro29.github.io/Faces/index.html" target="_blank"
+                class="text-3xl lg:text-4xl title-fancy gold-title no-underline hover:brightness-110"
+                aria-label="Fashion Muse Collection home">
+                <h1>Fashion Muse Collection</h1>
+            </a>
+            <nav class="flex items-center justify-center flex-wrap gap-2" role="navigation"
+                aria-label="Main navigation">
+                <button class="tab-nav-button active" data-tab="favorites" aria-label="Favorites tab"
+                    aria-pressed="true">❤️</button>
+                <button class="tab-nav-button" data-tab="facebases" aria-label="Facebases tab"
+                    aria-pressed="false">Facebases</button>
+                <button class="tab-nav-button" data-tab="avatar" aria-label="Avatar tab"
+                    aria-pressed="false">Avatar</button>
+                <button class="tab-nav-button" data-tab="textures" aria-label="Textures tab"
+                    aria-pressed="false">Textures</button>
+                <button class="tab-nav-button" data-tab="music" aria-label="Music tab"
+                    aria-pressed="false">Music</button>
+                <button id="nav-admin-btn" class="tab-nav-button" aria-label="Admin Panel"
+                    style="border-color: #333; color: #666;">
+                    + Admin
+                </button>
+            </nav>
+            <div class="flex items-center gap-2" role="toolbar" aria-label="Utility actions">
+                <button id="openPhotosBtn" title="Download Photos"
+                    class="w-10 h-10 flex items-center justify-center bg-black/20 text-[var(--gold2)] rounded-full border border-transparent hover:border-[var(--border)] hover:scale-110 transition-all"
+                    aria-label="Open photo gallery"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18"
+                        fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+                        <path d="M6.002 5.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0" />
+                        <path
+                            d="M2.002 1a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2h-12zm12 1a1 1 0 0 1 1 1v6.5l-3.777-1.947a.5.5 0 0 0-.577.093l-3.71 3.71-2.66-1.772a.5.5 0 0 0-.63.062L1.002 12V3a1 1 0 0 1 1-1h12z" />
+                    </svg></button>
+                <button id="openTimeConverterBtn" title="Time Converter"
+                    class="w-10 h-10 flex items-center justify-center bg-black/20 text-[var(--gold2)] rounded-full border border-transparent hover:border-[var(--border)] hover:scale-110 transition-all"
+                    aria-label="Open time converter"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18"
+                        fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+                        <path d="M8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71V3.5z" />
+                        <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16m7-8A7 7 0 1 1 1 8a7 7 0 0 1 14 0" />
+                    </svg></button>
+                <button id="openDriveModalBtn" title="Subir a Drive"
+                    class="w-10 h-10 flex items-center justify-center bg-black/20 text-[var(--gold2)] rounded-full border border-transparent hover:border-[var(--border)] hover:scale-110 transition-all"
+                    aria-label="Upload to Google Drive"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18"
+                        fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+                        <path
+                            d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z" />
+                        <path
+                            d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708l3-3z" />
+                    </svg></button>
+                <button id="openTicketModalBtn" title="Ticket Names"
+                    class="w-10 h-10 flex items-center justify-center bg-black/20 text-[var(--gold2)] rounded-full border border-transparent hover:border-[var(--border)] hover:scale-110 transition-all text-xl"
+                    aria-label="Copy ticket names">🎫</button>
+            </div>
+        </header>
+
+        <main class="panel" role="main">
+            <div id="search-controls"
+                class="flex-shrink-0 flex flex-col sm:flex-row gap-4 mb-4 pb-4 border-b border-[var(--border)]"
+                role="search">
+                <div class="relative flex-grow">
+                    <input type="search" id="search-bar" placeholder="Search..."
+                        class="w-full h-12 pl-10 pr-4 text-sm dark-input rounded-md" aria-label="Search items">
+                    <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none"
+                        aria-hidden="true">
+                        <svg class="w-5 h-5 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                        </svg>
+                    </div>
+                </div>
+                <select id="facebase-category-filter" class="h-12 px-3 text-sm dark-input rounded-md sm:w-64"
+                    style="display: none;" aria-label="Filter by facebase category">
+                </select>
+                <select id="avatar-category-filter" class="h-12 px-3 text-sm dark-input rounded-md sm:w-64"
+                    style="display: none;" aria-label="Filter by avatar category">
+                </select>
+                <select id="texture-category-filter" class="h-12 px-3 text-sm dark-input rounded-md sm:w-64"
+                    style="display: none;" aria-label="Filter by texture type">
+                </select>
+                <select id="music-category-filter" class="h-12 px-3 text-sm dark-input rounded-md sm:w-64"
+                    style="display: none;" aria-label="Filter by music category">
+                    <option value="all">All Categories</option>
+                </select>
+            </div>
+
+            <div id="tab-content-wrapper" class="flex-grow relative min-h-0">
+                <div id="content-facebases" class="tab-content absolute inset-0 hidden scrollable-content">
+                    <div id="gallery-container"
+                        class="pr-2 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4"></div>
+                </div>
+                <div id="content-music" class="tab-content absolute inset-0 hidden scrollable-content">
+                    <div id="music-results-container"
+                        class="pr-2 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4"></div>
+                </div>
+                <div id="content-avatar" class="tab-content absolute inset-0 hidden scrollable-content">
+                    <div id="avatar-gallery-container"
+                        class="pr-2 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                    </div>
+                </div>
+                <div id="content-textures" class="tab-content absolute inset-0 hidden scrollable-content">
+                    <div id="textures-gallery-container"
+                        class="pr-2 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                    </div>
+                </div>
+                <div id="content-favorites" class="tab-content absolute inset-0 scrollable-content">
+                    <div id="favorites-gallery-container"
+                        class="pr-2 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                        <p class="text-zinc-500 text-center col-span-full pt-4">Mark an item as favorite (❤️) to see it
+                            here.</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <footer class="text-center py-8 text-zinc-500 text-sm">
+        <p>&copy; 2024 Fashion Muse. All rights reserved.</p>
+    </footer>
+
+    <!-- ADMIN MODAL -->
+    <div id="admin-modal" class="modal-overlay hidden">
+        <div class="modal-content admin-modal-content">
+            <button class="modal-close" id="admin-close-btn">&times;</button>
+
+            <h2 class="admin-title">Admin Dashboard</h2>
+
+            <!-- AUTH SECTION -->
+            <div id="admin-auth-view">
+                <form id="admin-login-form" class="admin-form">
+                    <div class="input-group">
+                        <input type="text" id="admin-email" placeholder="Email" class="admin-input">
+                    </div>
+                    <div class="input-group">
+                        <input type="password" id="admin-password" placeholder="Password" class="admin-input">
+                    </div>
+                    <div class="auth-actions">
+                        <button type="submit" class="admin-btn primary">Login</button>
+                        <button type="button" id="admin-signup-btn" class="admin-btn secondary">Register</button>
+                    </div>
+                    <p id="auth-status" class="status-text"></p>
+                </form>
+            </div>
+
+            <!-- DASHBOARD SECTION -->
+            <div id="admin-dashboard-view" class="hidden">
+                <div class="dashboard-header">
+                    <span id="admin-user-email">user@example.com</span>
+                    <button id="admin-logout-btn" class="logout-link">Logout</button>
+                </div>
+
+                <form id="quick-upload-form" class="admin-form">
+
+                    <!-- TYPE SELECTOR -->
+                    <div class="form-section">
+                        <label>Item Type</label>
+                        <div class="type-selector" id="type-selector">
+                            <label>
+                                <input type="radio" name="itemType" value="texture" checked>
+                                <div class="type-card">Texture</div>
+                            </label>
+                            <label>
+                                <input type="radio" name="itemType" value="facebase">
+                                <div class="type-card">Facebase</div>
+                            </label>
+                            <label>
+                                <input type="radio" name="itemType" value="avatar">
+                                <div class="type-card">Avatar</div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- ROBLOX ID & PREVIEW -->
+                    <div class="form-row">
+                        <div class="form-section flex-grow">
+                            <label>Roblox Asset ID</label>
+                            <input type="number" id="new-roblox-id" placeholder="Paste ID..." class="admin-input">
+                        </div>
+                        <div id="new-item-preview" class="preview-box">
+                            <span>?</span>
+                        </div>
+                    </div>
+
+                    <!-- NAME -->
+                    <div class="form-section">
+                        <label>Display Name</label>
+                        <input type="text" id="new-item-name" placeholder="E.g. Blue Sparkle" class="admin-input">
+                    </div>
+
+                    <!-- CATEGORY -->
+                    <div class="form-section">
+                        <label>Category</label>
+
+                        <!-- Textures -->
+                        <div id="cat-options-texture" class="category-options-group pill-group">
+                            <label><input type="radio" name="itemCategory" value="M" checked><span>M</span></label>
+                            <label><input type="radio" name="itemCategory" value="S"><span>S</span></label>
+                            <label><input type="radio" name="itemCategory" value="T"><span>T</span></label>
+                            <label><input type="radio" name="itemCategory" value="ST"><span>ST</span></label>
+                        </div>
+
+                        <!-- Facebases -->
+                        <select id="cat-options-facebase" class="admin-select hidden category-options-group">
+                            <option value="Global">Global</option>
+                            <option value="Brazil">Brazil</option>
+                            <option value="UK">UK</option>
+                            <option value="USA">USA</option>
+                            <option value="Italy">Italy</option>
+                            <option value="Spain">Spain</option>
+                            <option value="France">France</option>
+                            <option value="Japan">Japan</option>
+                            <option value="Korea">Korea</option>
+                        </select>
+
+                        <!-- Avatar -->
+                        <div id="cat-options-avatar" class="category-options-group pill-group hidden">
+                            <label><input type="radio" name="itemCategory" value="Hair"><span>Hair</span></label>
+                            <label><input type="radio" name="itemCategory" value="Mesh"><span>Mesh</span></label>
+                            <label><input type="radio" name="itemCategory"
+                                    value="Accessory"><span>Accessory</span></label>
+                        </div>
+                    </div>
+
+                    <button type="submit" id="admin-submit-btn" class="admin-btn full-width mt-4">Add to
+                        Database</button>
+                    <p id="admin-msg" class="status-text"></p>
+                </form>
+
+                <div class="dashboard-footer">
+                    <button id="run-migration-btn" class="text-link">Run Migration (One-time)</button>
+                    <p id="migration-msg" class="status-tiny"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+
+    <!-- <script type="module" src="./background.js"></script> -->
+</body>
+
+</html>
