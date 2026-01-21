@@ -15,6 +15,8 @@ import './core/favorites.js'; // Auto-exports to window
 import { debounce, groupFacebaseVariants, createFilterFunction } from './core/search.js';
 import './ui/toast.js'; // Auto-exports to window
 import { registerHandler, setupEventDelegation, handleCopyButton, handleVariantButton, handleCardClick } from './ui/event-handlers.js';
+import { auth, onAuthStateChanged } from './core/firebase.js';
+import { runAutoHealer } from './core/auto-healer.js';
 
 // Constantes Globales
 const REQUIRE_LOGIN = false;
@@ -294,4 +296,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
     initAdminPanel();
     checkAuthentication();
+
+    // --- AUTO-HEAL AUTOMATION ---
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            console.log("👤 Admin logged in. Checking for broken links...");
+            // Esperar un poco a que los datos carguen si es login inmediato
+            const interval = setInterval(() => {
+                const state = store.getState();
+                if (state.globalDataLoaded) {
+                    clearInterval(interval);
+
+                    const healingList = [
+                        ...state.textures.map(i => ({ ...i, collectionRef: 'textures' })),
+                        ...state.facebases.map(i => ({ ...i, collectionRef: 'facebases' })),
+                        ...state.avatar.map(i => ({ ...i, collectionRef: 'avatar' }))
+                    ];
+
+                    runAutoHealer(healingList);
+                }
+            }, 1000);
+        }
+    });
 });
