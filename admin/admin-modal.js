@@ -1,231 +1,276 @@
-// admin/admin-modal.js
+
 import { auth, db } from '../core/firebase.js';
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "firebase/auth";
+import { signOut } from "firebase/auth";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
-import { getRobloxThumbnailUrl } from '../utils/roblox.js';
+
+// Configuración de Categorías
+const CATEGORIES = {
+    texture: ["M", "S", "T", "ST", "Makeup", "Tattoos", "Skin Details", "Fantasy"],
+    facebase: ["Global", "Brazil", "UK", "USA", "Italy", "Spain", "France", "Japan", "Korea", "China", "Thailand"],
+    avatar: ["Hair", "Mesh", "Accessory", "Clothing", "Hats", "Face"]
+};
+
+// Proxy para obtener datos de Roblox sin CORS (Funciona en GitHub Pages)
+const CORS_PROXY = "https://api.allorigins.win/raw?url=";
 
 export function initAdminPanel() {
-    // DOM Elements
-    const adminOpenBtn = document.getElementById('nav-admin-btn');
+    // --- DOM REFERENCES ---
     const adminModal = document.getElementById('admin-modal');
     const adminCloseBtn = document.getElementById('admin-close-btn');
+    const navAdminBtn = document.getElementById('nav-admin-btn');
 
-    // Views
+    // Dashboard Views
     const authView = document.getElementById('admin-auth-view');
     const dashboardView = document.getElementById('admin-dashboard-view');
-
-    // Auth Form
-    const loginForm = document.getElementById('admin-login-form');
-    const signupBtn = document.getElementById('admin-signup-btn');
-    const logoutBtn = document.getElementById('admin-logout-btn');
-    const authStatus = document.getElementById('auth-status');
     const userEmailSpan = document.getElementById('admin-user-email');
+    const logoutBtn = document.getElementById('admin-logout-btn');
 
-    // Upload Form
+    // Form Elements
     const uploadForm = document.getElementById('quick-upload-form');
-    const robloxIdInput = document.getElementById('new-roblox-id');
-    const previewContainer = document.getElementById('new-item-preview');
     const typeRadios = document.querySelectorAll('input[name="itemType"]');
-    const categoryGroups = document.querySelectorAll('.category-options-group'); // Containers for dynamic categories
+    const idInput = document.getElementById('new-roblox-id');
+    const nameInput = document.getElementById('new-item-name');
+    const categorySelect = document.getElementById('dynamic-category-select');
+    const submitBtn = document.getElementById('admin-submit-btn');
+    const msg = document.getElementById('admin-msg');
+    const finalUrlInput = document.getElementById('final-remote-url');
 
-    let currentUser = null;
+    // Preview Elements
+    const spinner = document.getElementById('id-loading-spinner');
+    const previewPlaceholder = document.getElementById('preview-placeholder');
+    const previewImage = document.getElementById('preview-image');
+    const previewBadge = document.getElementById('preview-badge');
 
-    // --- 1. MODAL TOGGLE (Delegation) ---
-    document.addEventListener('click', (e) => {
-        // Open
-        if (e.target.closest('#nav-admin-btn')) {
-            console.log("Admin button clicked");
+    // --- 1. INITIALIZATION & AUTH STATE ---
+
+    // Si llegamos aquí, asumimos que el usuario ya está logueado (gestionado por app.js)
+    if (auth.currentUser) {
+        if (authView) authView.classList.add('hidden');
+        if (dashboardView) dashboardView.classList.remove('hidden');
+        if (userEmailSpan) userEmailSpan.textContent = auth.currentUser.email;
+        populateCategories('texture'); // Default
+    }
+
+    // Modal Toggle Logic
+    if (navAdminBtn) {
+        navAdminBtn.addEventListener('click', () => {
             adminModal.classList.remove('hidden');
-            // Force redraw for transition
             setTimeout(() => adminModal.classList.add('show'), 10);
-        }
-        // Close
-        if (e.target.closest('#admin-close-btn') || e.target === adminModal) {
-            adminModal.classList.remove('show');
-            setTimeout(() => adminModal.classList.add('hidden'), 300);
-        }
-    });
+        });
+    }
 
-    // --- 2. AUTH STATE LISTENER ---
-    onAuthStateChanged(auth, (user) => {
-        currentUser = user;
-        if (user) {
-            authView.classList.add('hidden');
-            dashboardView.classList.remove('hidden');
-            userEmailSpan.textContent = user.email;
-        } else {
-            authView.classList.remove('hidden');
-            dashboardView.classList.add('hidden');
-        }
-    });
+    if (adminCloseBtn) {
+        adminCloseBtn.addEventListener('click', closeAdminModal);
+    }
 
-    // --- 3. LOGIN / SIGNUP ---
-    loginForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const email = document.getElementById('admin-email').value;
-        const password = document.getElementById('admin-password').value;
+    // Logout Logic
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', () => {
+            signOut(auth).then(() => {
+                window.location.reload(); // Recargar para mostrar el login overlay de nuevo
+            });
+        });
+    }
 
-        if (!email || !password) return;
+    function closeAdminModal() {
+        adminModal.classList.remove('show');
+        setTimeout(() => adminModal.classList.add('hidden'), 300);
+    }
 
-        try {
-            authStatus.textContent = "Logging in...";
-            authStatus.className = "text-center text-xs mt-2 text-zinc-400";
-            await signInWithEmailAndPassword(auth, email, password);
-            authStatus.textContent = "";
-            loginForm.reset();
-        } catch (error) {
-            authStatus.textContent = "Error: " + error.message;
-            authStatus.className = "text-center text-xs mt-2 text-red-500";
-        }
-    });
+    // --- 2. DYNAMIC FORM BEHAVIOR ---
 
-    signupBtn.addEventListener('click', async () => {
-        const email = document.getElementById('admin-email').value;
-        const password = document.getElementById('admin-password').value;
-
-        if (!email || !password) {
-            authStatus.textContent = "Enter email & password to register";
-            authStatus.className = "text-center text-xs mt-2 text-red-500";
-            return;
-        }
-
-        try {
-            authStatus.textContent = "Creating account...";
-            await createUserWithEmailAndPassword(auth, email, password);
-            authStatus.textContent = "Created! logging in...";
-        } catch (error) {
-            authStatus.textContent = error.message;
-            authStatus.className = "text-center text-xs mt-2 text-red-500";
-        }
-    });
-
-    logoutBtn.addEventListener('click', () => signOut(auth));
-
-
-    // --- 4. DYNAMIC FORM LOGIC ---
-    // Handle Type change to show correct categories
+    // Type Change Listener
     typeRadios.forEach(radio => {
         radio.addEventListener('change', (e) => {
-            updateCategoryView(e.target.value);
+            populateCategories(e.target.value);
         });
     });
 
-    function updateCategoryView(type) {
-        // Hide all first
-        document.getElementById('cat-options-texture').classList.add('hidden');
-        document.getElementById('cat-options-facebase').classList.add('hidden');
-        document.getElementById('cat-options-avatar').classList.add('hidden');
+    function populateCategories(type) {
+        categorySelect.innerHTML = '';
+        const options = CATEGORIES[type] || [];
+        options.forEach(cat => {
+            const opt = document.createElement('option');
+            opt.value = cat;
+            opt.textContent = cat;
+            categorySelect.appendChild(opt);
+        });
+    }
 
-        // Show relevant
-        if (type === 'texture') document.getElementById('cat-options-texture').classList.remove('hidden');
-        else if (type === 'facebase') document.getElementById('cat-options-facebase').classList.remove('hidden');
-        else if (type === 'avatar') {
-            document.getElementById('cat-options-avatar').classList.remove('hidden');
-            document.getElementById('cat-options-avatar').classList.add('flex'); // restore flex
+    // --- 3. MAGIC PREVIEW LOGIC ---
+    let debounceTimer;
+
+    idInput.addEventListener('input', (e) => {
+        const id = e.target.value.trim();
+        clearTimeout(debounceTimer);
+
+        // Reset UI state while typing
+        submitBtn.disabled = true;
+        previewBadge.classList.add('hidden');
+
+        if (id.length < 8) {
+            resetPreview();
+            return;
+        }
+
+        debounceTimer = setTimeout(() => fetchRobloxPreview(id), 600);
+    });
+
+    async function fetchRobloxPreview(assetId) {
+        showLoading(true);
+        resetPreview(); // Hide old image while loading
+
+        const robloxApi = `https://thumbnails.roblox.com/v1/assets?assetIds=${assetId}&size=420x420&format=Png&isCircular=false`;
+
+        // Strategy: Try proxies sequentially
+        const strategies = [
+            `https://api.allorigins.win/raw?url=${encodeURIComponent(robloxApi)}`,
+            `https://corsproxy.io/?${encodeURIComponent(robloxApi)}`
+        ];
+
+        let foundUrl = null;
+
+        try {
+            for (const url of strategies) {
+                try {
+                    const res = await fetch(url);
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (data.data && data.data.length > 0 && data.data[0].state === 'Completed') {
+                            foundUrl = data.data[0].imageUrl;
+                            break; // Success!
+                        }
+                    }
+                } catch (e) {
+                    console.warn("Proxy attempt failed:", e);
+                }
+            }
+
+            if (foundUrl) {
+                // Success Case
+                previewImage.src = foundUrl;
+                previewImage.classList.remove('hidden');
+                previewPlaceholder.classList.add('hidden');
+                previewBadge.textContent = "VALID";
+                previewBadge.className = "absolute top-2 right-2 bg-green-500 text-black text-[10px] font-bold px-2 py-0.5 rounded";
+                previewBadge.classList.remove('hidden');
+
+                finalUrlInput.value = foundUrl;
+                submitBtn.disabled = false;
+            } else {
+                throw new Error("Image could not be fetched");
+            }
+
+        } catch (error) {
+            console.warn("All previews failed:", error);
+
+            // Fallback: Mostrar mensaje amigable y permitir forzar subida
+            previewPlaceholder.innerHTML = `
+                <div class="flex flex-col items-center">
+                    <span class="text-xs text-red-500 font-bold mb-1">PREVIEW FAILED</span>
+                    <span class="text-[10px] text-zinc-500 text-center px-4">However, if ID is correct, it might still work.</span>
+                    <button type="button" id="force-approve-btn" class="mt-2 text-[10px] underline text-zinc-400 hover:text-white">Force Allow</button>
+                </div>
+            `;
+
+            // Allow manual override
+            setTimeout(() => {
+                const forceBtn = document.getElementById('force-approve-btn');
+                if (forceBtn) {
+                    forceBtn.addEventListener('click', () => {
+                        finalUrlInput.value = "FORCE_Heal_Me_Later"; // Auto-healer will fix this later
+                        submitBtn.disabled = false;
+                        previewBadge.textContent = "FORCE";
+                        previewBadge.className = "absolute top-2 right-2 bg-yellow-500 text-black text-[10px] font-bold px-2 py-0.5 rounded";
+                        previewBadge.classList.remove('hidden');
+                    });
+                }
+            }, 100);
+
+        } finally {
+            showLoading(false);
         }
     }
 
-    // Auto-Preview Roblox Image
-    robloxIdInput.addEventListener('input', (e) => {
-        const id = e.target.value;
-        if (id && id.length > 5) {
-            const url = getRobloxThumbnailUrl(id);
-            previewContainer.innerHTML = `<img src="${url}" class="w-full h-full object-cover">`;
-        } else {
-            previewContainer.innerHTML = '<span class="text-xs text-zinc-600">?</span>';
-        }
-    });
+    function showLoading(isLoading) {
+        if (isLoading) spinner.classList.remove('hidden');
+        else spinner.classList.add('hidden');
+    }
 
-    // --- 5. UPLOAD HANDLER ---
+    function resetPreview() {
+        previewImage.classList.add('hidden');
+        previewPlaceholder.classList.remove('hidden');
+        previewPlaceholder.innerHTML = `
+            <svg class="w-8 h-8 opacity-50 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+            <span class="text-xs">Preview Area</span>
+        `;
+        previewImage.src = "";
+        finalUrlInput.value = "";
+        previewBadge.classList.add('hidden');
+    }
+
+    // --- 4. SUBMIT HANDLER ---
     uploadForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-        if (!currentUser) return;
 
-        const subBtn = document.getElementById('admin-submit-btn');
-        const msg = document.getElementById('admin-msg');
-
-        subBtn.disabled = true;
-        subBtn.textContent = "Saving...";
-        msg.textContent = "";
+        submitBtn.disabled = true;
+        const previousText = submitBtn.innerHTML;
+        submitBtn.textContent = "SAVING...";
 
         try {
-            // Get values
+            // Gather Data
             const type = document.querySelector('input[name="itemType"]:checked').value;
-            const robloxId = robloxIdInput.value;
-            const name = document.getElementById('new-item-name').value;
+            const robloxId = idInput.value.trim();
+            const name = nameInput.value.trim();
+            const category = categorySelect.value;
+            let remoteUrl = finalUrlInput.value;
 
-            // Get category based on active view
-            let category = "General";
-            if (type === 'texture') {
-                const checked = document.querySelector('input[name="itemCategory"]:checked');
-                if (checked) category = checked.value; // M, S, T...
-            } else if (type === 'facebase') {
-                category = document.getElementById('cat-options-facebase').value;
-            } else if (type === 'avatar') {
-                const checked = document.querySelector('#cat-options-avatar input:checked');
-                if (checked) category = checked.value;
+            // Manejar caso de "Force Allowed"
+            if (remoteUrl === "FORCE_Heal_Me_Later") {
+                // Usamos una URL temporal o nula para que el Auto-Healer lo arregle después
+                remoteUrl = null;
             }
 
-            if (!name || !robloxId) throw new Error("Missing fields");
+            if (!name) throw new Error("Missing items!");
 
-            // 1. Fetch Real CDN URL (via proxy)
-            let remoteUrl = null;
-            msg.textContent = "🔍 Fetching Roblox URL...";
-            try {
-                // Usamos el proxy configurado en vite.config.js para evitar CORS
-                const res = await fetch(`/api/roblox/v1/assets?assetIds=${robloxId}&size=420x420&format=Png&isCircular=false`);
-                if (res.ok) {
-                    const data = await res.json();
-                    if (data.data && data.data.length > 0 && data.data[0].state === 'Completed') {
-                        remoteUrl = data.data[0].imageUrl;
-                        console.log("Got remote URL via Proxy:", remoteUrl);
-                    }
-                } else {
-                    console.warn("Proxy returned status:", res.status);
-                }
-            } catch (fetchErr) {
-                console.warn("Could not fetch automatic URL (is proxy running?)", fetchErr);
-            }
+            // Determine Collection
+            const collectionName = (type === 'texture') ? 'textures' :
+                (type === 'facebase') ? 'facebases' : 'avatar';
 
-            // Define target collection
-            let collectionName = 'items';
-            if (type === 'texture') collectionName = 'textures';
-            else if (type === 'facebase') collectionName = 'facebases';
-            else if (type === 'avatar') collectionName = 'avatar';
-
-            // Add to Firestore
+            // Save to Firestore
             await addDoc(collection(db, collectionName), {
                 id: robloxId,
                 robloxId: robloxId,
                 name: name,
                 category: category,
                 type: type,
-                // Clean data structure
-                fullName: category === 'M' || category === 'S' ? `${category}-${name}` : name,
-                variant: name,
-                remoteUrl: remoteUrl, // GUARDAMOS LA URL REAL DE LA CDN
-                dateAdded: serverTimestamp()
+                remoteUrl: remoteUrl,
+                dateAdded: serverTimestamp(),
+                searchName: name.toLowerCase()
             });
 
-            msg.textContent = "✅ Item Added Successfully!";
-            msg.className = "text-center text-xs mt-2 text-green-500";
-            uploadForm.reset();
-            previewContainer.innerHTML = '<span class="text-xs text-zinc-600">?</span>';
+            // Success UI
+            msg.textContent = "✅ Saved!";
+            msg.className = "text-center text-xs mt-3 text-green-500 font-bold";
 
-            // Reset view to default
-            typeRadios[0].checked = true;
-            updateCategoryView('texture');
+            // Reset Form (Partial)
+            idInput.value = "";
+            nameInput.value = "";
+            resetPreview();
+            submitBtn.disabled = true; // Wait for new valid ID
+
+            // Success animation or delay
+            setTimeout(() => {
+                msg.textContent = "";
+                submitBtn.innerHTML = previousText;
+            }, 2000);
 
         } catch (error) {
-            console.error(error);
-            msg.textContent = "❌ Error: " + error.message;
-            msg.className = "text-center text-xs mt-2 text-red-500";
-        } finally {
-            subBtn.disabled = false;
-            subBtn.textContent = "ADD ITEM";
-            setTimeout(() => { msg.textContent = ""; }, 3000);
+            console.error("Upload failed:", error);
+            msg.textContent = "❌ " + error.message;
+            msg.className = "text-center text-xs mt-3 text-red-500 font-bold";
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = previousText;
         }
     });
-
-
 }
