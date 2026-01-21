@@ -86,7 +86,7 @@ const startApp = async () => {
         // Pero data-loader todavía no lo devuelve explícitamente en el return.
         // Voy a modificar data-loader.js para que devuelva `allTextureItems` en el objeto final.
 
-        const allTextureGroups = groupTextureVariants(data.allTextureBasenames);
+        const allTextureGroups = groupTextureVariants(data.allTextureItems);
         const allFacebaseGroups = groupFacebaseVariants(data.allFacebaseItems);
 
         store.setState({
