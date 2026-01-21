@@ -24,7 +24,7 @@ export async function initializeAllData() {
             group: item.type, // 'ST', 'M', etc.
             displayName: item.fullName, // "Peacock Blue"
             codeId: item.robloxId,
-            src: item.remoteUrl || (item.originalFilename ? `photos/textures/${item.originalFilename}` : getRobloxThumbnailUrl(item.robloxId)),
+            src: item.remoteUrl || getRobloxThumbnailUrl(item.robloxId),
             type: 'texture',
             baseName: item.name // "Peacock"
         }));
@@ -35,7 +35,7 @@ export async function initializeAllData() {
             group: item.category.toUpperCase(), // "BRAZIL"
             displayName: item.variant, // "Natural"
             codeId: item.robloxId,
-            src: item.remoteUrl || (item.originalFilename ? `photos/facebases/${item.originalFilename}` : getRobloxThumbnailUrl(item.robloxId)),
+            src: item.remoteUrl || getRobloxThumbnailUrl(item.robloxId),
             type: 'facebase'
         }));
 
@@ -45,7 +45,7 @@ export async function initializeAllData() {
             group: item.category.toUpperCase(), // "HAIR"
             displayName: item.name,
             codeId: item.robloxId,
-            src: item.remoteUrl || (item.originalFilename ? `photos/items/${item.originalFilename}` : getRobloxThumbnailUrl(item.robloxId)),
+            src: item.remoteUrl || getRobloxThumbnailUrl(item.robloxId),
             type: 'avatar'
         }));
 

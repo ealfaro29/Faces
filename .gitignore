@@ -4,3 +4,7 @@ dist
 .env
 *.log
 coverage/
+
+photos/facebases/
+photos/items/
+photos/textures/
