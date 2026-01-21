@@ -189,6 +189,10 @@
                     aria-pressed="false">Textures</button>
                 <button class="tab-nav-button" data-tab="music" aria-label="Music tab"
                     aria-pressed="false">Music</button>
+                <button id="nav-admin-btn" class="tab-nav-button" aria-label="Admin Panel"
+                    style="border-color: #333; color: #666;">
+                    + Admin
+                </button>
             </nav>
             <div class="flex items-center gap-2" role="toolbar" aria-label="Utility actions">
                 <button id="openPhotosBtn" title="Download Photos"
@@ -279,6 +283,126 @@
                 </div>
             </div>
         </main>
+    </div>
+
+    <footer class="text-center py-8 text-zinc-500 text-sm">
+        <p>&copy; 2024 Fashion Muse. All rights reserved.</p>
+    </footer>
+
+    <!-- ADMIN MODAL -->
+    <div id="admin-modal" class="modal-overlay hidden">
+        <div class="modal-content admin-modal-content">
+            <button class="modal-close" id="admin-close-btn">&times;</button>
+
+            <h2 class="admin-title">Admin Dashboard</h2>
+
+            <!-- AUTH SECTION -->
+            <div id="admin-auth-view">
+                <form id="admin-login-form" class="admin-form">
+                    <div class="input-group">
+                        <input type="text" id="admin-email" placeholder="Email" class="admin-input">
+                    </div>
+                    <div class="input-group">
+                        <input type="password" id="admin-password" placeholder="Password" class="admin-input">
+                    </div>
+                    <div class="auth-actions">
+                        <button type="submit" class="admin-btn primary">Login</button>
+                        <button type="button" id="admin-signup-btn" class="admin-btn secondary">Register</button>
+                    </div>
+                    <p id="auth-status" class="status-text"></p>
+                </form>
+            </div>
+
+            <!-- DASHBOARD SECTION -->
+            <div id="admin-dashboard-view" class="hidden">
+                <div class="dashboard-header">
+                    <span id="admin-user-email">user@example.com</span>
+                    <button id="admin-logout-btn" class="logout-link">Logout</button>
+                </div>
+
+                <form id="quick-upload-form" class="admin-form">
+
+                    <!-- TYPE SELECTOR -->
+                    <div class="form-section">
+                        <label>Item Type</label>
+                        <div class="type-selector" id="type-selector">
+                            <label>
+                                <input type="radio" name="itemType" value="texture" checked>
+                                <div class="type-card">Texture</div>
+                            </label>
+                            <label>
+                                <input type="radio" name="itemType" value="facebase">
+                                <div class="type-card">Facebase</div>
+                            </label>
+                            <label>
+                                <input type="radio" name="itemType" value="avatar">
+                                <div class="type-card">Avatar</div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- ROBLOX ID & PREVIEW -->
+                    <div class="form-row">
+                        <div class="form-section flex-grow">
+                            <label>Roblox Asset ID</label>
+                            <input type="number" id="new-roblox-id" placeholder="Paste ID..." class="admin-input">
+                        </div>
+                        <div id="new-item-preview" class="preview-box">
+                            <span>?</span>
+                        </div>
+                    </div>
+
+                    <!-- NAME -->
+                    <div class="form-section">
+                        <label>Display Name</label>
+                        <input type="text" id="new-item-name" placeholder="E.g. Blue Sparkle" class="admin-input">
+                    </div>
+
+                    <!-- CATEGORY -->
+                    <div class="form-section">
+                        <label>Category</label>
+
+                        <!-- Textures -->
+                        <div id="cat-options-texture" class="category-options-group pill-group">
+                            <label><input type="radio" name="itemCategory" value="M" checked><span>M</span></label>
+                            <label><input type="radio" name="itemCategory" value="S"><span>S</span></label>
+                            <label><input type="radio" name="itemCategory" value="T"><span>T</span></label>
+                            <label><input type="radio" name="itemCategory" value="ST"><span>ST</span></label>
+                        </div>
+
+                        <!-- Facebases -->
+                        <select id="cat-options-facebase" class="admin-select hidden category-options-group">
+                            <option value="Global">Global</option>
+                            <option value="Brazil">Brazil</option>
+                            <option value="UK">UK</option>
+                            <option value="USA">USA</option>
+                            <option value="Italy">Italy</option>
+                            <option value="Spain">Spain</option>
+                            <option value="France">France</option>
+                            <option value="Japan">Japan</option>
+                            <option value="Korea">Korea</option>
+                        </select>
+
+                        <!-- Avatar -->
+                        <div id="cat-options-avatar" class="category-options-group pill-group hidden">
+                            <label><input type="radio" name="itemCategory" value="Hair"><span>Hair</span></label>
+                            <label><input type="radio" name="itemCategory" value="Mesh"><span>Mesh</span></label>
+                            <label><input type="radio" name="itemCategory"
+                                    value="Accessory"><span>Accessory</span></label>
+                        </div>
+                    </div>
+
+                    <button type="submit" id="admin-submit-btn" class="admin-btn full-width mt-4">Add to
+                        Database</button>
+                    <p id="admin-msg" class="status-text"></p>
+                </form>
+
+                <div class="dashboard-footer">
+                    <button id="run-migration-btn" class="text-link">Run Migration (One-time)</button>
+                    <p id="migration-msg" class="status-tiny"></p>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>

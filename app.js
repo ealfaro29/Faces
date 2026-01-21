@@ -79,9 +79,19 @@ function initializeFavoritesTab() {
 }
 
 // Lógica de inicialización principal
+// ... imports
+import { initAdminPanel } from './admin/admin-modal.js';
+
+// ... existing code
+
 const startApp = async () => {
     try {
         const data = await initializeAllData();
+
+        // Initialize Admin Panel
+
+
+        // ... rest of logic
 
         // const allTextureItems = ... (YA NO ES NECESARIO SI DATA-LOADER LO DEVUELVE)
         // Pero data-loader todavía no lo devuelve explícitamente en el return.
@@ -133,7 +143,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const loginBtn = document.getElementById('loginBtn');
     const errorMessage = document.getElementById('errorMessage');
     const searchBar = document.getElementById('search-bar');
-    const tabs = document.querySelectorAll('.tab-nav-button');
+    const tabs = document.querySelectorAll('.tab-nav-button[data-tab]');
     const contentAreas = document.querySelectorAll('.tab-content');
 
     // Setup event delegation
@@ -282,5 +292,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
+    initAdminPanel();
     checkAuthentication();
 });

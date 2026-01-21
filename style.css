@@ -725,3 +725,230 @@ main.panel {
 }
 
 /* --- FIN DE LA MODIFICACIÓN --- */
+/* --- ADMIN PANEL (REFINED) --- */
+.admin-modal-content {
+    background: #0f1115;
+    border: 1px solid #2a2d36;
+    border-radius: 16px;
+    padding: 2rem;
+    color: #e2e8f0;
+    width: 95%;
+    max-width: 440px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.95);
+    position: relative;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.admin-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.5rem;
+    color: var(--gold1);
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+
+/* Forms */
+.admin-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.form-section label {
+    display: block;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #94a3b8;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+}
+
+/* Inputs */
+.admin-input,
+.admin-select {
+    width: 100%;
+    background: #1e293b;
+    border: 1px solid #334155;
+    color: #fff;
+    padding: 0.75rem;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    transition: all 0.2s;
+}
+
+.admin-input:focus,
+.admin-select:focus {
+    outline: none;
+    border-color: var(--gold2);
+    box-shadow: 0 0 0 2px rgba(220, 180, 80, 0.1);
+}
+
+.form-row {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-end;
+}
+
+.flex-grow {
+    flex-grow: 1;
+}
+
+.preview-box {
+    width: 4rem;
+    height: 4rem;
+    background: #000;
+    border: 1px solid #334155;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.preview-box img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Type Selector (Cards) */
+.type-selector {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.5rem;
+}
+
+.type-selector input {
+    display: none;
+}
+
+.type-card {
+    background: #1e293b;
+    border: 1px solid #334155;
+    padding: 0.75rem;
+    text-align: center;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.type-selector input:checked+.type-card {
+    background: var(--gold2);
+    color: #000;
+    border-color: var(--gold2);
+    font-weight: 600;
+}
+
+/* Pill Groups (Categories) */
+.pill-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.pill-group input {
+    display: none;
+}
+
+.pill-group span {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 99px;
+    /* Capsule */
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.pill-group input:checked+span {
+    border-color: var(--gold2);
+    color: var(--gold2);
+    background: rgba(220, 180, 80, 0.1);
+}
+
+/* Buttons */
+.admin-btn {
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: none;
+}
+
+.admin-btn.primary,
+.admin-btn.full-width {
+    background: linear-gradient(135deg, var(--gold1), var(--gold2));
+    color: #0f172a;
+    width: 100%;
+}
+
+.admin-btn.secondary {
+    background: transparent;
+    border: 1px solid #475569;
+    color: #94a3b8;
+}
+
+.admin-btn:hover {
+    filter: brightness(1.1);
+    transform: translateY(-1px);
+}
+
+.auth-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+/* Dashboard Header/Footer */
+.dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    padding-bottom: 1rem;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid #334155;
+    font-size: 0.85rem;
+    color: #94a3b8;
+}
+
+.logout-link {
+    background: none;
+    border: none;
+    color: #ef4444;
+    cursor: pointer;
+    font-size: 0.8rem;
+}
+
+.dashboard-footer {
+    margin-top: 2rem;
+    border-top: 1px solid #334155;
+    padding-top: 1rem;
+    text-align: center;
+}
+
+.text-link {
+    background: none;
+    border: none;
+    color: #64748b;
+    font-size: 0.75rem;
+    cursor: pointer;
+    text-decoration: underline;
+}
+
+.status-text {
+    text-align: center;
+    font-size: 0.8rem;
+    margin-top: 0.5rem;
+    min-height: 1.2em;
+}
+
+.status-tiny {
+    font-size: 0.7rem;
+    color: #64748b;
+    margin-top: 4px;
+}
