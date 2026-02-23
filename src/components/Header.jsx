@@ -13,7 +13,7 @@ export default function Header({ activeTab, setActiveTab }) {
     const [isDriveOpen, setIsDriveOpen] = useState(false);
     const [isTicketOpen, setIsTicketOpen] = useState(false);
 
-    const THEMES = ['pink', 'apple', 'gold', 'cyberpunk'];
+    const THEMES = ['pink', 'apple', 'gold', 'cyberpunk', 'dark'];
 
     const [theme, setTheme] = useState(() => {
         return localStorage.getItem('app-theme') || 'pink';
@@ -40,6 +40,7 @@ export default function Header({ activeTab, setActiveTab }) {
             case 'apple': return <Sun className="w-5 h-5" />;
             case 'gold': return <Crown className="w-5 h-5" />;
             case 'cyberpunk': return <Zap className="w-5 h-5" />;
+            case 'dark': return <Moon className="w-5 h-5" />;
             case 'pink':
             default: return <Heart className="w-5 h-5" />;
         }
