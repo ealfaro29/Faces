@@ -1,6 +1,5 @@
+/* Import Tailwind CSS v4 */
+@import "tailwindcss";
+
 /* Import original styles */
 @import "./style.css";
-
-@tailwind base;
-@tailwind components;
-@tailwind utilities;

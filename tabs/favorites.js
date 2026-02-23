@@ -1,6 +1,5 @@
 // tabs/favorites.js
 
-import { getTextureIconPath } from './textures.js';
 import { getFlagEmoji } from '../utils/flag.js';
 import { getMusicIconPath } from './music.js';
 import store from '../core/store.js';

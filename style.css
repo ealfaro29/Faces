@@ -1,20 +1,75 @@
 :root {
     /* Variables de color y tamaño */
-    --ink: #e5e7eb;
-    --muted: #a1a1aa;
-    --card: #121317;
-    --border: #2a2b31;
-    --shadow: 0 18px 50px rgba(0, 0, 0, .45);
-    --gold1: #9b7b25;
-    --gold2: #d5b85a;
-    --gold3: #9b7b25;
-    --font-family-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial;
-    --font-family-serif: 'Playfair Display', ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+    --ink: #5c183b;
+    --muted: #ad487c;
+    --card: #ffe4f0;
+    --card-light: #ffebf5;
+    --card-lighter: #ffffff;
+    --card-hover: #ffd1e6;
+    --border: #ff85c2;
+    --shadow: 0 10px 40px rgba(255, 105, 180, 0.35);
+    --gold1: #ff69b4;
+    --gold2: #ff1493;
+    --gold3: #c71585;
+    --font-family-sans: 'Quicksand', sans-serif;
+    --font-family-serif: 'Quicksand', sans-serif;
+    --body-bg: linear-gradient(120deg, #ffb6c1 0%, #ff69b4 100%);
     --space-4: 16px;
     --space-5: 24px;
     --radius-md: 8px;
     --radius-xl: 16px;
     --swiper-navigation-color: var(--gold2);
+}
+
+[data-theme="apple"] {
+    --ink: #1d1d1f;
+    --muted: #86868b;
+    --card: #ffffff;
+    --card-light: #ffffff;
+    --card-lighter: #f5f5f7;
+    --card-hover: #e5e5ea;
+    --border: #d2d2d7;
+    --shadow: 0 8px 16px rgba(0, 0, 0, 0.08), 0 2px 6px rgba(0, 0, 0, 0.04);
+    --gold1: #444444;
+    --gold2: #000000;
+    --gold3: #444444;
+    --font-family-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --font-family-serif: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --body-bg: linear-gradient(135deg, #e5e5ea 0%, #f5f5f7 100%);
+}
+
+[data-theme="gold"] {
+    --ink: #faecd4;
+    --muted: #c9b189;
+    --card: #1c130d;
+    --card-light: #2a1c13;
+    --card-lighter: #3c291b;
+    --card-hover: #4e3522;
+    --border: #d4af37;
+    --shadow: 0 15px 40px rgba(0, 0, 0, 0.95), 0 0 20px rgba(212, 175, 55, 0.2);
+    --gold1: #ebd197;
+    --gold2: #d4af37;
+    --gold3: #ebd197;
+    --font-family-sans: 'Cinzel', serif;
+    --font-family-serif: 'Cinzel', serif;
+    --body-bg: radial-gradient(circle at 50% 50%, #3e2723 0%, #0a0604 100%);
+}
+
+[data-theme="cyberpunk"] {
+    --ink: #0bf8ff;
+    --muted: #b80bf8;
+    --card: #040814;
+    --card-light: #0a1128;
+    --card-lighter: #111d42;
+    --card-hover: #192a60;
+    --border: #f82af3;
+    --shadow: 0 0 15px rgba(248, 42, 243, 0.6), 0 0 35px rgba(11, 248, 255, 0.3);
+    --gold1: #0bf8ff;
+    --gold2: #f30cf8;
+    --gold3: #0bf8ff;
+    --font-family-sans: 'Fira Code', monospace;
+    --font-family-serif: 'Fira Code', monospace;
+    --body-bg: linear-gradient(45deg, #090117 0%, #1f013b 50%, #031526 100%);
 }
 
 /* Emojis de bandera usando fuentes del sistema */
@@ -90,11 +145,12 @@
 html,
 body {
     font-family: var(--font-family-sans);
-    background-color: #000000;
+    background: var(--body-bg);
     color: var(--ink);
     margin: 0;
     padding: var(--space-4);
     overflow: hidden;
+    transition: background 0.4s ease, color 0.4s ease;
 }
 
 #particle-canvas {
@@ -137,11 +193,12 @@ body {
 }
 
 .panel {
-    background: rgba(18, 19, 23, .75);
+    background: color-mix(in srgb, var(--card) 75%, transparent);
     border: 1px solid var(--border);
     border-radius: var(--radius-xl);
     box-shadow: var(--shadow);
     backdrop-filter: blur(12px);
+    transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
 main.panel {
@@ -177,9 +234,9 @@ main.panel {
 }
 
 .dark-input {
-    background: #0f1115;
-    color: #e7e7ea;
-    border: 1px solid #2a2d36;
+    background: var(--card-light);
+    color: var(--ink);
+    border: 1px solid var(--border);
     transition: all 0.2s ease;
 }
 
@@ -456,7 +513,7 @@ main.panel {
 
 /* Estilos de Tarjetas de Música */
 .music-card {
-    background: #151722;
+    background: var(--card-light);
     border: 1px solid var(--border);
     transition: all 0.2s ease;
 }
@@ -635,8 +692,7 @@ main.panel {
 
 .variant-buttons {
     position: absolute;
-    bottom: 50px;
-    /* Posición sobre la imagen, no sobre el footer */
+    bottom: 6px;
     right: 6px;
     display: flex;
     flex-direction: row;
@@ -727,11 +783,11 @@ main.panel {
 /* --- FIN DE LA MODIFICACIÓN --- */
 /* --- ADMIN PANEL (REFINED) --- */
 .admin-modal-content {
-    background: #0f1115;
-    border: 1px solid #2a2d36;
+    background: var(--card);
+    border: 1px solid var(--border);
     border-radius: 16px;
     padding: 2rem;
-    color: #e2e8f0;
+    color: var(--ink);
     width: 95%;
     max-width: 440px;
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.95);
@@ -760,7 +816,7 @@ main.panel {
     font-size: 0.75rem;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    color: #94a3b8;
+    color: var(--muted);
     margin-bottom: 0.5rem;
     font-weight: 600;
 }
@@ -769,8 +825,8 @@ main.panel {
 .admin-input,
 .admin-select {
     width: 100%;
-    background: #1e293b;
-    border: 1px solid #334155;
+    background: var(--card-light);
+    border: 1px solid var(--border);
     color: #fff;
     padding: 0.75rem;
     border-radius: 8px;
@@ -799,7 +855,7 @@ main.panel {
     width: 4rem;
     height: 4rem;
     background: #000;
-    border: 1px solid #334155;
+    border: 1px solid var(--border);
     border-radius: 8px;
     display: flex;
     align-items: center;
@@ -826,8 +882,8 @@ main.panel {
 }
 
 .type-card {
-    background: #1e293b;
-    border: 1px solid #334155;
+    background: var(--card-light);
+    border: 1px solid var(--border);
     padding: 0.75rem;
     text-align: center;
     border-radius: 8px;
@@ -857,8 +913,8 @@ main.panel {
 .pill-group span {
     display: inline-block;
     padding: 0.5rem 1rem;
-    background: #1e293b;
-    border: 1px solid #334155;
+    background: var(--card-light);
+    border: 1px solid var(--border);
     border-radius: 99px;
     /* Capsule */
     font-size: 0.85rem;
@@ -892,7 +948,7 @@ main.panel {
 .admin-btn.secondary {
     background: transparent;
     border: 1px solid #475569;
-    color: #94a3b8;
+    color: var(--muted);
 }
 
 .admin-btn:hover {
@@ -911,9 +967,9 @@ main.panel {
     justify-content: space-between;
     padding-bottom: 1rem;
     margin-bottom: 1rem;
-    border-bottom: 1px solid #334155;
+    border-bottom: 1px solid var(--border);
     font-size: 0.85rem;
-    color: #94a3b8;
+    color: var(--muted);
 }
 
 .logout-link {
@@ -926,7 +982,7 @@ main.panel {
 
 .dashboard-footer {
     margin-top: 2rem;
-    border-top: 1px solid #334155;
+    border-top: 1px solid var(--border);
     padding-top: 1rem;
     text-align: center;
 }

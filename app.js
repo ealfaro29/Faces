@@ -3,7 +3,7 @@
 import { initializeAllData } from './data-loader.js';
 import { renderFacebasesGallery, populateFacebaseFilter } from './tabs/facebases.js';
 import { renderAvatarGallery, populateAvatarFilter } from './tabs/avatar.js';
-import { renderTextureGallery, getTextureIconPath, populateTextureFilter, groupTextureVariants } from './tabs/textures.js';
+import { renderTextureGallery, populateTextureFilter, groupTextureVariants } from './tabs/textures.js';
 import { renderMusicCodes, populateMusicCategoryFilter } from './tabs/music.js';
 import { renderFavoritesGallery } from './tabs/favorites.js';
 import { setupPhotosModal } from './modals/photos.js';
@@ -20,8 +20,6 @@ import { onAuthStateChanged, signInWithPopup } from 'firebase/auth';
 import { runAutoHealer } from './core/auto-healer.js';
 import { initAdminPanel } from './admin/admin-modal.js';
 import { initDeleteHandler } from './admin/admin-delete.js';
-
-window.getTextureIconPath = getTextureIconPath;
 
 const renderers = {
     renderFacebasesGallery,
