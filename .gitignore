@@ -8,3 +8,4 @@ coverage/
 photos/facebases/
 photos/items/
 photos/textures/
+.env
