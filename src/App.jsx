@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Routes, Route, Link } from 'react-router-dom';
+import { onAuthStateChanged } from 'firebase/auth';
+import { auth } from '../core/firebase.js';
 import Header from './components/Header';
 import Card from './components/Card';
 import TextureCard from './components/TextureCard';
@@ -14,6 +16,7 @@ import { groupFacebaseVariants } from '../core/search.js';
 import CreateSession from './pages/scoring/CreateSession';
 import JoinSession from './pages/scoring/JoinSession';
 import SessionBoard from './pages/scoring/SessionBoard';
+import Login from './pages/Login';
 
 function Dashboard() {
     const [activeTab, setActiveTab] = useState('favorites');
@@ -284,9 +287,29 @@ function Dashboard() {
 }
 
 function App() {
+    const [user, setUser] = useState(undefined);
+
+    useEffect(() => {
+        const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+            setUser(currentUser);
+        });
+        return () => unsubscribe();
+    }, []);
+
+    if (user === undefined) {
+        return (
+            <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
+                <div className="w-10 h-10 border-4 border-zinc-800 border-t-[var(--gold)] rounded-full animate-spin"></div>
+            </div>
+        );
+    }
+
     return (
         <Routes>
-            <Route path="/*" element={<Dashboard />} />
+            {/* Rutas Críticas Privadas (El app original) */}
+            <Route path="/*" element={user ? <Dashboard /> : <Login />} />
+            
+            {/* Rutas Públicas (El Scoring System) */}
             <Route path="/session/create" element={<CreateSession />} />
             <Route path="/session/join" element={<JoinSession />} />
             <Route path="/session/:sessionId" element={<SessionBoard />} />
