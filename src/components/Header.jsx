@@ -52,8 +52,7 @@ export default function Header({ activeTab, setActiveTab }) {
         { id: 'facebases', label: 'Facebases' },
         { id: 'avatar', label: 'Avatar' },
         { id: 'textures', label: 'Textures' },
-        { id: 'music', label: 'Music' },
-        { id: 'scoring', label: 'Scoring 🏆' }
+        { id: 'music', label: 'Music' }
     ];
 
     return (

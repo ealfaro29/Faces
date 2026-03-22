@@ -3,7 +3,6 @@ import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { db } from '../../../core/firebase.js';
 import { doc, onSnapshot, setDoc } from 'firebase/firestore';
 import ParticipantSetup from './ParticipantSetup';
-import { motion } from 'framer-motion';
 
 export default function SessionBoard() {
   const { sessionId } = useParams();
@@ -15,9 +14,8 @@ export default function SessionBoard() {
   const [scores, setScores] = useState({});
   const [activePhase, setActivePhase] = useState('');
   const [activeEvent, setActiveEvent] = useState('');
-  const [rankingFilter, setRankingFilter] = useState('event'); // 'event' or 'global'
+  const [rankingFilter, setRankingFilter] = useState('event');
   
-  // Real-time synchronization via Firestore
   useEffect(() => {
     if (!sessionId || !judgeName) {
       if (!judgeName) navigate('/session/join');
@@ -80,27 +78,15 @@ export default function SessionBoard() {
     }, { merge: true });
   };
 
-  if (!session) return (
-    <div className="min-h-screen flex items-center justify-center bg-black">
-      <div className="text-zinc-500 animate-pulse text-lg tracking-widest uppercase">Cargando Sesión...</div>
-    </div>
-  );
+  if (!session) return <div>Cargando...</div>;
 
   const isHost = session.host === judgeName;
 
   if (!session.participants) {
     if (isHost) return <ParticipantSetup session={session} />;
-    
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-black text-center p-6">
-        <div className="w-16 h-16 border-4 border-zinc-800 border-t-[var(--gold)] rounded-full animate-spin mb-6"></div>
-        <h2 className="text-2xl font-bold text-white mb-2">Esperando al Host</h2>
-        <p className="text-zinc-400">El host ({session.host}) está configurando la lista de participantes.</p>
-      </div>
-    );
+    return <div>Esperando al host para configurar participantes...</div>;
   }
 
-  // Calculate Rankings
   const getRankings = () => {
     if (!session.participants) return [];
     
@@ -114,7 +100,6 @@ export default function SessionBoard() {
             if (val !== null) { sum += val; count++; }
         });
       } else {
-        // Global average across all events
         Object.keys(scores).forEach(eventKey => {
            const pScores = scores[eventKey]?.[p.id] || {};
            Object.values(pScores).forEach(val => { 
@@ -132,155 +117,118 @@ export default function SessionBoard() {
   const currentEventScores = scores[`${activePhase}_${activeEvent}`] || {};
 
   return (
-    <div className="flex flex-col h-screen bg-black text-white font-sans">
-       <header className="flex-shrink-0 h-16 bg-zinc-950 border-b border-zinc-900 flex items-center justify-between px-6">
-         <div>
-           <h1 className="text-xl font-bold font-['Playfair_Display'] text-[var(--gold)] tracking-wide">{session.name}</h1>
-           <p className="text-xs text-zinc-500 mt-0.5">ID: <span className="font-mono text-zinc-300">{session.id}</span> • Juez: <span className="text-white">{judgeName}</span> {isHost && <span className="text-[var(--gold)] ml-1">(Host)</span>}</p>
-         </div>
-         <div className="flex items-center space-x-2">
-           <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-           <span className="text-xs text-zinc-400 font-medium">FIRESTORE LIVE</span>
-         </div>
+    <div style={{ padding: '20px', fontFamily: 'monospace', color: '#000', backgroundColor: '#fff', minHeight: '100vh' }}>
+       <header style={{ borderBottom: '2px solid #000', marginBottom: '20px', paddingBottom: '10px' }}>
+         <h1>{session.name} [{session.id}]</h1>
+         <p>Juez: {judgeName} {isHost && <strong>(HOST)</strong>}</p>
        </header>
        
-       <div className="flex-1 flex overflow-hidden">
-          {/* ZONE A: Phase Selector */}
-          <aside className="w-64 bg-zinc-950 border-r border-zinc-900 overflow-y-auto hidden md:block">
-             <div className="p-5">
-               <h3 className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 mb-6">Etapas del Certamen</h3>
-               
-               {Object.keys(session.phases || {}).map(phaseKey => {
-                 const events = session.phases[phaseKey] || [];
-                 if (events.length === 0) return null;
-                 
-                 return (
-                   <div key={phaseKey} className="mb-8 group">
-                     <h4 className="capitalize text-xs font-bold text-zinc-400 mb-3 px-3 tracking-wider">{phaseKey} Competition</h4>
-                     <ul className="space-y-1.5">
-                       {events.map(ev => {
-                         const isActive = activePhase === phaseKey && activeEvent === ev;
-                         return (
-                           <li key={ev}>
-                             <button
-                               onClick={() => { setActivePhase(phaseKey); setActiveEvent(ev); }}
-                               className={`w-full text-left px-4 py-2.5 text-sm rounded-lg transition-all duration-200 ${
-                                 isActive 
-                                   ? 'bg-zinc-800 text-[var(--gold)] font-semibold shadow-sm border border-zinc-700/50' 
-                                   : 'text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200'
-                               }`}
-                             >
-                               {ev.replace(/([A-Z])/g, ' $1').trim().replace(/^\w/, c => c.toUpperCase())}
-                             </button>
-                           </li>
-                         );
-                       })}
-                     </ul>
-                   </div>
-                 );
-               })}
-             </div>
-          </aside>
+       <div style={{ display: 'flex', gap: '20px', alignItems: 'flex-start' }}>
           
-          {/* ZONE B: Judge Input */}
-          <main className="flex-1 bg-[#0a0a0a] overflow-y-auto relative p-4 md:p-8">
-             <div className="max-w-3xl mx-auto">
-               <div className="mb-8 pb-4 border-b border-zinc-800 sticky top-0 bg-[#0a0a0a] z-10 pt-4">
-                 <h2 className="text-3xl font-bold text-white mb-2 tracking-tight">
-                   Puntuación: <span className="capitalize text-[var(--gold)] font-['Playfair_Display'] italic ml-1">{activeEvent.replace(/([A-Z])/g, ' $1').trim()}</span>
-                 </h2>
-                 <p className="text-zinc-500 text-sm">Califica a cada participante del 0 al 10. Los cambios se guardan automáticamente en Firestore.</p>
-               </div>
+          <div style={{ flex: '1', borderRight: '1px solid #ccc', paddingRight: '20px' }}>
+             <h3>Fases</h3>
+             {Object.keys(session.phases || {}).map(phaseKey => {
+               const events = session.phases[phaseKey] || [];
+               if (events.length === 0) return null;
                
-               <div className="space-y-4 pb-20">
+               return (
+                 <div key={phaseKey} style={{ marginBottom: '10px' }}>
+                   <strong>{phaseKey.toUpperCase()}</strong>
+                   <ul style={{ listStyle: 'none', padding: 0 }}>
+                     {events.map(ev => {
+                       const isActive = activePhase === phaseKey && activeEvent === ev;
+                       return (
+                         <li key={ev} style={{ margin: '5px 0' }}>
+                           <button
+                             onClick={() => { setActivePhase(phaseKey); setActiveEvent(ev); }}
+                             style={{
+                               width: '100%', textAlign: 'left', padding: '8px',
+                               background: isActive ? '#000' : '#eee',
+                               color: isActive ? '#fff' : '#000',
+                               fontWeight: isActive ? 'bold' : 'normal',
+                               border: '1px solid #000'
+                             }}
+                           >
+                             {ev}
+                           </button>
+                         </li>
+                       );
+                     })}
+                   </ul>
+                 </div>
+               );
+             })}
+          </div>
+          
+          <div style={{ flex: '3' }}>
+             <h2>Puntuando: {activePhase} - {activeEvent}</h2>
+             
+             <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '20px' }}>
+               <thead>
+                 <tr>
+                   <th style={{ borderBottom: '2px solid #000', textAlign: 'left', padding: '5px' }}>Bandera</th>
+                   <th style={{ borderBottom: '2px solid #000', textAlign: 'left', padding: '5px' }}>Nombre</th>
+                   <th style={{ borderBottom: '2px solid #000', textAlign: 'center', padding: '5px' }}>Tu Puntaje</th>
+                   <th style={{ borderBottom: '2px solid #000', textAlign: 'center', padding: '5px' }}>Acción</th>
+                 </tr>
+               </thead>
+               <tbody>
                  {session.participants.map(p => {
                    const myScore = currentEventScores[p.id]?.[judgeName];
-                   
                    return (
-                     <div key={p.id} className="group flex items-center justify-between p-5 bg-zinc-900 border border-zinc-800 rounded-xl hover:border-zinc-700 transition-all shadow-sm">
-                       <div className="flex items-center space-x-4">
-                         {p.type === 'country' && <img src={p.flag} alt={`${p.name} flag`} className="w-10 h-7 object-cover rounded shadow-sm border border-zinc-800" />}
-                         {p.type === 'city' && <span className="text-2xl">{p.flag}</span>}
-                         <span className="font-semibold text-lg sm:text-xl text-zinc-100 group-hover:text-white transition-colors">{p.name}</span>
-                       </div>
-                       
-                       <div className="flex items-center space-x-4">
-                         {myScore !== undefined && myScore !== null && (
-                           <button onClick={() => deleteScore(p.id)} className="text-xs text-red-500/70 hover:text-red-500 transition-colors" title="Borrar puntaje">
-                             Borrar
-                           </button>
-                         )}
+                     <tr key={p.id}>
+                       <td style={{ borderBottom: '1px solid #ccc', padding: '10px' }}>
+                         {p.type === 'country' ? <img src={p.flag} alt="flag" width="30" /> : p.flag}
+                       </td>
+                       <td style={{ borderBottom: '1px solid #ccc', padding: '10px', fontWeight: 'bold' }}>
+                         {p.name}
+                       </td>
+                       <td style={{ borderBottom: '1px solid #ccc', padding: '10px', textAlign: 'center' }}>
                          <input 
-                           type="number" 
-                           min="0" max="10" step="0.1"
-                           placeholder="-"
+                           type="number" min="0" max="10" step="0.1"
                            value={(myScore !== undefined && myScore !== null) ? myScore : ''}
                            onChange={(e) => handleScoreChange(p.id, e.target.value)}
-                           className={`w-24 text-center text-2xl font-bold bg-zinc-950 border rounded-lg py-2 focus:ring-2 focus:outline-none transition-colors ${
-                             (myScore !== undefined && myScore !== null) ? 'border-[var(--gold)] text-[var(--gold)] focus:ring-[var(--gold)]' : 'border-zinc-700 text-white focus:border-zinc-500 focus:ring-zinc-600'
-                           }`}
+                           style={{ width: '60px', padding: '5px', textAlign: 'center', border: '1px solid #000' }}
                          />
-                       </div>
-                     </div>
+                       </td>
+                       <td style={{ borderBottom: '1px solid #ccc', padding: '10px', textAlign: 'center' }}>
+                         {myScore !== undefined && myScore !== null && (
+                           <button onClick={() => deleteScore(p.id)} style={{ padding: '2px 5px', color: 'red' }}>Borrar</button>
+                         )}
+                       </td>
+                     </tr>
                    );
                  })}
-               </div>
-             </div>
-          </main>
+               </tbody>
+             </table>
+          </div>
 
-          {/* ZONE C: Live Ranking */}
-          <aside className="w-80 md:w-96 bg-zinc-950 border-l border-zinc-900 flex flex-col hidden lg:flex">
-             <div className="p-5 border-b border-zinc-900 flex-shrink-0 bg-zinc-900/50">
-               <h3 className="text-[10px] font-bold uppercase tracking-widest text-[var(--gold2)] mb-3 flex items-center justify-between">
-                 <span>Ranking en Vivo</span>
-               </h3>
-               
-               <div className="flex bg-zinc-950 rounded-md p-1 border border-zinc-800">
-                 <button 
-                   onClick={() => setRankingFilter('event')}
-                   className={`flex-1 text-xs py-2 rounded-sm font-medium transition-colors ${rankingFilter === 'event' ? 'bg-zinc-800 text-white shadow-sm' : 'text-zinc-500 hover:text-zinc-300'}`}
-                 >
-                   Este Evento
-                 </button>
-                 <button 
-                   onClick={() => setRankingFilter('global')}
-                   className={`flex-1 text-xs py-2 rounded-sm font-medium transition-colors ${rankingFilter === 'global' ? 'bg-zinc-800 text-white shadow-sm' : 'text-zinc-500 hover:text-zinc-300'}`}
-                 >
-                   Global
-                 </button>
-               </div>
+          <div style={{ flex: '2', borderLeft: '1px solid #ccc', paddingLeft: '20px' }}>
+             <h3>Ranking en Vivo</h3>
+             <div style={{ marginBottom: '10px' }}>
+               <button onClick={() => setRankingFilter('event')} style={{ background: rankingFilter === 'event' ? '#000' : '#eee', color: rankingFilter === 'event' ? '#fff' : '#000', border: '1px solid #000', padding: '5px' }}>Este Evento</button>
+               <button onClick={() => setRankingFilter('global')} style={{ background: rankingFilter === 'global' ? '#000' : '#eee', color: rankingFilter === 'global' ? '#fff' : '#000', border: '1px solid #000', padding: '5px', marginLeft: '5px' }}>Global</button>
              </div>
              
-             <div className="flex-1 overflow-y-auto p-5 space-y-3">
-               {rankings.map((p, idx) => (
-                 <motion.div 
-                   layout 
-                   key={p.id} 
-                   className={`flex items-center justify-between p-3 rounded-lg border ${
-                     idx === 0 ? 'bg-[var(--gold)]/10 border-[var(--gold)]/30' : 
-                     idx < 5 ? 'bg-zinc-900 border-zinc-800' : 'bg-zinc-950 border-zinc-900 opacity-80'
-                   }`}
-                 >
-                   <div className="flex items-center space-x-3">
-                     <span className={`text-sm font-bold w-5 text-center ${idx === 0 ? 'text-[var(--gold)]' : 'text-zinc-500'}`}>{idx + 1}</span>
-                     <span className="font-medium text-sm max-w-[120px] truncate">{p.name}</span>
-                   </div>
-                   <div className="text-right">
-                     <div className={`font-bold ${idx === 0 ? 'text-[var(--gold)] text-lg' : 'text-white'}`}>
-                       {p.average.toFixed(2)}
-                     </div>
-                     <div className="text-[10px] text-zinc-500">{p.votes} {p.votes === 1 ? 'voto' : 'votos'}</div>
-                   </div>
-                 </motion.div>
-               ))}
-               
-               {rankings.filter(p => p.votes > 0).length === 0 && (
-                 <div className="text-center text-zinc-600 text-sm mt-10">
-                   <p>Esperando puntajes...</p>
-                 </div>
-               )}
-             </div>
-          </aside>
+             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+               <thead>
+                 <tr>
+                   <th style={{ borderBottom: '1px solid #000', textAlign: 'left', padding: '5px' }}>Pos</th>
+                   <th style={{ borderBottom: '1px solid #000', textAlign: 'left', padding: '5px' }}>Nombre</th>
+                   <th style={{ borderBottom: '1px solid #000', textAlign: 'right', padding: '5px' }}>Promedio</th>
+                 </tr>
+               </thead>
+               <tbody>
+                 {rankings.map((p, idx) => (
+                   <tr key={p.id}>
+                     <td style={{ borderBottom: '1px solid #ccc', padding: '5px', fontWeight: idx === 0 ? 'bold' : 'normal' }}>{idx + 1}</td>
+                     <td style={{ borderBottom: '1px solid #ccc', padding: '5px' }}>{p.name}</td>
+                     <td style={{ borderBottom: '1px solid #ccc', padding: '5px', textAlign: 'right', fontWeight: 'bold' }}>{p.average.toFixed(2)} <span style={{fontSize: '10px', fontWeight: 'normal'}}>({p.votes}v)</span></td>
+                   </tr>
+                 ))}
+               </tbody>
+             </table>
+          </div>
        </div>
     </div>
   );
