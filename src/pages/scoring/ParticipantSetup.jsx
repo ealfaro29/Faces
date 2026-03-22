@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { db } from '../../../core/firebase.js';
 import { doc, updateDoc } from 'firebase/firestore';
+import { Search, Plus, X, Globe, MapPin } from 'lucide-react';
 
 export default function ParticipantSetup({ session }) {
   const [countries, setCountries] = useState([]);
@@ -15,7 +16,6 @@ export default function ParticipantSetup({ session }) {
   
   const [selectedParticipants, setSelectedParticipants] = useState([]);
 
-  // Load countries on mount
   useEffect(() => {
     fetch('https://restcountries.com/v3.1/all?fields=name,cca3,flag')
       .then(res => res.json())
@@ -29,10 +29,9 @@ export default function ParticipantSetup({ session }) {
         .sort((a,b) => a.name.localeCompare(b.name));
         setCountries(parsed);
       })
-      .catch(err => console.error("Error fetching countries", err));
+      .catch(err => console.error("Error", err));
   }, []);
 
-  // Fetch Cities when Parent Country is chosen (for National)
   useEffect(() => {
     if (session.type === 'Nacional' && selectedParentCountry) {
         setCities([]);
@@ -46,17 +45,16 @@ export default function ParticipantSetup({ session }) {
             if(!data.error && data.data) {
                 const parsedCities = data.data.map(c => ({
                     name: c,
-                    id: c.replace(/\\s+/g, '').toUpperCase(),
-                    flag: selectedParentCountry.flag // reuse country emoji
+                    id: c.replace(/\s+/g, '').toUpperCase(),
+                    flag: selectedParentCountry.flag
                 }));
                 setCities(parsedCities);
             }
         })
-        .catch(err => console.error("Error fetching cities", err));
+        .catch(err => console.error("Error", err));
     }
   }, [session.type, selectedParentCountry]);
 
-  // Autocomplete Logic
   useEffect(() => {
     if (queryCountry.length > 1) {
         setCountryResults(countries.filter(c => c.name.toLowerCase().includes(queryCountry.toLowerCase())));
@@ -94,160 +92,174 @@ export default function ParticipantSetup({ session }) {
   };
 
   const handleStart = async () => {
-    if (selectedParticipants.length === 0) return alert("Agrega al menos un participante.");
-    
+    if (selectedParticipants.length === 0) return alert("Agrega herramientas.");
     try {
       const sessionRef = doc(db, "sessions", session.id);
-      await updateDoc(sessionRef, {
-        participants: selectedParticipants
-      });
+      await updateDoc(sessionRef, { participants: selectedParticipants });
     } catch(err) {
       console.error(err);
-      alert("Error guardando participantes");
     }
   };
 
   return (
-    <div style={{ padding: '20px', fontFamily: 'monospace', color: '#000', backgroundColor: '#fff', minHeight: '100vh', paddingBottom: '100px' }}>
-      <h2 style={{borderBottom: '2px solid #000'}}>Setup de {session.type === 'Global' ? 'Países' : 'Ciudades'}</h2>
-      <p style={{marginBottom: '20px'}}>Agrega los participantes buscando en el campo de texto.</p>
+    <div className="w-full flex justify-center py-10 px-4 h-full overflow-y-auto">
+      <div className="w-full max-w-4xl grid grid-cols-1 lg:grid-cols-2 gap-8 h-fit">
+        
+        {/* Columna Izquierda: Búsqueda */}
+        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 shadow-lg h-fit">
+          <h2 className="text-xl font-bold text-white mb-1 flex items-center gap-2">
+            {session.type === 'Global' ? <Globe className="w-5 h-5 text-zinc-400"/> : <MapPin className="w-5 h-5 text-zinc-400"/>}
+            Añadir Candidatas
+          </h2>
+          <p className="text-zinc-500 text-sm mb-6">Busca y selecciona perfiles para agregar a la competencia.</p>
 
-      {session.type === 'Global' && (
-          <div style={{ position: 'relative', maxWidth: '400px', marginBottom: '20px' }}>
-              <label style={{fontWeight: 'bold'}}>Buscar País:</label><br/>
-              <input 
-                  type="text" 
-                  value={queryCountry} 
-                  onChange={e => setQueryCountry(e.target.value)} 
-                  placeholder="Escribe el nombre..."
-                  style={{ width: '100%', padding: '10px', border: '2px solid #000', outline: 'none', fontSize: '16px' }}
-              />
+          {session.type === 'Global' && (
+            <div className="relative">
+              <div className="relative">
+                <input 
+                  type="text" value={queryCountry} onChange={e => setQueryCountry(e.target.value)} 
+                  placeholder="Escibe el nombre del país..."
+                  className="w-full bg-zinc-950 border border-zinc-800 rounded-xl h-12 pl-12 pr-4 text-sm text-white focus:outline-none focus:border-zinc-500 transition-colors"
+                />
+                <Search className="w-5 h-5 text-zinc-500 absolute left-4 top-3.5" />
+              </div>
+              
               {countryResults.length > 0 && (
-                  <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: '#fff', border: '2px solid #000', borderTop: 'none', zIndex: 10, maxHeight: '200px', overflowY: 'auto' }}>
-                      {countryResults.map(c => (
-                          <div 
-                              key={c.id} 
-                              onClick={() => handleAddGlobal(c)}
-                              style={{ padding: '10px', borderBottom: '1px solid #ccc', cursor: 'pointer', background: '#f9f9f9', hover: {background: '#e0e0e0'} }}
-                          >
-                              {c.flag} {c.name}
-                          </div>
-                      ))}
-                  </div>
+                <div className="absolute top-14 left-0 right-0 bg-zinc-800 border border-zinc-700 rounded-xl overflow-hidden z-20 shadow-2xl max-h-60 overflow-y-auto">
+                  {countryResults.map(c => (
+                    <button key={c.id} onClick={() => handleAddGlobal(c)} className="w-full flex items-center gap-3 p-3 hover:bg-zinc-700 transition-colors text-left border-b border-zinc-700/50 last:border-0">
+                      <span className="text-lg">{c.flag}</span>
+                      <span className="text-zinc-200 text-sm">{c.name}</span>
+                      <Plus className="w-4 h-4 text-zinc-500 ml-auto" />
+                    </button>
+                  ))}
+                </div>
               )}
-              {queryCountry.length > 1 && countryResults.length === 0 && countries.length > 0 && (
-                 <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: '#fff', border: '2px solid #000', zIndex: 10, padding: '10px' }}>
-                    País no encontrado.
-                 </div>
-              )}
-          </div>
-      )}
+            </div>
+          )}
 
-      {session.type === 'Nacional' && (
-          <div style={{ maxWidth: '400px', marginBottom: '20px' }}>
+          {session.type === 'Nacional' && (
+            <div className="space-y-6">
               {!selectedParentCountry ? (
-                  <div style={{ position: 'relative' }}>
-                      <label style={{fontWeight: 'bold'}}>1. País Anfitrión:</label><br/>
-                      <input 
-                          type="text" 
-                          value={queryCountry} 
-                          onChange={e => setQueryCountry(e.target.value)} 
-                          placeholder="Escribe para buscar..."
-                          style={{ width: '100%', padding: '10px', border: '2px solid #000', outline: 'none' }}
-                      />
-                      {countryResults.length > 0 && (
-                          <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: '#fff', border: '2px solid #000', borderTop: 'none', zIndex: 10, maxHeight: '200px', overflowY: 'auto' }}>
-                              {countryResults.map(c => (
-                                  <div 
-                                      key={c.id} 
-                                      onClick={() => { setSelectedParentCountry(c); setQueryCountry(''); setCountryResults([]); }}
-                                      style={{ padding: '10px', borderBottom: '1px solid #ccc', cursor: 'pointer', background: '#f9f9f9' }}
-                                  >
-                                      {c.flag} {c.name}
-                                  </div>
-                              ))}
-                          </div>
-                      )}
+                <div className="relative">
+                  <label className="block text-xs font-bold tracking-widest text-zinc-500 uppercase mb-2">1. País Sede</label>
+                  <div className="relative">
+                    <input 
+                      type="text" value={queryCountry} onChange={e => setQueryCountry(e.target.value)} 
+                      placeholder="Busca el país anfitrión..."
+                      className="w-full bg-zinc-950 border border-zinc-800 rounded-xl h-12 pl-12 pr-4 text-sm text-white focus:outline-none focus:border-zinc-500 transition-colors"
+                    />
+                    <Search className="w-5 h-5 text-zinc-500 absolute left-4 top-3.5" />
                   </div>
+                  {countryResults.length > 0 && (
+                    <div className="absolute top-[72px] left-0 right-0 bg-zinc-800 border border-zinc-700 rounded-xl overflow-hidden z-20 shadow-2xl max-h-60 overflow-y-auto">
+                      {countryResults.map(c => (
+                        <button key={c.id} onClick={() => { setSelectedParentCountry(c); setQueryCountry(''); setCountryResults([]); }} className="w-full flex items-center gap-3 p-3 hover:bg-zinc-700 transition-colors text-left border-b border-zinc-700/50 last:border-0">
+                          <span className="text-lg">{c.flag}</span>
+                          <span className="text-zinc-200 text-sm">{c.name}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
               ) : (
-                  <div>
-                      <div style={{ padding: '10px', border: '1px dashed #000', marginBottom: '15px' }}>
-                        <strong>Anfitrión seleccionado:</strong> {selectedParentCountry.flag} {selectedParentCountry.name} 
-                        <button onClick={() => {setSelectedParentCountry(null); setCities([]); setSelectedParticipants([]);}} style={{marginLeft:'10px', cursor:'pointer', border:'1px solid #000', background:'#eee', padding:'2px 5px'}}>Cambiar</button>
+                <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2">
+                  <div className="bg-zinc-950/50 border border-zinc-800/80 p-4 rounded-xl flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <span className="text-2xl">{selectedParentCountry.flag}</span>
+                      <div>
+                        <p className="text-xs text-zinc-500 uppercase tracking-widest">Sede Nacional</p>
+                        <p className="text-white font-medium">{selectedParentCountry.name}</p>
                       </div>
-                      
-                      <div style={{ position: 'relative' }}>
-                          <label style={{fontWeight: 'bold'}}>2. Buscar Ciudad:</label><br/>
-                          <input 
-                              type="text" 
-                              value={queryCity} 
-                              onChange={e => setQueryCity(e.target.value)} 
-                              placeholder="Escribe la ciudad..."
-                              style={{ width: '100%', padding: '10px', border: '2px solid #000', outline: 'none' }}
-                              disabled={cities.length === 0}
-                          />
-                          {cities.length === 0 && <small style={{color:'gray'}}>Cargando lista de ciudades (API)...</small>}
-                          
-                          {cityResults.length > 0 && (
-                              <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: '#fff', border: '2px solid #000', borderTop: 'none', zIndex: 10, maxHeight: '200px', overflowY: 'auto' }}>
-                                  {cityResults.map(c => (
-                                      <div 
-                                          key={c.id} 
-                                          onClick={() => handleAddNational(c)}
-                                          style={{ padding: '10px', borderBottom: '1px solid #ccc', cursor: 'pointer', background: '#f9f9f9' }}
-                                      >
-                                          {c.flag} {c.name}
-                                      </div>
-                                  ))}
-                              </div>
-                          )}
-                          {queryCity.length > 1 && cityResults.length === 0 && cities.length > 0 && (
-                              <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: '#fff', border: '2px solid #000', borderTop: 'none', zIndex: 10, padding: '10px' }}>
-                                 Ciudad no encontrada en API. <br/>
-                                 <button onClick={() => handleAddNational({name: queryCity.trim(), id: queryCity.replace(/\\s+/g,'').toUpperCase(), flag: selectedParentCountry.flag})} style={{textDecoration:'underline', border:'none', background:'none', cursor:'pointer', fontWeight:'bold', marginTop: '5px'}}>
-                                   Agregar manualmente "{queryCity}"
-                                 </button>
-                              </div>
-                          )}
-                      </div>
+                    </div>
+                    <button onClick={() => {setSelectedParentCountry(null); setCities([]); setSelectedParticipants([]);}} className="text-xs text-zinc-400 hover:text-white underline decoration-zinc-700 underline-offset-4">Modificar</button>
                   </div>
+                  
+                  <div className="relative">
+                    <label className="block text-xs font-bold tracking-widest text-zinc-500 uppercase mb-2">2. Agregar Ciudad</label>
+                    <div className="relative">
+                      <input 
+                        type="text" value={queryCity} onChange={e => setQueryCity(e.target.value)} disabled={cities.length === 0}
+                        placeholder={cities.length === 0 ? "Cargando cartografía..." : "Buscar ciudad..."}
+                        className="w-full bg-zinc-950 border border-zinc-800 rounded-xl h-12 pl-12 pr-4 text-sm text-white focus:outline-none focus:border-zinc-500 transition-colors disabled:opacity-50"
+                      />
+                      <Search className="w-5 h-5 text-zinc-500 absolute left-4 top-3.5" />
+                    </div>
+                    
+                    {cityResults.length > 0 && (
+                      <div className="absolute mt-2 left-0 right-0 bg-zinc-800 border border-zinc-700 rounded-xl overflow-hidden z-20 shadow-2xl max-h-60 overflow-y-auto">
+                        {cityResults.map(c => (
+                          <button key={c.id} onClick={() => handleAddNational(c)} className="w-full flex items-center gap-3 p-3 hover:bg-zinc-700 transition-colors text-left border-b border-zinc-700/50 last:border-0">
+                            <span className="text-zinc-200 text-sm">{c.name}</span>
+                            <Plus className="w-4 h-4 text-zinc-500 ml-auto" />
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                    {queryCity.length > 1 && cityResults.length === 0 && cities.length > 0 && (
+                      <div className="absolute mt-2 left-0 right-0 bg-zinc-800 border border-zinc-700 rounded-xl p-4 z-20 shadow-2xl text-center">
+                        <p className="text-sm text-zinc-400 mb-3">No hay resultados en la API pública.</p>
+                        <button onClick={() => handleAddNational({name: queryCity.trim(), id: queryCity.replace(/\s+/g,'').toUpperCase(), flag: selectedParentCountry.flag})} className="text-xs bg-white text-black px-4 py-2 rounded-lg font-medium hover:bg-zinc-200 transition-colors">
+                          Añadir "{queryCity}" Manualmente
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
               )}
+            </div>
+          )}
+        </div>
+
+        {/* Columna Derecha: Tabla */}
+        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 shadow-lg flex flex-col min-h-[400px]">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-sm font-bold text-white uppercase tracking-widest">Nómina Base</h3>
+            <span className="bg-zinc-800 text-zinc-300 text-xs px-2 py-1 rounded-md font-mono">{selectedParticipants.length}</span>
           </div>
-      )}
 
-      <h3>({selectedParticipants.length}) Participantes Agregados</h3>
-      <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '20px' }}>
-          <thead>
-              <tr>
-                  <th style={{ borderBottom: '2px solid #000', textAlign: 'left', padding: '8px' }}>P</th>
-                  <th style={{ borderBottom: '2px solid #000', textAlign: 'left', padding: '8px' }}>Candidato</th>
-                  <th style={{ borderBottom: '2px solid #000', textAlign: 'center', padding: '8px' }}>-</th>
-              </tr>
-          </thead>
-          <tbody>
-              {selectedParticipants.length === 0 && (
-                  <tr><td colSpan="3" style={{padding:'20px', textAlign:'center', fontStyle: 'italic', borderBottom: '1px solid #ccc'}}>Vacío</td></tr>
-              )}
-              {selectedParticipants.map(p => (
-                  <tr key={p.id}>
-                      <td style={{ borderBottom: '1px solid #ccc', padding: '8px' }}>{p.flag}</td>
-                      <td style={{ borderBottom: '1px solid #ccc', padding: '8px', fontWeight: 'bold' }}>{p.name}</td>
-                      <td style={{ borderBottom: '1px solid #ccc', padding: '8px', textAlign: 'center' }}>
-                          <button onClick={() => handleRemove(p.id)} style={{ color: 'red', border: '1px solid red', background: 'none', cursor: 'pointer', padding: '2px 8px' }}>x</button>
-                      </td>
+          <div className="flex-grow overflow-y-auto border border-zinc-800 rounded-xl bg-zinc-950/30 mb-6">
+            {selectedParticipants.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-full text-zinc-600 p-8 text-center gap-3">
+                <Globe className="w-10 h-10 opacity-20" />
+                <p className="text-sm">El certamen está vacío.</p>
+              </div>
+            ) : (
+              <table className="w-full text-sm text-left">
+                <thead className="bg-zinc-900 sticky top-0 border-b border-zinc-800 z-10 text-xs tracking-wider text-zinc-500 uppercase">
+                  <tr>
+                    <th className="font-normal py-3 pl-4 pr-2 w-10">#</th>
+                    <th className="font-normal py-3 px-2">Candidata</th>
+                    <th className="font-normal py-3 pr-4 text-right">Delete</th>
                   </tr>
-              ))}
-          </tbody>
-      </table>
+                </thead>
+                <tbody className="divide-y divide-zinc-800/50">
+                  {selectedParticipants.map((p, i) => (
+                    <tr key={p.id} className="hover:bg-zinc-800/30 transition-colors group">
+                      <td className="py-3 pl-4 pr-2 text-xl">{p.flag}</td>
+                      <td className="py-3 px-2 font-medium text-zinc-200">{p.name}</td>
+                      <td className="py-3 pr-4 text-right">
+                        <button onClick={() => handleRemove(p.id)} className="w-6 h-6 flex items-center justify-center rounded bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-colors ml-auto opacity-0 group-hover:opacity-100">
+                          <X className="w-3 h-3" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
 
-      <button 
-          onClick={handleStart} 
-          disabled={selectedParticipants.length === 0}
-          style={{ padding: '15px 20px', width: '100%', maxWidth: '400px', background: selectedParticipants.length > 0 ? '#000' : '#ccc', color: '#fff', border: 'none', cursor: selectedParticipants.length > 0 ? 'pointer' : 'not-allowed', fontWeight: 'bold', fontSize: '18px' }}
-      >
-          &gt; Iniciar Evento
-      </button>
+          <button 
+            onClick={handleStart} 
+            disabled={selectedParticipants.length === 0}
+            className="w-full h-14 bg-white text-black font-bold uppercase tracking-widest text-sm rounded-xl hover:bg-zinc-200 transition-colors shadow-[0_0_20px_rgba(255,255,255,0.05)] disabled:opacity-20 disabled:shadow-none"
+          >
+            Iniciar Evento
+          </button>
+        </div>
 
+      </div>
     </div>
   );
 }
