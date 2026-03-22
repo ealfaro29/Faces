@@ -19,15 +19,17 @@ export async function initializeAllData() {
     try {
         console.log("DATA_LOADER: Fetching from Firestore...");
 
-        const [texSnap, faceSnap, avSnap, musicSnap] = await Promise.all([
-            getDocs(collection(db, 'textures')),
-            getDocs(collection(db, 'facebases')),
-            getDocs(collection(db, 'avatar')),
-            getDocs(collection(db, 'music'))
-        ]);
+        const queries = [
+            getDocs(collection(db, 'textures')).catch(e => { console.warn("Failed textures", e); return { empty: true, forEach: () => {} }; }),
+            getDocs(collection(db, 'facebases')).catch(e => { console.warn("Failed facebases", e); return { empty: true, forEach: () => {} }; }),
+            getDocs(collection(db, 'avatar')).catch(e => { console.warn("Failed avatar", e); return { empty: true, forEach: () => {} }; }),
+            getDocs(collection(db, 'music')).catch(e => { console.warn("Failed music", e); return { empty: true, forEach: () => {} }; })
+        ];
+
+        const [texSnap, faceSnap, avSnap, musicSnap] = await Promise.all(queries);
 
         if (texSnap.empty && faceSnap.empty && avSnap.empty) {
-            console.warn("DATA_LOADER: Firestore is empty!");
+            console.warn("DATA_LOADER: Firestore queries returned empty or blocked by rules!");
         }
 
         texSnap.forEach(doc => sourceData.textures.push({ ...doc.data(), id: doc.id }));
@@ -37,10 +39,10 @@ export async function initializeAllData() {
 
     } catch (error) {
         console.error("DATA_LOADER: CRITICAL ERROR - Could not load from Firebase.", error);
-        throw error;
+        // We no longer throw error since we catch individual collections above
     }
 
-    console.log(`DATA_LOADER: Cloud load complete. Items: T:${sourceData.textures.length} F:${sourceData.facebases.length} A:${sourceData.avatar.length}`);
+    console.log(`DATA_LOADER: Cloud load complete. Items: T:${sourceData.textures.length} F:${sourceData.facebases.length} A:${sourceData.avatar.length} M:${sourceData.music.length}`);
 
     // 2. Mapear y Normalizar datos (sourceData ya tiene la estructura correcta)
     // TEXTURAS
