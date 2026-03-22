@@ -216,7 +216,7 @@ function Dashboard() {
     return (
         <>
             <div id="custom-toast"></div>
-            <div className={`container ${!loading ? 'loaded' : ''}`} id="app-container">
+            <div className={`app-wrapper ${!loading ? 'loaded' : ''}`} id="app-container">
                 <Header activeTab={activeTab} setActiveTab={setActiveTab} />
                 <main className="panel" role="main">
                     <div id="search-controls" className="flex-shrink-0 flex flex-col sm:flex-row gap-4 mb-4 pb-4 border-b border-[var(--border)]" role="search">

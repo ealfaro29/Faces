@@ -192,7 +192,7 @@ body {
     text-shadow: 0 0 18px rgba(227, 199, 102, .25);
 }
 
-.container {
+.app-wrapper {
     max-width: 1600px;
     margin: 0 auto;
     display: flex;
@@ -204,7 +204,7 @@ body {
     filter: blur(4px);
 }
 
-.container.loaded {
+.app-wrapper.loaded {
     opacity: 1;
     filter: blur(0);
 }
