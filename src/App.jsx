@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Routes, Route, Link } from 'react-router-dom';
 import Header from './components/Header';
 import Card from './components/Card';
 import TextureCard from './components/TextureCard';
@@ -10,8 +11,11 @@ import { initializeAllData } from '../data-loader.js';
 import { useFavorites } from './hooks/useFavorites.js';
 import { groupTextureVariants } from '../tabs/textures.js';
 import { groupFacebaseVariants } from '../core/search.js';
+import CreateSession from './pages/scoring/CreateSession';
+import JoinSession from './pages/scoring/JoinSession';
+import SessionBoard from './pages/scoring/SessionBoard';
 
-function App() {
+function Dashboard() {
     const [activeTab, setActiveTab] = useState('favorites');
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -155,6 +159,27 @@ function App() {
             );
         }
 
+        if (activeTab === 'scoring') {
+            return (
+                <div className="flex flex-col items-center justify-center p-10 gap-6 animate-in fade-in">
+                   <h2 className="text-4xl font-bold font-['Playfair_Display'] text-[var(--gold)] mb-2 mt-10">Real-Time Scoring</h2>
+                   <p className="text-zinc-400 text-center max-w-xl mb-8 leading-relaxed text-lg">El motor integrado de calificación en tiempo real para certámenes de belleza.</p>
+                   
+                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 w-full max-w-2xl">
+                     <Link to="/session/create" className="p-10 bg-zinc-900 border border-[var(--gold)]/30 hover:border-[var(--gold)] rounded-xl flex flex-col items-center justify-center gap-6 transition-all group cursor-pointer no-underline shadow-lg hover:shadow-[var(--gold)]/10">
+                       <span className="text-5xl group-hover:scale-110 transition-transform block filter drop-shadow-md">🏆</span>
+                       <span className="text-xl font-bold text-white mt-2 group-hover:text-[var(--gold)] transition-colors">Crear Configuración (Host)</span>
+                     </Link>
+                     
+                     <Link to="/session/join" className="p-10 bg-zinc-900 border border-[var(--gold)]/30 hover:border-[var(--gold)] rounded-xl flex flex-col items-center justify-center gap-6 transition-all group cursor-pointer no-underline shadow-lg hover:shadow-[var(--gold)]/10">
+                       <span className="text-5xl group-hover:scale-110 transition-transform block filter drop-shadow-md">👑</span>
+                       <span className="text-xl font-bold text-white mt-2 group-hover:text-[var(--gold)] transition-colors">Unirse como Juez</span>
+                     </Link>
+                   </div>
+                </div>
+            );
+        }
+
         if (activeTab === 'favorites') {
             // Need to flatten all lists, find items marked as favorites, and render them.
             // Simplified rendering since they're different types. In original, it dynamically rendered appropriate cards.
@@ -276,6 +301,17 @@ function App() {
                 <p>&copy; 2024 Fashion Muse. Migrating to React ⚛️.</p>
             </footer>
         </>
+    );
+}
+
+function App() {
+    return (
+        <Routes>
+            <Route path="/*" element={<Dashboard />} />
+            <Route path="/session/create" element={<CreateSession />} />
+            <Route path="/session/join" element={<JoinSession />} />
+            <Route path="/session/:sessionId" element={<SessionBoard />} />
+        </Routes>
     );
 }
 

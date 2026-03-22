@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Camera, Clock, UploadCloud, Ticket, Sun, Moon, Crown, Heart, Zap, Diamond } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import AdminModal from './AdminModal';
 import PhotosModal from './PhotosModal';
 import TimeConverterModal from './TimeConverterModal';
@@ -51,7 +52,8 @@ export default function Header({ activeTab, setActiveTab }) {
         { id: 'facebases', label: 'Facebases' },
         { id: 'avatar', label: 'Avatar' },
         { id: 'textures', label: 'Textures' },
-        { id: 'music', label: 'Music' }
+        { id: 'music', label: 'Music' },
+        { id: 'scoring', label: 'Scoring 🏆' }
     ];
 
     return (
