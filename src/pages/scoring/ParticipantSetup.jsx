@@ -17,7 +17,7 @@ export default function ParticipantSetup({ session }) {
 
   // Load countries on mount
   useEffect(() => {
-    fetch('https://restcountries.com/v3.1/all')
+    fetch('https://restcountries.com/v3.1/all?fields=name,cca3,flag')
       .then(res => res.json())
       .then(data => {
         const parsed = data.map(c => ({
