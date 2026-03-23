@@ -199,6 +199,13 @@ export default function SessionBoard() {
     }
   };
 
+  const setCutoff = async (phaseKey, value) => {
+    const cutoffs = session.phaseCutoffs || {};
+    const num = parseInt(value);
+    const updated = { ...cutoffs, [phaseKey]: isNaN(num) || num <= 0 ? null : num };
+    await updateDoc(doc(db, "sessions", session.id), { phaseCutoffs: updated });
+  };
+
   const copyCode = () => {
     navigator.clipboard.writeText(session.id);
     setCodeCopied(true);
@@ -212,10 +219,11 @@ export default function SessionBoard() {
   );
 
   const isHost = session.host === judgeName;
-  const participants = session.participants || [];
+  const allParticipants = session.participants || [];
+  const cutoffs = session.phaseCutoffs || {};
 
   // Non-host waiting screen (only if host hasn't added anyone yet)
-  if (!isHost && participants.length === 0) {
+  if (!isHost && allParticipants.length === 0) {
     return (
       <div className="min-h-screen bg-[#0a0a0a] flex flex-col items-center justify-center p-6 text-center">
         <Activity className="w-12 h-12 text-zinc-700 animate-pulse mb-4" />
@@ -227,17 +235,52 @@ export default function SessionBoard() {
   }
 
   const hasAnyEvents = Object.values(session.phases || {}).some(events => events.length > 0);
+  const phaseKeys = Object.keys(session.phases || {});
+
+  // Compute overall scores for a given phase (across all its events)
+  const getPhaseOverallRanking = (phaseKey, participantPool) => {
+    const events = session.phases[phaseKey] || [];
+    return participantPool.map(p => {
+      let sum = 0, count = 0;
+      events.forEach(ev => {
+        const eventScores = scores[`${phaseKey}_${ev}`]?.[p.id] || {};
+        Object.values(eventScores).forEach(val => { if (val !== null) { sum += val; count++; } });
+      });
+      return { ...p, average: count > 0 ? sum / count : 0, votes: count };
+    }).sort((a, b) => b.average - a.average);
+  };
+
+  // Get participants eligible for a given phase (filtered by previous phase cutoff)
+  const getActiveParticipants = (phaseKey) => {
+    const phaseIdx = phaseKeys.indexOf(phaseKey);
+    if (phaseIdx <= 0) return allParticipants; // First phase: everyone
+    
+    // Look at the previous phase's cutoff
+    const prevPhaseKey = phaseKeys[phaseIdx - 1];
+    const prevCutoff = cutoffs[prevPhaseKey];
+    if (!prevCutoff) return allParticipants; // No cutoff set: everyone advances
+    
+    // Recursively get who was eligible for the previous phase, then rank them
+    const prevPool = getActiveParticipants(prevPhaseKey);
+    const ranked = getPhaseOverallRanking(prevPhaseKey, prevPool);
+    return ranked.slice(0, prevCutoff);
+  };
+
+  const activeParticipants = getActiveParticipants(activePhase);
+  const activeParticipantIds = new Set(activeParticipants.map(p => p.id));
 
   const getRankings = () => {
-    return participants.map(p => {
+    return activeParticipants.map(p => {
       let sum = 0, count = 0;
       if (rankingFilter === 'event') {
         const eventScores = scores[`${activePhase}_${activeEvent}`]?.[p.id] || {};
         Object.values(eventScores).forEach(val => { if (val !== null) { sum += val; count++; } });
       } else {
-        Object.keys(scores).forEach(eventKey => {
-          const pScores = scores[eventKey]?.[p.id] || {};
-          Object.values(pScores).forEach(val => { if (val !== null) { sum += val; count++; } });
+        // Overall across current phase events only
+        const events = session.phases[activePhase] || [];
+        events.forEach(ev => {
+          const evScores = scores[`${activePhase}_${ev}`]?.[p.id] || {};
+          Object.values(evScores).forEach(val => { if (val !== null) { sum += val; count++; } });
         });
       }
       return { ...p, average: count > 0 ? sum / count : 0, votes: count };
@@ -493,10 +536,10 @@ export default function SessionBoard() {
             </div>
           )}
 
-          {participants.length === 0 ? (
+          {activeParticipants.length === 0 ? (
             <div className="flex-1 flex flex-col items-center justify-center text-zinc-600 gap-3">
               <UserPlus className="w-12 h-12 opacity-20" />
-              <p className="text-sm">Usa el buscador del panel lateral para agregar candidatas.</p>
+              <p className="text-sm text-center">{allParticipants.length === 0 ? 'Usa el buscador del panel lateral para agregar candidatas.' : 'No hay candidatas clasificadas para esta fase.'}</p>
             </div>
           ) : (
             <div className="flex-1 overflow-auto rounded-xl border border-zinc-800 bg-zinc-900/40 relative z-10 shadow-2xl">
@@ -510,7 +553,7 @@ export default function SessionBoard() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-800/50">
-                  {participants.map(p => {
+                  {activeParticipants.map(p => {
                     const myScore = currentEventScores[p.id]?.[judgeName];
                     const hasScore = myScore !== undefined && myScore !== null;
                     
@@ -549,34 +592,68 @@ export default function SessionBoard() {
         {/* RIGHT SIDEBAR: RANKING */}
         <div className="w-full lg:w-80 xl:w-96 border-t lg:border-t-0 lg:border-l border-zinc-800 bg-zinc-950/80 flex flex-col overflow-hidden shrink-0">
           <div className="p-4 shrink-0 border-b border-zinc-800/50 bg-zinc-950 shadow-sm z-20">
-            <h3 className="text-xs font-bold tracking-widest text-zinc-400 uppercase mb-3 flex items-center justify-between">
-              Rankings en Vivo
-              <Star className="w-4 h-4 text-zinc-600" />
-            </h3>
-            <div className="flex bg-zinc-900 rounded-lg p-1 border border-zinc-800">
-              <button onClick={() => setRankingFilter('event')} className={`flex-1 text-xs py-1.5 rounded-md font-medium transition-all ${rankingFilter === 'event' ? 'bg-zinc-800 text-white shadow-sm' : 'text-zinc-500 hover:text-zinc-300'}`}>Evento Actual</button>
-              <button onClick={() => setRankingFilter('global')} className={`flex-1 text-xs py-1.5 rounded-md font-medium transition-all ${rankingFilter === 'global' ? 'bg-zinc-800 text-white shadow-sm' : 'text-zinc-500 hover:text-zinc-300'}`}>Promedio General</button>
+            {/* Event title */}
+            {activeEvent && (
+              <div className="mb-3">
+                <p className="text-[10px] text-zinc-500 uppercase tracking-widest capitalize">{activePhase}</p>
+                <h3 className="text-base font-bold text-white">{activeEvent}</h3>
+              </div>
+            )}
+            <div className="flex bg-zinc-900 rounded-lg p-1 border border-zinc-800 mb-3">
+              <button onClick={() => setRankingFilter('event')} className={`flex-1 text-xs py-1.5 rounded-md font-medium transition-all ${rankingFilter === 'event' ? 'bg-zinc-800 text-white shadow-sm' : 'text-zinc-500 hover:text-zinc-300'}`}>Evento</button>
+              <button onClick={() => setRankingFilter('global')} className={`flex-1 text-xs py-1.5 rounded-md font-medium transition-all ${rankingFilter === 'global' ? 'bg-zinc-800 text-white shadow-sm' : 'text-zinc-500 hover:text-zinc-300'}`}>Fase Completa</button>
             </div>
+            {/* Cutoff selector — host only */}
+            {isHost && activePhase && (
+              <div className="flex items-center gap-2 bg-zinc-900/50 border border-zinc-800 rounded-lg px-3 py-2">
+                <span className="text-[10px] text-zinc-500 uppercase tracking-widest whitespace-nowrap">Clasifican:</span>
+                <input
+                  type="number" min="1" max={activeParticipants.length}
+                  value={cutoffs[activePhase] || ''}
+                  onChange={e => setCutoff(activePhase, e.target.value)}
+                  placeholder="Todas"
+                  className="flex-1 bg-transparent text-sm text-white font-mono font-bold text-center focus:outline-none w-12 placeholder:text-zinc-700 placeholder:font-normal placeholder:text-xs"
+                />
+                <span className="text-[10px] text-zinc-600">de {activeParticipants.length}</span>
+              </div>
+            )}
           </div>
           
           <div className="flex-1 overflow-y-auto bg-zinc-950/30">
             <div className="p-3">
               {rankings.length === 0 && (
-                <p className="text-xs text-zinc-600 text-center py-6">Agrega candidatas para ver la tabla de posiciones.</p>
+                <p className="text-xs text-zinc-600 text-center py-6">Agrega candidatas para ver la tabla.</p>
               )}
-              {rankings.map((p, idx) => (
-                <div key={p.id} className={`flex items-center gap-3 p-3 mb-2 rounded-xl border transition-colors group ${idx === 0 && p.votes > 0 ? 'border-zinc-700 bg-zinc-900/60' : 'border-zinc-800/50 bg-zinc-900/20 hover:bg-zinc-900'}`}>
-                  <div className={`w-6 text-center font-mono text-xs font-bold ${idx === 0 ? 'text-white' : idx <= 2 ? 'text-zinc-400' : 'text-zinc-600'}`}>{idx + 1}</div>
-                  <div className="text-xl">{p.flag}</div>
-                  <div className="flex-1 min-w-0">
-                    <p className={`text-sm truncate ${idx === 0 ? 'text-white font-medium' : 'text-zinc-400'}`}>{p.name}</p>
+              {rankings.map((p, idx) => {
+                const cutoffVal = cutoffs[activePhase];
+                const isEliminated = cutoffVal && idx >= cutoffVal;
+                const isAtCutoffLine = cutoffVal && idx === cutoffVal;
+                return (
+                  <div key={p.id}>
+                    {isAtCutoffLine && (
+                      <div className="flex items-center gap-2 my-2 px-2">
+                        <div className="flex-1 border-t border-red-500/40"></div>
+                        <span className="text-[9px] text-red-400/70 uppercase tracking-widest whitespace-nowrap">Eliminadas</span>
+                        <div className="flex-1 border-t border-red-500/40"></div>
+                      </div>
+                    )}
+                    <div className={`flex items-center gap-3 p-3 mb-2 rounded-xl border transition-colors group ${
+                      isEliminated ? 'border-zinc-800/30 bg-zinc-950/50 opacity-40' :
+                      idx === 0 && p.votes > 0 ? 'border-zinc-700 bg-zinc-900/60' : 'border-zinc-800/50 bg-zinc-900/20 hover:bg-zinc-900'
+                    }`}>
+                      <div className={`w-6 text-center font-mono text-xs font-bold ${isEliminated ? 'text-zinc-700' : idx === 0 ? 'text-white' : idx <= 2 ? 'text-zinc-400' : 'text-zinc-600'}`}>{idx + 1}</div>
+                      <div className={`text-xl ${isEliminated ? 'grayscale' : ''}`}>{p.flag}</div>
+                      <div className="flex-1 min-w-0">
+                        <p className={`text-sm truncate ${isEliminated ? 'text-zinc-600' : idx === 0 ? 'text-white font-medium' : 'text-zinc-400'}`}>{p.name}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className={`text-sm font-mono font-medium ${isEliminated ? 'text-zinc-700' : p.votes > 0 ? 'text-white' : 'text-zinc-700'}`}>{p.average.toFixed(2)}</p>
+                        <p className="text-[10px] text-zinc-600">{p.votes} {p.votes === 1 ? 'voto' : 'votos'}</p>
+                      </div>
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <p className={`text-sm font-mono font-medium ${p.votes > 0 ? 'text-white' : 'text-zinc-700'}`}>{p.average.toFixed(2)}</p>
-                    <p className="text-[10px] text-zinc-600">{p.votes} {p.votes === 1 ? 'voto' : 'votos'}</p>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </div>
