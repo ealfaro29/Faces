@@ -192,7 +192,7 @@ export default function SessionBoard() {
       <div className="flex flex-col lg:flex-row flex-grow overflow-hidden bg-zinc-950/50">
         
         {/* LEFT SIDEBAR — hidden on mobile (replaced with horizontal scroll above) */}
-        <div className="hidden lg:flex w-64 border-r border-zinc-800 bg-zinc-950/80 flex-col p-4 overflow-y-auto">
+        <div className="hidden lg:flex w-72 xl:w-80 border-r border-zinc-800 bg-zinc-950/80 flex-col p-4 overflow-y-auto shrink-0">
           <p className="text-xs font-bold tracking-widest text-zinc-500 uppercase mb-4">Etapas</p>
           <div className="space-y-5">
             {Object.keys(session.phases || {}).map(phaseKey => {
@@ -220,7 +220,7 @@ export default function SessionBoard() {
         </div>
 
         {/* MAIN SCORING TABLE */}
-        <div className="flex-1 flex flex-col bg-[#050505] p-4 lg:p-8 overflow-hidden relative">
+        <div className="flex-1 flex flex-col bg-[#050505] p-4 lg:p-8 overflow-hidden relative min-w-0 max-w-3xl mx-auto w-full">
           <div className="absolute top-0 inset-x-0 h-32 bg-gradient-to-b from-white/[0.02] to-transparent pointer-events-none"></div>
           
           <div className="mb-4 lg:mb-6 flex items-end justify-between z-10 shrink-0">
@@ -280,7 +280,7 @@ export default function SessionBoard() {
         </div>
 
         {/* RIGHT SIDEBAR: RANKING */}
-        <div className="w-full lg:w-72 xl:w-80 border-t lg:border-t-0 lg:border-l border-zinc-800 bg-zinc-950/80 flex flex-col overflow-hidden">
+        <div className="w-full lg:w-80 xl:w-96 border-t lg:border-t-0 lg:border-l border-zinc-800 bg-zinc-950/80 flex flex-col overflow-hidden shrink-0">
           <div className="p-4 shrink-0 border-b border-zinc-800/50 bg-zinc-950 shadow-sm z-20">
             <h3 className="text-xs font-bold tracking-widest text-zinc-400 uppercase mb-3 flex items-center justify-between">
               Rankings en Vivo
