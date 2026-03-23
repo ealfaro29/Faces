@@ -16,6 +16,7 @@ import { groupFacebaseVariants } from '../core/search.js';
 import CreateSession from './pages/scoring/CreateSession';
 import JoinSession from './pages/scoring/JoinSession';
 import SessionBoard from './pages/scoring/SessionBoard';
+import ScoringLanding from './pages/scoring/ScoringLanding';
 import Login from './pages/Login';
 
 function Dashboard() {
@@ -306,13 +307,14 @@ function App() {
 
     return (
         <Routes>
-            {/* Rutas Críticas Privadas (El app original) */}
-            <Route path="/*" element={user ? <Dashboard /> : <Login />} />
-            
-            {/* Rutas Públicas (El Scoring System) */}
+            {/* Rutas Públicas (El Scoring System) — deben ir ANTES del wildcard */}
+            <Route path="/session" element={<ScoringLanding />} />
             <Route path="/session/create" element={<CreateSession />} />
             <Route path="/session/join" element={<JoinSession />} />
             <Route path="/session/:sessionId" element={<SessionBoard />} />
+            
+            {/* Rutas Privadas (El app original) — wildcard al final */}
+            <Route path="/*" element={user ? <Dashboard /> : <Login />} />
         </Routes>
     );
 }
