@@ -1,14 +1,27 @@
 import { Link } from 'react-router-dom';
+import { useEffect, useState } from 'react';
 import { Plus, LogIn, Crown } from 'lucide-react';
+import ScoringLanguageToggle from './ScoringLanguageToggle';
+import { getStoredScoringLanguage, persistScoringLanguage, scoringCopy } from './scoringI18n';
 
 export default function ScoringLanding() {
+  const [language, setLanguage] = useState(getStoredScoringLanguage());
+  const t = scoringCopy[language];
+
+  useEffect(() => {
+    persistScoringLanguage(language);
+  }, [language]);
+
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-zinc-300 font-sans flex items-center justify-center p-4">
       <div className="w-full max-w-lg text-center">
         <div className="mb-10">
+          <div className="mb-6 flex justify-center">
+            <ScoringLanguageToggle language={language} label={t.languageLabel} onChange={setLanguage} />
+          </div>
           <Crown className="w-10 h-10 text-zinc-600 mx-auto mb-4" />
-          <h1 className="text-3xl font-bold text-white tracking-tight mb-2">Scoring System</h1>
-          <p className="text-zinc-500 text-sm max-w-xs mx-auto">Panel de evaluación en tiempo real para certámenes y competencias.</p>
+          <h1 className="text-3xl font-bold text-white tracking-tight mb-2">{t.landing.title}</h1>
+          <p className="text-zinc-500 text-sm max-w-xs mx-auto">{t.landing.subtitle}</p>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -19,8 +32,8 @@ export default function ScoringLanding() {
             <div className="w-10 h-10 rounded-xl bg-white/5 border border-zinc-800 flex items-center justify-center mb-4 group-hover:bg-white/10 transition-colors">
               <Plus className="w-5 h-5 text-white" />
             </div>
-            <h2 className="text-lg font-bold text-white mb-1">Crear Sesión</h2>
-            <p className="text-xs text-zinc-500 leading-relaxed">Configura un nuevo tablero de evaluación como anfitrión (Host).</p>
+            <h2 className="text-lg font-bold text-white mb-1">{t.landing.createTitle}</h2>
+            <p className="text-xs text-zinc-500 leading-relaxed">{t.landing.createDescription}</p>
           </Link>
 
           <Link
@@ -30,8 +43,8 @@ export default function ScoringLanding() {
             <div className="w-10 h-10 rounded-xl bg-white/5 border border-zinc-800 flex items-center justify-center mb-4 group-hover:bg-white/10 transition-colors">
               <LogIn className="w-5 h-5 text-white" />
             </div>
-            <h2 className="text-lg font-bold text-white mb-1">Unirse como Juez</h2>
-            <p className="text-xs text-zinc-500 leading-relaxed">Ingresa un código de sesión para comenzar a puntuar en tiempo real.</p>
+            <h2 className="text-lg font-bold text-white mb-1">{t.landing.joinTitle}</h2>
+            <p className="text-xs text-zinc-500 leading-relaxed">{t.landing.joinDescription}</p>
           </Link>
         </div>
 
