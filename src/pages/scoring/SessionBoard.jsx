@@ -4,6 +4,51 @@ import { db } from '../../../core/firebase.js';
 import { doc, onSnapshot, setDoc, updateDoc, arrayUnion } from 'firebase/firestore';
 import { Copy, Check, Search, Plus, X, ChevronRight, Globe, MapPin, AlertTriangle } from 'lucide-react';
 
+const DEFAULT_PHASE = { name: 'Fase 1', cutoff: null, status: 'active' };
+
+function normalizePhase(phase, index, currentPhaseIndex) {
+  const cutoff = Number.parseInt(phase?.cutoff, 10);
+
+  return {
+    name: typeof phase?.name === 'string' && phase.name.trim() ? phase.name.trim() : `Fase ${index + 1}`,
+    cutoff: Number.isFinite(cutoff) && cutoff > 0 ? cutoff : null,
+    status:
+      phase?.status === 'completed' || phase?.status === 'active'
+        ? phase.status
+        : index === currentPhaseIndex
+          ? 'active'
+          : 'completed'
+  };
+}
+
+function getPhaseOrder(key, phase, fallbackIndex) {
+  if (typeof phase?.index === 'number') return phase.index;
+
+  const match = String(key).match(/\d+/);
+  return match ? Number.parseInt(match[0], 10) : fallbackIndex;
+}
+
+function normalizePhases(rawPhases, currentPhaseIndex = 0) {
+  if (Array.isArray(rawPhases) && rawPhases.length > 0) {
+    return rawPhases.map((phase, index) => normalizePhase(phase, index, currentPhaseIndex));
+  }
+
+  if (rawPhases && typeof rawPhases === 'object') {
+    if ('name' in rawPhases || 'cutoff' in rawPhases || 'status' in rawPhases) {
+      return [normalizePhase(rawPhases, 0, currentPhaseIndex)];
+    }
+
+    const normalized = Object.entries(rawPhases)
+      .filter(([, phase]) => phase && typeof phase === 'object')
+      .sort((a, b) => getPhaseOrder(a[0], a[1], 0) - getPhaseOrder(b[0], b[1], 0))
+      .map(([, phase], index) => normalizePhase(phase, index, currentPhaseIndex));
+
+    if (normalized.length > 0) return normalized;
+  }
+
+  return [DEFAULT_PHASE];
+}
+
 export default function SessionBoard() {
   // Reset body styles
   useEffect(() => {
@@ -23,6 +68,7 @@ export default function SessionBoard() {
   const [scores, setScores] = useState({});
   const [codeCopied, setCodeCopied] = useState(false);
   const [forceAttempted, setForceAttempted] = useState(false);
+  const [scoreDrafts, setScoreDrafts] = useState({});
 
   // Search state
   const [countries, setCountries] = useState([]);
@@ -32,6 +78,7 @@ export default function SessionBoard() {
   const [selectedParentCountry, setSelectedParentCountry] = useState(null);
   const [loadingCities, setLoadingCities] = useState(false);
   const searchRef = useRef(null);
+  const scoreSaveTimersRef = useRef({});
 
   // Load countries
   useEffect(() => {
@@ -73,6 +120,18 @@ export default function SessionBoard() {
     return () => document.removeEventListener('mousedown', h);
   }, []);
 
+  useEffect(() => {
+    Object.values(scoreSaveTimersRef.current).forEach(clearTimeout);
+    scoreSaveTimersRef.current = {};
+    setScoreDrafts({});
+  }, [sessionId, judgeName, session?.currentPhaseIndex]);
+
+  useEffect(() => {
+    return () => {
+      Object.values(scoreSaveTimersRef.current).forEach(clearTimeout);
+    };
+  }, []);
+
   // Session + scores listener
   useEffect(() => {
     if (!sessionId || !judgeName) { if (!judgeName) navigate('/session/join'); return; }
@@ -88,21 +147,46 @@ export default function SessionBoard() {
   }, [sessionId, judgeName, navigate]);
 
   // --- Actions ---
-  const handleScore = (participantId, value) => {
-    if (value === '' || value === undefined) return;
+  const handleScore = async (participantId, value) => {
+    if (value === '' || value === undefined) {
+      await deleteScore(participantId);
+      return;
+    }
     const num = parseFloat(value);
     if (isNaN(num) || num < 0 || num > 10) return;
-    const phaseKey = `phase_${session.currentPhaseIndex}`;
-    setDoc(doc(db, "sessions", `${sessionId}_scores`), {
+    const phaseKey = `phase_${currentPhaseIndex}`;
+    await setDoc(doc(db, "sessions", `${sessionId}_scores`), {
       [phaseKey]: { [participantId]: { [judgeName]: num } }
     }, { merge: true });
   };
 
-  const deleteScore = (participantId) => {
-    const phaseKey = `phase_${session.currentPhaseIndex}`;
-    setDoc(doc(db, "sessions", `${sessionId}_scores`), {
+  const deleteScore = async (participantId) => {
+    const phaseKey = `phase_${currentPhaseIndex}`;
+    await setDoc(doc(db, "sessions", `${sessionId}_scores`), {
       [phaseKey]: { [participantId]: { [judgeName]: null } }
     }, { merge: true });
+  };
+
+  const queueScoreSave = (participantId, value) => {
+    setScoreDrafts(prev => ({ ...prev, [participantId]: value }));
+
+    if (scoreSaveTimersRef.current[participantId]) {
+      clearTimeout(scoreSaveTimersRef.current[participantId]);
+    }
+
+    scoreSaveTimersRef.current[participantId] = setTimeout(() => {
+      handleScore(participantId, value).catch(() => {});
+      delete scoreSaveTimersRef.current[participantId];
+    }, 250);
+  };
+
+  const flushScoreSave = (participantId, fallbackValue) => {
+    if (scoreSaveTimersRef.current[participantId]) {
+      clearTimeout(scoreSaveTimersRef.current[participantId]);
+      delete scoreSaveTimersRef.current[participantId];
+    }
+
+    handleScore(participantId, scoreDrafts[participantId] ?? fallbackValue ?? '').catch(() => {});
   };
 
   const addParticipant = async (item) => {
@@ -121,23 +205,22 @@ export default function SessionBoard() {
   };
 
   const updatePhaseName = async (name) => {
-    const phases = [...session.phases];
-    phases[session.currentPhaseIndex] = { ...phases[session.currentPhaseIndex], name };
-    await updateDoc(doc(db, "sessions", session.id), { phases });
+    const nextPhases = [...phases];
+    nextPhases[currentPhaseIndex] = { ...nextPhases[currentPhaseIndex], name };
+    await updateDoc(doc(db, "sessions", session.id), { phases: nextPhases });
   };
 
   const updatePhaseCutoff = async (value) => {
-    const phases = [...session.phases];
+    const nextPhases = [...phases];
     const num = parseInt(value);
-    phases[session.currentPhaseIndex] = { ...phases[session.currentPhaseIndex], cutoff: isNaN(num) || num <= 0 ? null : num };
-    await updateDoc(doc(db, "sessions", session.id), { phases });
+    nextPhases[currentPhaseIndex] = { ...nextPhases[currentPhaseIndex], cutoff: isNaN(num) || num <= 0 ? null : num };
+    await updateDoc(doc(db, "sessions", session.id), { phases: nextPhases });
   };
 
   const advancePhase = async () => {
-    const phase = session.phases[session.currentPhaseIndex];
-    const phaseKey = `phase_${session.currentPhaseIndex}`;
+    const phaseKey = `phase_${currentPhaseIndex}`;
     const phaseScores = scores[phaseKey] || {};
-    const currentParticipants = getPhaseParticipants(session.currentPhaseIndex);
+    const currentParticipants = getPhaseParticipants(currentPhaseIndex);
     const judges = session.judges || [];
 
     // Check if all judges have scored all participants
@@ -167,13 +250,13 @@ export default function SessionBoard() {
     }
 
     // Mark current phase complete, add new phase
-    const phases = [...session.phases];
-    phases[session.currentPhaseIndex] = { ...phases[session.currentPhaseIndex], status: 'completed' };
-    const newPhaseIndex = session.currentPhaseIndex + 1;
-    phases.push({ name: `Fase ${newPhaseIndex + 1}`, cutoff: null, status: 'active' });
+    const nextPhases = [...phases];
+    nextPhases[currentPhaseIndex] = { ...nextPhases[currentPhaseIndex], status: 'completed' };
+    const newPhaseIndex = currentPhaseIndex + 1;
+    nextPhases.push({ name: `Fase ${newPhaseIndex + 1}`, cutoff: null, status: 'active' });
 
     await updateDoc(doc(db, "sessions", session.id), {
-      phases,
+      phases: nextPhases,
       currentPhaseIndex: newPhaseIndex
     });
     setForceAttempted(false);
@@ -195,14 +278,17 @@ export default function SessionBoard() {
   const isHost = session.host === judgeName;
   const allParticipants = session.participants || [];
   const judges = session.judges || [];
-  const currentPhase = session.phases?.[session.currentPhaseIndex] || { name: 'Fase 1', cutoff: null, status: 'active' };
-  const phaseKey = `phase_${session.currentPhaseIndex}`;
+  const requestedPhaseIndex = Number.isInteger(session.currentPhaseIndex) ? session.currentPhaseIndex : 0;
+  const phases = normalizePhases(session.phases, requestedPhaseIndex);
+  const currentPhaseIndex = Math.min(Math.max(requestedPhaseIndex, 0), phases.length - 1);
+  const currentPhase = phases[currentPhaseIndex] || DEFAULT_PHASE;
+  const phaseKey = `phase_${currentPhaseIndex}`;
   const phaseScores = scores[phaseKey] || {};
 
   // Get participants for a given phase index
   const getPhaseParticipants = (phaseIdx) => {
     if (phaseIdx === 0) return allParticipants;
-    const prevPhase = session.phases[phaseIdx - 1];
+    const prevPhase = phases[phaseIdx - 1];
     if (!prevPhase || !prevPhase.cutoff) return allParticipants;
     const prevKey = `phase_${phaseIdx - 1}`;
     const prevScores = scores[prevKey] || {};
@@ -216,7 +302,7 @@ export default function SessionBoard() {
     return ranked.slice(0, prevPhase.cutoff);
   };
 
-  const currentParticipants = getPhaseParticipants(session.currentPhaseIndex);
+  const currentParticipants = getPhaseParticipants(currentPhaseIndex);
 
   // Score + sort participants for current phase
   const scoredParticipants = currentParticipants.map(p => {
@@ -245,7 +331,7 @@ export default function SessionBoard() {
     let totalAvg = 0;
     let totalVotes = 0;
 
-    for (let i = 0; i <= session.currentPhaseIndex; i++) {
+    for (let i = 0; i <= currentPhaseIndex; i++) {
       const phaseParticipants = getPhaseParticipants(i);
       const isInPhase = phaseParticipants.find(pp => pp.id === p.id);
       if (!isInPhase) {
@@ -304,9 +390,9 @@ export default function SessionBoard() {
           <div className="p-4 border-b border-zinc-800/50 bg-zinc-950/50 shrink-0">
             <div className="flex items-center gap-3 flex-wrap">
               {/* Phase nav pills (completed + current) */}
-              {session.phases.map((ph, i) => (
+              {phases.map((ph, i) => (
                 <div key={i} className={`text-[10px] px-2.5 py-1 rounded-md font-medium ${
-                  i === session.currentPhaseIndex ? 'bg-white text-black' : 
+                  i === currentPhaseIndex ? 'bg-white text-black' : 
                   ph.status === 'completed' ? 'bg-zinc-800 text-zinc-500' : 'bg-zinc-900 text-zinc-600'
                 }`}>
                   {ph.name}
@@ -344,7 +430,7 @@ export default function SessionBoard() {
           </div>
 
           {/* Search bar (host, first phase only for adding) */}
-          {isHost && session.currentPhaseIndex === 0 && (
+          {isHost && currentPhaseIndex === 0 && (
             <div className="px-4 py-2 border-b border-zinc-800/30 bg-zinc-950/30 shrink-0">
               {session.type === 'Nacional' && !selectedParentCountry && (
                 <div className="relative mb-2" ref={searchRef}>
@@ -410,7 +496,7 @@ export default function SessionBoard() {
             {scoredParticipants.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-zinc-600 gap-2 p-4">
                 <Search className="w-10 h-10 opacity-20" />
-                <p className="text-xs text-center">{session.currentPhaseIndex === 0 ? 'Usa la barra de búsqueda para agregar candidatas.' : 'No hay candidatas en esta fase.'}</p>
+              <p className="text-xs text-center">{currentPhaseIndex === 0 ? 'Usa la barra de búsqueda para agregar candidatas.' : 'No hay candidatas en esta fase.'}</p>
               </div>
             ) : (
               <table className="w-full text-sm">
@@ -419,14 +505,17 @@ export default function SessionBoard() {
                     <th className="font-normal py-2 pl-3 pr-1 w-6 text-center">#</th>
                     <th className="font-normal py-2 px-2 text-left">Delegada</th>
                     <th className="font-normal py-2 px-2 text-center w-16">Prom.</th>
-                    <th className="font-normal py-2 px-2 text-center w-20 bg-zinc-900/50 border-x border-zinc-800/50">Tu Score</th>
-                    {isHost && session.currentPhaseIndex === 0 && <th className="font-normal py-2 pr-3 w-8"></th>}
+                    <th className="font-normal py-2 px-2 text-center w-44 bg-zinc-900/50 border-x border-zinc-800/50">Tu Score</th>
+                    {isHost && currentPhaseIndex === 0 && <th className="font-normal py-2 pr-3 w-8"></th>}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-800/30">
                   {scoredParticipants.map((p, idx) => {
                     const hasScore = p.myScore !== undefined && p.myScore !== null;
                     const isCutoff = currentPhase.cutoff && idx >= currentPhase.cutoff;
+                    const sliderValue = scoreDrafts[p.id] ?? (hasScore ? String(p.myScore) : '0');
+                    const displayScore = Number.parseFloat(sliderValue);
+                    const showScoreValue = Number.isFinite(displayScore);
                     return (
                       <tr key={p.id} className={`transition-colors ${isCutoff ? 'opacity-30 bg-zinc-950' : 'hover:bg-white/[0.02]'}`}>
                         <td className="py-2 pl-3 pr-1 text-center">
@@ -442,18 +531,53 @@ export default function SessionBoard() {
                           <span className={`text-xs font-mono ${p.voteCount > 0 ? 'text-zinc-300' : 'text-zinc-700'}`}>{p.avg.toFixed(2)}</span>
                           <span className="text-[8px] text-zinc-600 ml-0.5">{p.voteCount > 0 && `(${p.voteCount})`}</span>
                         </td>
-                        <td className="py-2 px-2 bg-zinc-900/10 border-x border-zinc-800/20 text-center">
-                          <input
-                            type="number" min="0" max="10" step="0.1"
-                            defaultValue={hasScore ? p.myScore : ''}
-                            key={`${p.id}-${session.currentPhaseIndex}-${p.myScore}`}
-                            onBlur={e => handleScore(p.id, e.target.value)}
-                            onKeyDown={e => { if (e.key === 'Enter') e.target.blur(); }}
-                            className="w-14 bg-transparent text-center text-sm font-bold text-white border-b border-zinc-700 hover:border-zinc-500 focus:border-white focus:outline-none transition-colors font-mono"
-                            placeholder="—"
-                          />
+                        <td className="py-2 px-3 bg-zinc-900/10 border-x border-zinc-800/20 text-center">
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="range"
+                              min="0"
+                              max="10"
+                              step="0.1"
+                              value={sliderValue}
+                              onChange={e => queueScoreSave(p.id, e.target.value)}
+                              onMouseUp={e => flushScoreSave(p.id, e.currentTarget.value)}
+                              onTouchEnd={e => flushScoreSave(p.id, e.currentTarget.value)}
+                              onBlur={e => flushScoreSave(p.id, e.target.value)}
+                              className="h-1.5 flex-1 cursor-pointer appearance-none rounded-full bg-zinc-800 accent-white"
+                              aria-label={`Puntuar a ${p.name}`}
+                            />
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (scoreSaveTimersRef.current[p.id]) {
+                                  clearTimeout(scoreSaveTimersRef.current[p.id]);
+                                  delete scoreSaveTimersRef.current[p.id];
+                                }
+                                setScoreDrafts(prev => {
+                                  const next = { ...prev };
+                                  delete next[p.id];
+                                  return next;
+                                });
+                                deleteScore(p.id).catch(() => {});
+                              }}
+                              className="w-6 h-6 rounded border border-zinc-800 text-[10px] text-zinc-500 hover:border-zinc-600 hover:text-white transition-colors"
+                              title="Quitar tu voto"
+                              aria-label={`Quitar tu voto para ${p.name}`}
+                            >
+                              ×
+                            </button>
+                          </div>
+                          <div className="mt-1 flex items-center justify-between text-[10px] font-mono">
+                            <span className="text-zinc-600">0.0</span>
+                            <span className={hasScore ? 'text-white' : 'text-zinc-400'}>
+                              {hasScore || scoreDrafts[p.id] !== undefined
+                                ? (showScoreValue ? displayScore.toFixed(1) : '0.0')
+                                : 'Sin votar'}
+                            </span>
+                            <span className="text-zinc-600">10.0</span>
+                          </div>
                         </td>
-                        {isHost && session.currentPhaseIndex === 0 && (
+                        {isHost && currentPhaseIndex === 0 && (
                           <td className="py-2 pr-3 text-center">
                             <button onClick={() => removeParticipant(p.id)} className="text-zinc-700 hover:text-red-400 transition-colors p-0.5">
                               <X className="w-3 h-3" />
@@ -502,7 +626,7 @@ export default function SessionBoard() {
         <div className="w-full lg:w-80 xl:w-96 flex flex-col overflow-hidden shrink-0 bg-zinc-950/80">
           <div className="px-4 py-3 border-b border-zinc-800/50 bg-zinc-950 shrink-0">
             <h3 className="text-[10px] font-bold tracking-widest text-zinc-500 uppercase">Resultados Globales</h3>
-            <p className="text-[9px] text-zinc-700 mt-0.5">{allParticipants.length} candidatas • {session.phases.filter(p => p.status === 'completed').length} fases completadas</p>
+            <p className="text-[9px] text-zinc-700 mt-0.5">{allParticipants.length} candidatas • {phases.filter(p => p.status === 'completed').length} fases completadas</p>
           </div>
           <div className="flex-1 overflow-y-auto">
             <div className="p-2">
@@ -520,7 +644,7 @@ export default function SessionBoard() {
                     <div className="flex-1 min-w-0">
                       <p className={`text-xs truncate ${eliminated ? 'text-zinc-600 line-through' : idx === 0 ? 'text-white font-medium' : 'text-zinc-400'}`}>{p.name}</p>
                       {eliminated && (
-                        <p className="text-[9px] text-red-400/50">Eliminada en {session.phases[p.lastActivePhase]?.name || `Fase ${p.lastActivePhase + 1}`}</p>
+                        <p className="text-[9px] text-red-400/50">Eliminada en {phases[p.lastActivePhase]?.name || `Fase ${p.lastActivePhase + 1}`}</p>
                       )}
                     </div>
                     <div className="text-right">
