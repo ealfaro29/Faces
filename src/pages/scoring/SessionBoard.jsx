@@ -8,10 +8,14 @@ const DEFAULT_PHASE = { name: 'Fase 1', cutoff: null, status: 'active' };
 
 function normalizePhase(phase, index, currentPhaseIndex) {
   const cutoff = Number.parseInt(phase?.cutoff, 10);
+  const participantIds = Array.isArray(phase?.participantIds)
+    ? phase.participantIds.filter(id => typeof id === 'string' && id.trim())
+    : null;
 
   return {
     name: typeof phase?.name === 'string' && phase.name.trim() ? phase.name.trim() : `Fase ${index + 1}`,
     cutoff: Number.isFinite(cutoff) && cutoff > 0 ? cutoff : null,
+    participantIds: participantIds?.length ? participantIds : null,
     status:
       phase?.status === 'completed' || phase?.status === 'active'
         ? phase.status
@@ -47,6 +51,22 @@ function normalizePhases(rawPhases, currentPhaseIndex = 0) {
   }
 
   return [DEFAULT_PHASE];
+}
+
+function rankParticipantsByPhaseScores(participants, phaseScores) {
+  return participants
+    .map(participant => {
+      const participantScores = phaseScores[participant.id] || {};
+      const values = Object.values(participantScores).filter(value => value !== null && value !== undefined);
+      const avg = values.length > 0 ? values.reduce((sum, value) => sum + value, 0) / values.length : 0;
+
+      return {
+        ...participant,
+        avg,
+        voteCount: values.length
+      };
+    })
+    .sort((a, b) => b.avg - a.avg || a.name.localeCompare(b.name));
 }
 
 export default function SessionBoard() {
@@ -251,9 +271,21 @@ export default function SessionBoard() {
 
     // Mark current phase complete, add new phase
     const nextPhases = [...phases];
-    nextPhases[currentPhaseIndex] = { ...nextPhases[currentPhaseIndex], status: 'completed' };
+    const rankedCurrentParticipants = rankParticipantsByPhaseScores(currentParticipants, phaseScores);
+    const qualifiedParticipants = rankedCurrentParticipants.slice(0, currentPhase.cutoff || rankedCurrentParticipants.length);
+
+    nextPhases[currentPhaseIndex] = {
+      ...nextPhases[currentPhaseIndex],
+      status: 'completed',
+      participantIds: currentParticipants.map(participant => participant.id)
+    };
     const newPhaseIndex = currentPhaseIndex + 1;
-    nextPhases.push({ name: `Fase ${newPhaseIndex + 1}`, cutoff: null, status: 'active' });
+    nextPhases.push({
+      name: `Fase ${newPhaseIndex + 1}`,
+      cutoff: null,
+      status: 'active',
+      participantIds: qualifiedParticipants.map(participant => participant.id)
+    });
 
     await updateDoc(doc(db, "sessions", session.id), {
       phases: nextPhases,
@@ -282,23 +314,24 @@ export default function SessionBoard() {
   const phases = normalizePhases(session.phases, requestedPhaseIndex);
   const currentPhaseIndex = Math.min(Math.max(requestedPhaseIndex, 0), phases.length - 1);
   const currentPhase = phases[currentPhaseIndex] || DEFAULT_PHASE;
+  const participantMap = new Map(allParticipants.map(participant => [participant.id, participant]));
   const phaseKey = `phase_${currentPhaseIndex}`;
   const phaseScores = scores[phaseKey] || {};
 
   // Get participants for a given phase index
   const getPhaseParticipants = (phaseIdx) => {
     if (phaseIdx === 0) return allParticipants;
+    const phase = phases[phaseIdx];
+    if (phase?.participantIds?.length) {
+      return phase.participantIds.map(participantId => participantMap.get(participantId)).filter(Boolean);
+    }
+
     const prevPhase = phases[phaseIdx - 1];
-    if (!prevPhase || !prevPhase.cutoff) return allParticipants;
+    const prevParticipants = getPhaseParticipants(phaseIdx - 1);
+    if (!prevPhase || !prevPhase.cutoff) return prevParticipants;
     const prevKey = `phase_${phaseIdx - 1}`;
     const prevScores = scores[prevKey] || {};
-    const prevParticipants = getPhaseParticipants(phaseIdx - 1);
-    const ranked = prevParticipants.map(p => {
-      const pScores = prevScores[p.id] || {};
-      const vals = Object.values(pScores).filter(v => v !== null && v !== undefined);
-      const avg = vals.length > 0 ? vals.reduce((a, b) => a + b, 0) / vals.length : 0;
-      return { ...p, avg };
-    }).sort((a, b) => b.avg - a.avg);
+    const ranked = rankParticipantsByPhaseScores(prevParticipants, prevScores);
     return ranked.slice(0, prevPhase.cutoff);
   };
 
@@ -311,7 +344,7 @@ export default function SessionBoard() {
     const avg = vals.length > 0 ? vals.reduce((a, b) => a + b, 0) / vals.length : 0;
     const myScore = pScores[judgeName];
     return { ...p, avg, voteCount: vals.length, myScore };
-  }).sort((a, b) => b.avg - a.avg || a.name.localeCompare(b.name));
+  });
 
   // Check completion for advance button
   const allJudgesComplete = currentParticipants.length > 0 && currentParticipants.every(p => {
