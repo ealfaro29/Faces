@@ -27,6 +27,7 @@ export default function SessionBoard() {
   const [activeEvent, setActiveEvent] = useState('');
   const [rankingFilter, setRankingFilter] = useState('event');
   const [codeCopied, setCodeCopied] = useState(false);
+  const [newEventName, setNewEventName] = useState({});
 
   // Participant search state (inline in sidebar)
   const [countries, setCountries] = useState([]);
@@ -174,6 +175,30 @@ export default function SessionBoard() {
     await updateDoc(doc(db, "sessions", session.id), { participants: updated });
   };
 
+  const addEvent = async (phaseKey) => {
+    const name = (newEventName[phaseKey] || '').trim();
+    if (!name) return;
+    const events = session.phases[phaseKey] || [];
+    if (events.includes(name)) return;
+    const updatedPhases = { ...session.phases, [phaseKey]: [...events, name] };
+    await updateDoc(doc(db, "sessions", session.id), { phases: updatedPhases });
+    setNewEventName(prev => ({ ...prev, [phaseKey]: '' }));
+    // Auto-select the new event if none is active
+    if (!activeEvent) { setActivePhase(phaseKey); setActiveEvent(name); }
+  };
+
+  const removeEvent = async (phaseKey, eventName) => {
+    const events = (session.phases[phaseKey] || []).filter(e => e !== eventName);
+    const updatedPhases = { ...session.phases, [phaseKey]: events };
+    await updateDoc(doc(db, "sessions", session.id), { phases: updatedPhases });
+    if (activePhase === phaseKey && activeEvent === eventName) {
+      // Select another event
+      const allEvents = Object.entries(updatedPhases).flatMap(([k, v]) => v.map(e => ({ phase: k, event: e })));
+      if (allEvents.length > 0) { setActivePhase(allEvents[0].phase); setActiveEvent(allEvents[0].event); }
+      else { setActivePhase(''); setActiveEvent(''); }
+    }
+  };
+
   const copyCode = () => {
     navigator.clipboard.writeText(session.id);
     setCodeCopied(true);
@@ -201,12 +226,7 @@ export default function SessionBoard() {
     );
   }
 
-  const EVENT_LABELS = {
-    opening: 'Opening Statement',
-    swimsuit: 'Swimsuit',
-    eveningGown: 'Evening Gown',
-    questions: 'Final Q&A'
-  };
+  const hasAnyEvents = Object.values(session.phases || {}).some(events => events.length > 0);
 
   const getRankings = () => {
     return participants.map(p => {
@@ -256,25 +276,27 @@ export default function SessionBoard() {
       </header>
 
       {/* MOBILE: Phase/Event selector */}
-      <div className="lg:hidden border-b border-zinc-800 bg-zinc-950/90 p-3 overflow-x-auto flex-shrink-0">
-        <div className="flex gap-2">
-          {Object.keys(session.phases || {}).map(phaseKey => {
-            const events = session.phases[phaseKey] || [];
-            return events.map(ev => {
-              const isActive = activePhase === phaseKey && activeEvent === ev;
-              return (
-                <button
-                  key={`${phaseKey}-${ev}`}
-                  onClick={() => { setActivePhase(phaseKey); setActiveEvent(ev); }}
-                  className={`whitespace-nowrap px-4 py-2 rounded-lg text-xs font-medium transition-all ${isActive ? 'bg-white text-black' : 'bg-zinc-900 text-zinc-400 border border-zinc-800'}`}
-                >
-                  <span className="capitalize">{EVENT_LABELS[ev] || ev}</span>
-                </button>
-              );
-            });
-          })}
+      {hasAnyEvents && (
+        <div className="lg:hidden border-b border-zinc-800 bg-zinc-950/90 p-3 overflow-x-auto flex-shrink-0">
+          <div className="flex gap-2">
+            {Object.keys(session.phases || {}).map(phaseKey => {
+              const events = session.phases[phaseKey] || [];
+              return events.map(ev => {
+                const isActive = activePhase === phaseKey && activeEvent === ev;
+                return (
+                  <button
+                    key={`${phaseKey}-${ev}`}
+                    onClick={() => { setActivePhase(phaseKey); setActiveEvent(ev); }}
+                    className={`whitespace-nowrap px-4 py-2 rounded-lg text-xs font-medium transition-all ${isActive ? 'bg-white text-black' : 'bg-zinc-900 text-zinc-400 border border-zinc-800'}`}
+                  >
+                    {ev}
+                  </button>
+                );
+              });
+            })}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* THREE COLUMNS */}
       <div className="flex flex-col lg:flex-row flex-grow overflow-hidden bg-zinc-950/50">
@@ -284,23 +306,43 @@ export default function SessionBoard() {
           <div className="p-4 space-y-5">
             <div>
               <p className="text-xs font-bold tracking-widest text-zinc-500 uppercase mb-3">Etapas</p>
-              <div className="space-y-4">
+              <div className="space-y-5">
                 {Object.keys(session.phases || {}).map(phaseKey => {
                   const events = session.phases[phaseKey] || [];
-                  if (events.length === 0) return null;
                   return (
                     <div key={phaseKey} className="space-y-1">
                       <h3 className="text-[11px] text-zinc-500 capitalize tracking-wider mb-2 pl-1">{phaseKey}</h3>
                       {events.map(ev => {
                         const isActive = activePhase === phaseKey && activeEvent === ev;
                         return (
-                          <button key={ev} onClick={() => { setActivePhase(phaseKey); setActiveEvent(ev); }}
-                            className={`w-full text-left px-4 py-2.5 rounded-lg text-sm transition-all focus:outline-none ${isActive ? 'bg-white text-black font-semibold shadow-md' : 'text-zinc-400 hover:text-white hover:bg-zinc-800/80'}`}
-                          >
-                            {EVENT_LABELS[ev] || <span className="capitalize">{ev}</span>}
-                          </button>
+                          <div key={ev} className="flex items-center group">
+                            <button onClick={() => { setActivePhase(phaseKey); setActiveEvent(ev); }}
+                              className={`flex-1 text-left px-4 py-2.5 rounded-lg text-sm transition-all focus:outline-none ${isActive ? 'bg-white text-black font-semibold shadow-md' : 'text-zinc-400 hover:text-white hover:bg-zinc-800/80'}`}
+                            >
+                              {ev}
+                            </button>
+                            {isHost && (
+                              <button onClick={() => removeEvent(phaseKey, ev)} className="opacity-0 group-hover:opacity-100 ml-1 p-1 text-zinc-600 hover:text-red-400 transition-all" title="Eliminar evento">
+                                <X className="w-3 h-3" />
+                              </button>
+                            )}
+                          </div>
                         );
                       })}
+                      {isHost && (
+                        <form onSubmit={(e) => { e.preventDefault(); addEvent(phaseKey); }} className="flex items-center gap-1 mt-1">
+                          <input
+                            type="text"
+                            value={newEventName[phaseKey] || ''}
+                            onChange={e => setNewEventName(prev => ({ ...prev, [phaseKey]: e.target.value }))}
+                            placeholder="+ Nuevo evento"
+                            className="flex-1 bg-transparent border border-zinc-800 rounded-lg h-8 px-3 text-xs text-zinc-400 focus:outline-none focus:border-zinc-500 focus:text-white transition-colors placeholder:text-zinc-700"
+                          />
+                          <button type="submit" className="h-8 px-2 rounded-lg bg-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-700 transition-colors">
+                            <Plus className="w-3.5 h-3.5" />
+                          </button>
+                        </form>
+                      )}
                     </div>
                   );
                 })}
@@ -410,7 +452,7 @@ export default function SessionBoard() {
           <div className="mb-4 lg:mb-6 flex items-end justify-between z-10 shrink-0">
             <div>
               <p className="text-[10px] text-zinc-500 uppercase tracking-widest mb-0.5 capitalize">{activePhase}</p>
-              <h2 className="text-xl lg:text-3xl font-bold text-white tracking-tight">{EVENT_LABELS[activeEvent] || <span className="capitalize">{activeEvent}</span>}</h2>
+              <h2 className="text-xl lg:text-3xl font-bold text-white tracking-tight">{activeEvent || <span className="text-zinc-600">Sin evento seleccionado</span>}</h2>
             </div>
             <div className="flex items-center gap-3">
               {/* Mobile: Add participant button */}
