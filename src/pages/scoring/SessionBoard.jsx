@@ -5,6 +5,17 @@ import { doc, onSnapshot, setDoc, updateDoc } from 'firebase/firestore';
 import { Activity, Star, LayoutPanelLeft, Copy, Check, Search, Plus, X, UserPlus } from 'lucide-react';
 
 export default function SessionBoard() {
+  // Reset body padding/overflow that global style.css applies (padding: var(--space-4), overflow: hidden)
+  useEffect(() => {
+    const html = document.documentElement;
+    const body = document.body;
+    const prev = { htmlP: html.style.padding, bodyP: body.style.padding, bodyO: body.style.overflow, bodyBg: body.style.background };
+    html.style.padding = '0';
+    body.style.padding = '0';
+    body.style.overflow = 'hidden';
+    body.style.background = '#0a0a0a';
+    return () => { html.style.padding = prev.htmlP; body.style.padding = prev.bodyP; body.style.overflow = prev.bodyO; body.style.background = prev.bodyBg; };
+  }, []);
   const { sessionId } = useParams();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
