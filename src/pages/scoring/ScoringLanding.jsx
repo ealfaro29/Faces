@@ -35,7 +35,7 @@ export default function ScoringLanding() {
           </Link>
         </div>
 
-        <p className="text-[11px] text-zinc-700 mt-10">&copy; {new Date().getFullYear()} Scoring Engine &mdash; Real-time Evaluation</p>
+        <p className="text-[11px] text-zinc-700 mt-10">&copy; {new Date().getFullYear()} Scoring Engine &mdash; by <a href="https://discord.com/users/angelmuse_87856" target="_blank" rel="noopener noreferrer" className="text-zinc-500 hover:text-white transition-colors underline decoration-zinc-700 underline-offset-2">Angel Muse Doll</a></p>
       </div>
     </div>
   );
