@@ -119,29 +119,6 @@ export default function ParticipantSetup({ session }) {
     }
   };
 
-  const SearchInput = ({ value, onChange, placeholder, disabled, innerRef }) => (
-    <div className="relative" ref={innerRef}>
-      <input 
-        type="text" value={value} onChange={e => onChange(e.target.value)} disabled={disabled}
-        placeholder={placeholder}
-        className="w-full bg-zinc-950 border border-zinc-800 rounded-xl h-12 pl-12 pr-4 text-sm text-white focus:outline-none focus:border-zinc-500 transition-colors disabled:opacity-40"
-      />
-      <Search className="w-5 h-5 text-zinc-500 absolute left-4 top-3.5" />
-    </div>
-  );
-
-  const Dropdown = ({ items, onSelect, showPlus = true }) => (
-    <div className="absolute top-14 left-0 right-0 bg-zinc-800 border border-zinc-700 rounded-xl overflow-hidden z-30 shadow-2xl max-h-60 overflow-y-auto">
-      {items.map(item => (
-        <button key={item.id} onClick={() => onSelect(item)} className="w-full flex items-center gap-3 p-3 hover:bg-zinc-700 transition-colors text-left border-b border-zinc-700/50 last:border-0">
-          {item.flag && <span className="text-lg">{item.flag}</span>}
-          <span className="text-zinc-200 text-sm">{item.name}</span>
-          {showPlus && <Plus className="w-4 h-4 text-zinc-500 ml-auto shrink-0" />}
-        </button>
-      ))}
-    </div>
-  );
-
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-zinc-300 font-sans flex justify-center p-4 md:p-10">
       <div className="w-full max-w-4xl grid grid-cols-1 lg:grid-cols-2 gap-6 h-fit">
@@ -156,8 +133,25 @@ export default function ParticipantSetup({ session }) {
 
           {session.type === 'Global' && (
             <div className="relative" ref={countryDropdownRef}>
-              <SearchInput value={queryCountry} onChange={setQueryCountry} placeholder="Escribe el nombre del país..." />
-              {countryResults.length > 0 && <Dropdown items={countryResults} onSelect={handleAddGlobal} />}
+              <div className="relative">
+                <input 
+                  type="text" value={queryCountry} onChange={e => setQueryCountry(e.target.value)}
+                  placeholder="Escribe el nombre del país..."
+                  className="w-full bg-zinc-950 border border-zinc-800 rounded-xl h-12 pl-12 pr-4 text-sm text-white focus:outline-none focus:border-zinc-500 transition-colors"
+                />
+                <Search className="w-5 h-5 text-zinc-500 absolute left-4 top-3.5" />
+              </div>
+              {countryResults.length > 0 && (
+                <div className="absolute top-14 left-0 right-0 bg-zinc-800 border border-zinc-700 rounded-xl overflow-hidden z-30 shadow-2xl max-h-60 overflow-y-auto">
+                  {countryResults.map(item => (
+                    <button key={item.id} onClick={() => handleAddGlobal(item)} className="w-full flex items-center gap-3 p-3 hover:bg-zinc-700 transition-colors text-left border-b border-zinc-700/50 last:border-0">
+                      {item.flag && <span className="text-lg">{item.flag}</span>}
+                      <span className="text-zinc-200 text-sm">{item.name}</span>
+                      <Plus className="w-4 h-4 text-zinc-500 ml-auto shrink-0" />
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
@@ -193,11 +187,15 @@ export default function ParticipantSetup({ session }) {
                   
                   <div className="relative" ref={cityDropdownRef}>
                     <label className="block text-xs font-bold tracking-widest text-zinc-500 uppercase mb-2">2. Agregar Ciudad</label>
-                    <SearchInput 
-                      value={queryCity} onChange={setQueryCity} 
-                      disabled={loadingCities}
-                      placeholder={loadingCities ? "Cargando ciudades..." : "Buscar ciudad..."}
-                    />
+                    <div className="relative">
+                      <input 
+                        type="text" value={queryCity} onChange={e => setQueryCity(e.target.value)}
+                        disabled={loadingCities}
+                        placeholder={loadingCities ? "Cargando ciudades..." : "Buscar ciudad..."}
+                        className="w-full bg-zinc-950 border border-zinc-800 rounded-xl h-12 pl-12 pr-4 text-sm text-white focus:outline-none focus:border-zinc-500 transition-colors disabled:opacity-40"
+                      />
+                      <Search className="w-5 h-5 text-zinc-500 absolute left-4 top-3.5" />
+                    </div>
                     
                     {cityResults.length > 0 && (
                       <div className="absolute mt-2 left-0 right-0 bg-zinc-800 border border-zinc-700 rounded-xl overflow-hidden z-30 shadow-2xl max-h-60 overflow-y-auto">
