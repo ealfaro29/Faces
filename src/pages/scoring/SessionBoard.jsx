@@ -294,10 +294,10 @@ export default function SessionBoard() {
     <div className="min-h-screen bg-[#0a0a0a] text-zinc-300 font-sans flex flex-col h-screen overflow-hidden">
       
       {/* HEADER */}
-      <header className="h-14 lg:h-16 border-b border-zinc-800/80 bg-zinc-950 flex items-center justify-between px-4 lg:px-6 flex-shrink-0 z-10 shadow-md">
+      <header className="h-11 border-b border-zinc-800/80 bg-zinc-950 flex items-center justify-between px-3 lg:px-5 flex-shrink-0 z-10 shadow-md">
         <div className="flex items-center gap-3 lg:gap-4 min-w-0">
-          <LayoutPanelLeft className="w-5 h-5 text-white shrink-0 hidden sm:block" />
-          <h1 className="text-sm lg:text-lg font-bold text-white tracking-tight truncate">{session.name}</h1>
+          <LayoutPanelLeft className="w-4 h-4 text-white shrink-0 hidden sm:block" />
+          <h1 className="text-sm font-bold text-white tracking-tight truncate">{session.name}</h1>
           <button 
             onClick={copyCode}
             className="flex items-center gap-1.5 bg-zinc-800 px-2 py-1 rounded text-xs font-mono tracking-widest text-zinc-400 border border-zinc-700 hover:border-zinc-500 hover:text-white transition-colors shrink-0 cursor-pointer"
@@ -345,22 +345,22 @@ export default function SessionBoard() {
       <div className="flex flex-col lg:flex-row flex-grow overflow-hidden bg-zinc-950/50">
         
         {/* LEFT SIDEBAR — Phases + Add Participants (host only) */}
-        <div className="hidden lg:flex w-72 xl:w-80 border-r border-zinc-800 bg-zinc-950/80 flex-col overflow-y-auto shrink-0">
-          <div className="p-4 space-y-5">
+        <div className="hidden lg:flex w-52 xl:w-60 border-r border-zinc-800 bg-zinc-950/80 flex-col overflow-y-auto shrink-0">
+          <div className="p-3 space-y-4">
             <div>
-              <p className="text-xs font-bold tracking-widest text-zinc-500 uppercase mb-3">Etapas</p>
-              <div className="space-y-5">
+              <p className="text-[10px] font-bold tracking-widest text-zinc-500 uppercase mb-2">Etapas</p>
+              <div className="space-y-3">
                 {Object.keys(session.phases || {}).map(phaseKey => {
                   const events = session.phases[phaseKey] || [];
                   return (
                     <div key={phaseKey} className="space-y-1">
-                      <h3 className="text-[11px] text-zinc-500 capitalize tracking-wider mb-2 pl-1">{phaseKey}</h3>
+                      <h3 className="text-[10px] text-zinc-500 capitalize tracking-wider mb-1 pl-1">{phaseKey}</h3>
                       {events.map(ev => {
                         const isActive = activePhase === phaseKey && activeEvent === ev;
                         return (
                           <div key={ev} className="flex items-center group">
                             <button onClick={() => { setActivePhase(phaseKey); setActiveEvent(ev); }}
-                              className={`flex-1 text-left px-4 py-2.5 rounded-lg text-sm transition-all focus:outline-none ${isActive ? 'bg-white text-black font-semibold shadow-md' : 'text-zinc-400 hover:text-white hover:bg-zinc-800/80'}`}
+                              className={`flex-1 text-left px-3 py-1.5 rounded-md text-xs transition-all focus:outline-none ${isActive ? 'bg-white text-black font-semibold shadow-md' : 'text-zinc-400 hover:text-white hover:bg-zinc-800/80'}`}
                             >
                               {ev}
                             </button>
@@ -379,9 +379,9 @@ export default function SessionBoard() {
                             value={newEventName[phaseKey] || ''}
                             onChange={e => setNewEventName(prev => ({ ...prev, [phaseKey]: e.target.value }))}
                             placeholder="+ Nuevo evento"
-                            className="flex-1 bg-transparent border border-zinc-800 rounded-lg h-8 px-3 text-xs text-zinc-400 focus:outline-none focus:border-zinc-500 focus:text-white transition-colors placeholder:text-zinc-700"
+                            className="flex-1 bg-transparent border border-zinc-800 rounded-md h-7 px-2 text-[11px] text-zinc-400 focus:outline-none focus:border-zinc-500 focus:text-white transition-colors placeholder:text-zinc-700"
                           />
-                          <button type="submit" className="h-8 px-2 rounded-lg bg-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-700 transition-colors">
+                          <button type="submit" className="h-7 px-1.5 rounded-md bg-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-700 transition-colors">
                             <Plus className="w-3.5 h-3.5" />
                           </button>
                         </form>
@@ -489,13 +489,13 @@ export default function SessionBoard() {
         </div>
 
         {/* MAIN SCORING TABLE */}
-        <div className="flex-1 flex flex-col bg-[#050505] p-4 lg:p-8 overflow-hidden relative min-w-0">
+        <div className="flex-1 flex flex-col bg-[#050505] p-3 lg:p-5 overflow-hidden relative min-w-0">
           <div className="absolute top-0 inset-x-0 h-32 bg-gradient-to-b from-white/[0.02] to-transparent pointer-events-none"></div>
           
           <div className="mb-4 lg:mb-6 flex items-end justify-between z-10 shrink-0">
             <div>
-              <p className="text-[10px] text-zinc-500 uppercase tracking-widest mb-0.5 capitalize">{activePhase}</p>
-              <h2 className="text-xl lg:text-3xl font-bold text-white tracking-tight">{activeEvent || <span className="text-zinc-600">Sin evento seleccionado</span>}</h2>
+              <p className="text-[9px] text-zinc-500 uppercase tracking-widest mb-0.5 capitalize">{activePhase}</p>
+              <h2 className="text-lg lg:text-2xl font-bold text-white tracking-tight">{activeEvent || <span className="text-zinc-600">Sin evento seleccionado</span>}</h2>
             </div>
             <div className="flex items-center gap-3">
               {/* Mobile: Add participant button */}
@@ -590,8 +590,8 @@ export default function SessionBoard() {
         </div>
 
         {/* RIGHT SIDEBAR: RANKING */}
-        <div className="w-full lg:w-80 xl:w-96 border-t lg:border-t-0 lg:border-l border-zinc-800 bg-zinc-950/80 flex flex-col overflow-hidden shrink-0">
-          <div className="p-4 shrink-0 border-b border-zinc-800/50 bg-zinc-950 shadow-sm z-20">
+        <div className="w-full lg:w-72 xl:w-80 border-t lg:border-t-0 lg:border-l border-zinc-800 bg-zinc-950/80 flex flex-col overflow-hidden shrink-0">
+          <div className="p-3 shrink-0 border-b border-zinc-800/50 bg-zinc-950 shadow-sm z-20">
             {/* Event title */}
             {activeEvent && (
               <div className="mb-3">
@@ -605,16 +605,16 @@ export default function SessionBoard() {
             </div>
             {/* Cutoff selector — host only */}
             {isHost && activePhase && (
-              <div className="flex items-center gap-2 bg-zinc-900/50 border border-zinc-800 rounded-lg px-3 py-2">
-                <span className="text-[10px] text-zinc-500 uppercase tracking-widest whitespace-nowrap">Clasifican:</span>
+              <div className="flex items-center gap-2 bg-zinc-900/50 border border-zinc-800 rounded-lg px-2 py-1.5">
+                <span className="text-[9px] text-zinc-500 uppercase tracking-widest whitespace-nowrap">Clasifican:</span>
                 <input
                   type="number" min="1" max={activeParticipants.length}
                   value={cutoffs[activePhase] || ''}
                   onChange={e => setCutoff(activePhase, e.target.value)}
                   placeholder="Todas"
-                  className="flex-1 bg-transparent text-sm text-white font-mono font-bold text-center focus:outline-none w-12 placeholder:text-zinc-700 placeholder:font-normal placeholder:text-xs"
+                  className="flex-1 bg-transparent text-xs text-white font-mono font-bold text-center focus:outline-none w-10 placeholder:text-zinc-700 placeholder:font-normal placeholder:text-[10px]"
                 />
-                <span className="text-[10px] text-zinc-600">de {activeParticipants.length}</span>
+                <span className="text-[9px] text-zinc-600">de {activeParticipants.length}</span>
               </div>
             )}
           </div>
@@ -631,24 +631,24 @@ export default function SessionBoard() {
                 return (
                   <div key={p.id}>
                     {isAtCutoffLine && (
-                      <div className="flex items-center gap-2 my-2 px-2">
+                      <div className="flex items-center gap-2 my-1.5 px-1">
                         <div className="flex-1 border-t border-red-500/40"></div>
-                        <span className="text-[9px] text-red-400/70 uppercase tracking-widest whitespace-nowrap">Eliminadas</span>
+                        <span className="text-[8px] text-red-400/70 uppercase tracking-widest whitespace-nowrap">Eliminadas</span>
                         <div className="flex-1 border-t border-red-500/40"></div>
                       </div>
                     )}
-                    <div className={`flex items-center gap-3 p-3 mb-2 rounded-xl border transition-colors group ${
-                      isEliminated ? 'border-zinc-800/30 bg-zinc-950/50 opacity-40' :
+                    <div className={`flex items-center gap-2 px-2 py-2 mb-1 rounded-lg border transition-colors ${
+                      isEliminated ? 'border-zinc-800/30 bg-zinc-950/50 opacity-35' :
                       idx === 0 && p.votes > 0 ? 'border-zinc-700 bg-zinc-900/60' : 'border-zinc-800/50 bg-zinc-900/20 hover:bg-zinc-900'
                     }`}>
-                      <div className={`w-6 text-center font-mono text-xs font-bold ${isEliminated ? 'text-zinc-700' : idx === 0 ? 'text-white' : idx <= 2 ? 'text-zinc-400' : 'text-zinc-600'}`}>{idx + 1}</div>
-                      <div className={`text-xl ${isEliminated ? 'grayscale' : ''}`}>{p.flag}</div>
+                      <div className={`w-5 text-center font-mono text-[10px] font-bold ${isEliminated ? 'text-zinc-700' : idx === 0 ? 'text-white' : idx <= 2 ? 'text-zinc-400' : 'text-zinc-600'}`}>{idx + 1}</div>
+                      <div className={`text-base ${isEliminated ? 'grayscale' : ''}`}>{p.flag}</div>
                       <div className="flex-1 min-w-0">
-                        <p className={`text-sm truncate ${isEliminated ? 'text-zinc-600' : idx === 0 ? 'text-white font-medium' : 'text-zinc-400'}`}>{p.name}</p>
+                        <p className={`text-xs truncate ${isEliminated ? 'text-zinc-600' : idx === 0 ? 'text-white font-medium' : 'text-zinc-400'}`}>{p.name}</p>
                       </div>
                       <div className="text-right">
-                        <p className={`text-sm font-mono font-medium ${isEliminated ? 'text-zinc-700' : p.votes > 0 ? 'text-white' : 'text-zinc-700'}`}>{p.average.toFixed(2)}</p>
-                        <p className="text-[10px] text-zinc-600">{p.votes} {p.votes === 1 ? 'voto' : 'votos'}</p>
+                        <p className={`text-xs font-mono font-medium ${isEliminated ? 'text-zinc-700' : p.votes > 0 ? 'text-white' : 'text-zinc-700'}`}>{p.average.toFixed(2)}</p>
+                        <p className="text-[9px] text-zinc-600">{p.votes}v</p>
                       </div>
                     </div>
                   </div>
