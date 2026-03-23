@@ -397,7 +397,7 @@ export default function SessionBoard() {
               <div className="border-t border-zinc-800 pt-5">
                 <div className="flex items-center justify-between mb-3">
                   <p className="text-xs font-bold tracking-widest text-zinc-500 uppercase">Candidatas</p>
-                  <span className="bg-zinc-800 text-zinc-400 text-[10px] px-1.5 py-0.5 rounded font-mono">{participants.length}</span>
+                  <span className="bg-zinc-800 text-zinc-400 text-[10px] px-1.5 py-0.5 rounded font-mono">{allParticipants.length}</span>
                 </div>
 
                 {/* Nacional: Country selector first */}
@@ -470,9 +470,9 @@ export default function SessionBoard() {
                 )}
 
                 {/* Mini roster list */}
-                {participants.length > 0 && (
+                {allParticipants.length > 0 && (
                   <div className="mt-3 space-y-1 max-h-48 overflow-y-auto">
-                    {participants.map(p => (
+                    {allParticipants.map(p => (
                       <div key={p.id} className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-zinc-800/50 transition-colors group text-xs">
                         <span>{p.flag}</span>
                         <span className="text-zinc-300 flex-1 truncate">{p.name}</span>
