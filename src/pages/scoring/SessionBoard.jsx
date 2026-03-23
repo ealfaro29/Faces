@@ -1,217 +1,191 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { db } from '../../../core/firebase.js';
-import { doc, onSnapshot, setDoc, updateDoc } from 'firebase/firestore';
-import { Activity, Star, LayoutPanelLeft, Copy, Check, Search, Plus, X, UserPlus } from 'lucide-react';
+import { doc, onSnapshot, setDoc, updateDoc, arrayUnion } from 'firebase/firestore';
+import { Copy, Check, Search, Plus, X, ChevronRight, Globe, MapPin, AlertTriangle } from 'lucide-react';
 
 export default function SessionBoard() {
-  // Reset body padding/overflow that global style.css applies (padding: var(--space-4), overflow: hidden)
+  // Reset body styles
   useEffect(() => {
     const html = document.documentElement;
     const body = document.body;
     const prev = { htmlP: html.style.padding, bodyP: body.style.padding, bodyO: body.style.overflow, bodyBg: body.style.background };
-    html.style.padding = '0';
-    body.style.padding = '0';
-    body.style.overflow = 'hidden';
-    body.style.background = '#0a0a0a';
+    html.style.padding = '0'; body.style.padding = '0'; body.style.overflow = 'hidden'; body.style.background = '#0a0a0a';
     return () => { html.style.padding = prev.htmlP; body.style.padding = prev.bodyP; body.style.overflow = prev.bodyO; body.style.background = prev.bodyBg; };
   }, []);
+
   const { sessionId } = useParams();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const judgeName = searchParams.get('judge');
-  
+
   const [session, setSession] = useState(null);
   const [scores, setScores] = useState({});
-  const [activePhase, setActivePhase] = useState('');
-  const [activeEvent, setActiveEvent] = useState('');
-  const [rankingFilter, setRankingFilter] = useState('event');
   const [codeCopied, setCodeCopied] = useState(false);
-  const [newEventName, setNewEventName] = useState({});
+  const [forceAttempted, setForceAttempted] = useState(false);
 
-  // Participant search state (inline in sidebar)
+  // Search state
   const [countries, setCountries] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
-  const [showSearch, setShowSearch] = useState(false);
   const [cities, setCities] = useState([]);
   const [selectedParentCountry, setSelectedParentCountry] = useState(null);
   const [loadingCities, setLoadingCities] = useState(false);
-  const searchDropdownRef = useRef(null);
+  const searchRef = useRef(null);
 
-  const initialPhaseSet = useRef(false);
-  
-  // Load countries for Global search
+  // Load countries
   useEffect(() => {
     fetch('https://restcountries.com/v3.1/all?fields=name,cca3,flag')
-      .then(res => res.json())
+      .then(r => r.json())
       .then(data => {
-        const parsed = data.map(c => ({
-          name: c.name?.common || '',
-          flag: c.flag || '',
-          id: c.cca3 || Math.random().toString()
-        }))
-        .filter(c => c.name)
-        .sort((a,b) => a.name.localeCompare(b.name));
-        setCountries(parsed);
-      })
-      .catch(err => console.error("Error fetching countries", err));
+        setCountries(
+          data.map(c => ({ name: c.name?.common || '', flag: c.flag || '', id: c.cca3 || Math.random().toString() }))
+          .filter(c => c.name).sort((a, b) => a.name.localeCompare(b.name))
+        );
+      }).catch(() => {});
   }, []);
 
-  // Load cities when parent country is selected (Nacional mode)
+  // Load cities for Nacional
   useEffect(() => {
     if (session?.type === 'Nacional' && selectedParentCountry) {
-      setCities([]);
-      setLoadingCities(true);
+      setCities([]); setLoadingCities(true);
       fetch('https://countriesnow.space/api/v0.1/countries/cities', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ country: selectedParentCountry.name })
-      })
-      .then(res => res.json())
-      .then(data => {
-        if(!data.error && data.data) {
-          setCities(data.data.map(c => ({
-            name: c,
-            id: c.replace(/\s+/g, '').toUpperCase(),
-            flag: selectedParentCountry.flag
-          })));
-        }
-      })
-      .catch(err => console.error("Error fetching cities", err))
-      .finally(() => setLoadingCities(false));
+      }).then(r => r.json()).then(data => {
+        if (!data.error && data.data) setCities(data.data.map(c => ({ name: c, id: c.replace(/\s+/g, '').toUpperCase(), flag: selectedParentCountry.flag })));
+      }).catch(() => {}).finally(() => setLoadingCities(false));
     }
   }, [session?.type, selectedParentCountry]);
 
-  // Filter search results
+  // Filter search
   useEffect(() => {
     if (searchQuery.length > 1) {
-      if (session?.type === 'Nacional' && selectedParentCountry) {
-        setSearchResults(cities.filter(c => c.name.toLowerCase().includes(searchQuery.toLowerCase())).slice(0, 12));
-      } else {
-        setSearchResults(countries.filter(c => c.name.toLowerCase().includes(searchQuery.toLowerCase())).slice(0, 12));
-      }
-    } else {
-      setSearchResults([]);
-    }
+      const pool = session?.type === 'Nacional' && selectedParentCountry ? cities : countries;
+      setSearchResults(pool.filter(c => c.name.toLowerCase().includes(searchQuery.toLowerCase())).slice(0, 10));
+    } else setSearchResults([]);
   }, [searchQuery, countries, cities, session?.type, selectedParentCountry]);
 
-  // Click outside to close dropdown
+  // Click outside
   useEffect(() => {
-    const handler = (e) => {
-      if (searchDropdownRef.current && !searchDropdownRef.current.contains(e.target)) {
-        setSearchResults([]);
-      }
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
+    const h = e => { if (searchRef.current && !searchRef.current.contains(e.target)) setSearchResults([]); };
+    document.addEventListener('mousedown', h);
+    return () => document.removeEventListener('mousedown', h);
   }, []);
 
-  // Session & scores listener
+  // Session + scores listener
   useEffect(() => {
-    if (!sessionId || !judgeName) {
-      if (!judgeName) navigate('/session/join');
-      return;
-    }
-    
-    const sessionRef = doc(db, "sessions", sessionId);
-    const unsubSession = onSnapshot(sessionRef, (docSnap) => {
-      if (docSnap.exists()) {
-        const data = docSnap.data();
-        setSession(data);
-        if (!initialPhaseSet.current && data.phases) {
-          const firstPhase = Object.keys(data.phases).find(k => data.phases[k]?.length > 0);
-          if (firstPhase) {
-            setActivePhase(firstPhase);
-            setActiveEvent(data.phases[firstPhase][0]);
-            initialPhaseSet.current = true;
-          }
-        }
-      }
+    if (!sessionId || !judgeName) { if (!judgeName) navigate('/session/join'); return; }
+    const unsubS = onSnapshot(doc(db, "sessions", sessionId), snap => {
+      if (snap.exists()) setSession(snap.data());
     });
-
-    const scoresRef = doc(db, "sessions", `${sessionId}_scores`);
-    const unsubScores = onSnapshot(scoresRef, (docSnap) => {
-      if (docSnap.exists()) setScores(docSnap.data());
-      else setScores({});
+    const unsubSc = onSnapshot(doc(db, "sessions", `${sessionId}_scores`), snap => {
+      setScores(snap.exists() ? snap.data() : {});
     });
-    
-    return () => { unsubSession(); unsubScores(); };
+    // Register judge
+    updateDoc(doc(db, "sessions", sessionId), { judges: arrayUnion(judgeName) }).catch(() => {});
+    return () => { unsubS(); unsubSc(); };
   }, [sessionId, judgeName, navigate]);
 
-  const handleScoreChange = (participantId, value) => {
+  // --- Actions ---
+  const handleScore = (participantId, value) => {
     if (value === '' || value === undefined) return;
-    let numVal = parseFloat(value);
-    if (isNaN(numVal) || numVal < 0 || numVal > 10) return;
-    
-    const scoresRef = doc(db, "sessions", `${sessionId}_scores`);
-    setDoc(scoresRef, {
-      [`${activePhase}_${activeEvent}`]: {
-        [participantId]: { [judgeName]: numVal }
-      }
+    const num = parseFloat(value);
+    if (isNaN(num) || num < 0 || num > 10) return;
+    const phaseKey = `phase_${session.currentPhaseIndex}`;
+    setDoc(doc(db, "sessions", `${sessionId}_scores`), {
+      [phaseKey]: { [participantId]: { [judgeName]: num } }
     }, { merge: true });
   };
 
   const deleteScore = (participantId) => {
-    const scoresRef = doc(db, "sessions", `${sessionId}_scores`);
-    setDoc(scoresRef, {
-      [`${activePhase}_${activeEvent}`]: {
-        [participantId]: { [judgeName]: null }
-      }
+    const phaseKey = `phase_${session.currentPhaseIndex}`;
+    setDoc(doc(db, "sessions", `${sessionId}_scores`), {
+      [phaseKey]: { [participantId]: { [judgeName]: null } }
     }, { merge: true });
   };
 
   const addParticipant = async (item) => {
     const participants = session.participants || [];
     if (participants.find(p => p.id === item.id)) { setSearchQuery(''); setSearchResults([]); return; }
-    const updated = [...participants, { ...item, type: session.type === 'Global' ? 'country' : 'city' }];
-    await updateDoc(doc(db, "sessions", session.id), { participants: updated });
-    setSearchQuery('');
-    setSearchResults([]);
+    await updateDoc(doc(db, "sessions", session.id), {
+      participants: [...participants, { ...item, type: session.type === 'Global' ? 'country' : 'city' }]
+    });
+    setSearchQuery(''); setSearchResults([]);
   };
 
   const removeParticipant = async (id) => {
-    const updated = (session.participants || []).filter(p => p.id !== id);
-    await updateDoc(doc(db, "sessions", session.id), { participants: updated });
+    await updateDoc(doc(db, "sessions", session.id), {
+      participants: (session.participants || []).filter(p => p.id !== id)
+    });
   };
 
-  const addEvent = async (phaseKey) => {
-    const name = (newEventName[phaseKey] || '').trim();
-    if (!name) return;
-    const events = session.phases[phaseKey] || [];
-    if (events.includes(name)) return;
-    const updatedPhases = { ...session.phases, [phaseKey]: [...events, name] };
-    await updateDoc(doc(db, "sessions", session.id), { phases: updatedPhases });
-    setNewEventName(prev => ({ ...prev, [phaseKey]: '' }));
-    // Auto-select the new event if none is active
-    if (!activeEvent) { setActivePhase(phaseKey); setActiveEvent(name); }
+  const updatePhaseName = async (name) => {
+    const phases = [...session.phases];
+    phases[session.currentPhaseIndex] = { ...phases[session.currentPhaseIndex], name };
+    await updateDoc(doc(db, "sessions", session.id), { phases });
   };
 
-  const removeEvent = async (phaseKey, eventName) => {
-    const events = (session.phases[phaseKey] || []).filter(e => e !== eventName);
-    const updatedPhases = { ...session.phases, [phaseKey]: events };
-    await updateDoc(doc(db, "sessions", session.id), { phases: updatedPhases });
-    if (activePhase === phaseKey && activeEvent === eventName) {
-      // Select another event
-      const allEvents = Object.entries(updatedPhases).flatMap(([k, v]) => v.map(e => ({ phase: k, event: e })));
-      if (allEvents.length > 0) { setActivePhase(allEvents[0].phase); setActiveEvent(allEvents[0].event); }
-      else { setActivePhase(''); setActiveEvent(''); }
-    }
-  };
-
-  const setCutoff = async (phaseKey, value) => {
-    const cutoffs = session.phaseCutoffs || {};
+  const updatePhaseCutoff = async (value) => {
+    const phases = [...session.phases];
     const num = parseInt(value);
-    const updated = { ...cutoffs, [phaseKey]: isNaN(num) || num <= 0 ? null : num };
-    await updateDoc(doc(db, "sessions", session.id), { phaseCutoffs: updated });
+    phases[session.currentPhaseIndex] = { ...phases[session.currentPhaseIndex], cutoff: isNaN(num) || num <= 0 ? null : num };
+    await updateDoc(doc(db, "sessions", session.id), { phases });
+  };
+
+  const advancePhase = async () => {
+    const phase = session.phases[session.currentPhaseIndex];
+    const phaseKey = `phase_${session.currentPhaseIndex}`;
+    const phaseScores = scores[phaseKey] || {};
+    const currentParticipants = getPhaseParticipants(session.currentPhaseIndex);
+    const judges = session.judges || [];
+
+    // Check if all judges have scored all participants
+    const allComplete = currentParticipants.every(p => {
+      const pScores = phaseScores[p.id] || {};
+      return judges.every(j => pScores[j] !== undefined && pScores[j] !== null);
+    });
+
+    if (!allComplete && !forceAttempted) {
+      setForceAttempted(true);
+      return; // Show warning, next click will force
+    }
+
+    // Force: fill missing scores with 1
+    if (!allComplete) {
+      const updates = {};
+      currentParticipants.forEach(p => {
+        judges.forEach(j => {
+          if (!phaseScores[p.id]?.[j] && phaseScores[p.id]?.[j] !== 0) {
+            updates[`${phaseKey}.${p.id}.${j}`] = 1;
+          }
+        });
+      });
+      if (Object.keys(updates).length > 0) {
+        await updateDoc(doc(db, "sessions", `${sessionId}_scores`), updates);
+      }
+    }
+
+    // Mark current phase complete, add new phase
+    const phases = [...session.phases];
+    phases[session.currentPhaseIndex] = { ...phases[session.currentPhaseIndex], status: 'completed' };
+    const newPhaseIndex = session.currentPhaseIndex + 1;
+    phases.push({ name: `Fase ${newPhaseIndex + 1}`, cutoff: null, status: 'active' });
+
+    await updateDoc(doc(db, "sessions", session.id), {
+      phases,
+      currentPhaseIndex: newPhaseIndex
+    });
+    setForceAttempted(false);
   };
 
   const copyCode = () => {
-    navigator.clipboard.writeText(session.id);
+    navigator.clipboard.writeText(session?.id || '');
     setCodeCopied(true);
     setTimeout(() => setCodeCopied(false), 2000);
   };
 
+  // --- Computed ---
   if (!session) return (
     <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
       <div className="w-8 h-8 border-2 border-zinc-800 border-t-white rounded-full animate-spin"></div>
@@ -220,436 +194,337 @@ export default function SessionBoard() {
 
   const isHost = session.host === judgeName;
   const allParticipants = session.participants || [];
-  const cutoffs = session.phaseCutoffs || {};
+  const judges = session.judges || [];
+  const currentPhase = session.phases?.[session.currentPhaseIndex] || { name: 'Fase 1', cutoff: null, status: 'active' };
+  const phaseKey = `phase_${session.currentPhaseIndex}`;
+  const phaseScores = scores[phaseKey] || {};
 
-  // Non-host waiting screen (only if host hasn't added anyone yet)
-  if (!isHost && allParticipants.length === 0) {
-    return (
-      <div className="min-h-screen bg-[#0a0a0a] flex flex-col items-center justify-center p-6 text-center">
-        <Activity className="w-12 h-12 text-zinc-700 animate-pulse mb-4" />
-        <h2 className="text-xl text-white font-medium mb-2">Sala de Espera</h2>
-        <p className="text-zinc-500 max-w-sm">El anfitrión está configurando la lista de candidatas. Esta pantalla se actualizará automáticamente.</p>
-        <p className="text-xs text-zinc-700 mt-6 font-mono">Sesión: {sessionId}</p>
-      </div>
-    );
-  }
-
-  const hasAnyEvents = Object.values(session.phases || {}).some(events => events.length > 0);
-  const phaseKeys = Object.keys(session.phases || {});
-
-  // Compute overall scores for a given phase (across all its events)
-  const getPhaseOverallRanking = (phaseKey, participantPool) => {
-    const events = session.phases[phaseKey] || [];
-    return participantPool.map(p => {
-      let sum = 0, count = 0;
-      events.forEach(ev => {
-        const eventScores = scores[`${phaseKey}_${ev}`]?.[p.id] || {};
-        Object.values(eventScores).forEach(val => { if (val !== null) { sum += val; count++; } });
-      });
-      return { ...p, average: count > 0 ? sum / count : 0, votes: count };
-    }).sort((a, b) => b.average - a.average);
+  // Get participants for a given phase index
+  const getPhaseParticipants = (phaseIdx) => {
+    if (phaseIdx === 0) return allParticipants;
+    const prevPhase = session.phases[phaseIdx - 1];
+    if (!prevPhase || !prevPhase.cutoff) return allParticipants;
+    const prevKey = `phase_${phaseIdx - 1}`;
+    const prevScores = scores[prevKey] || {};
+    const prevParticipants = getPhaseParticipants(phaseIdx - 1);
+    const ranked = prevParticipants.map(p => {
+      const pScores = prevScores[p.id] || {};
+      const vals = Object.values(pScores).filter(v => v !== null && v !== undefined);
+      const avg = vals.length > 0 ? vals.reduce((a, b) => a + b, 0) / vals.length : 0;
+      return { ...p, avg };
+    }).sort((a, b) => b.avg - a.avg);
+    return ranked.slice(0, prevPhase.cutoff);
   };
 
-  // Get participants eligible for a given phase (filtered by previous phase cutoff)
-  const getActiveParticipants = (phaseKey) => {
-    const phaseIdx = phaseKeys.indexOf(phaseKey);
-    if (phaseIdx <= 0) return allParticipants; // First phase: everyone
-    
-    // Look at the previous phase's cutoff
-    const prevPhaseKey = phaseKeys[phaseIdx - 1];
-    const prevCutoff = cutoffs[prevPhaseKey];
-    if (!prevCutoff) return allParticipants; // No cutoff set: everyone advances
-    
-    // Recursively get who was eligible for the previous phase, then rank them
-    const prevPool = getActiveParticipants(prevPhaseKey);
-    const ranked = getPhaseOverallRanking(prevPhaseKey, prevPool);
-    return ranked.slice(0, prevCutoff);
-  };
+  const currentParticipants = getPhaseParticipants(session.currentPhaseIndex);
 
-  const activeParticipants = getActiveParticipants(activePhase);
-  const activeParticipantIds = new Set(activeParticipants.map(p => p.id));
+  // Score + sort participants for current phase
+  const scoredParticipants = currentParticipants.map(p => {
+    const pScores = phaseScores[p.id] || {};
+    const vals = Object.values(pScores).filter(v => v !== null && v !== undefined);
+    const avg = vals.length > 0 ? vals.reduce((a, b) => a + b, 0) / vals.length : 0;
+    const myScore = pScores[judgeName];
+    return { ...p, avg, voteCount: vals.length, myScore };
+  }).sort((a, b) => b.avg - a.avg || a.name.localeCompare(b.name));
 
-  const getRankings = () => {
-    return activeParticipants.map(p => {
-      let sum = 0, count = 0;
-      if (rankingFilter === 'event') {
-        const eventScores = scores[`${activePhase}_${activeEvent}`]?.[p.id] || {};
-        Object.values(eventScores).forEach(val => { if (val !== null) { sum += val; count++; } });
-      } else {
-        // Overall across current phase events only
-        const events = session.phases[activePhase] || [];
-        events.forEach(ev => {
-          const evScores = scores[`${activePhase}_${ev}`]?.[p.id] || {};
-          Object.values(evScores).forEach(val => { if (val !== null) { sum += val; count++; } });
-        });
+  // Check completion for advance button
+  const allJudgesComplete = currentParticipants.length > 0 && currentParticipants.every(p => {
+    const pScores = phaseScores[p.id] || {};
+    return judges.every(j => pScores[j] !== undefined && pScores[j] !== null);
+  });
+  const votedJudges = judges.filter(j => currentParticipants.every(p => {
+    const ps = phaseScores[p.id] || {};
+    return ps[j] !== undefined && ps[j] !== null;
+  })).length;
+
+  // Global results: track all participants + their elimination phase
+  const globalResults = allParticipants.map(p => {
+    // Find the last phase this participant was active in
+    let lastActivePhase = 0;
+    let eliminated = false;
+    let totalAvg = 0;
+    let totalVotes = 0;
+
+    for (let i = 0; i <= session.currentPhaseIndex; i++) {
+      const phaseParticipants = getPhaseParticipants(i);
+      const isInPhase = phaseParticipants.find(pp => pp.id === p.id);
+      if (!isInPhase) {
+        eliminated = true;
+        break;
       }
-      return { ...p, average: count > 0 ? sum / count : 0, votes: count };
-    }).sort((a, b) => b.average - a.average);
-  };
+      lastActivePhase = i;
+      const pk = `phase_${i}`;
+      const ps = scores[pk]?.[p.id] || {};
+      const vals = Object.values(ps).filter(v => v !== null && v !== undefined);
+      if (vals.length > 0) {
+        totalAvg = vals.reduce((a, b) => a + b, 0) / vals.length;
+        totalVotes += vals.length;
+      }
+    }
 
-  const rankings = getRankings();
-  const currentEventScores = scores[`${activePhase}_${activeEvent}`] || {};
+    const isCurrentlyActive = !eliminated;
+    return { ...p, lastActivePhase, eliminated, totalAvg, totalVotes, isCurrentlyActive };
+  }).sort((a, b) => {
+    if (a.isCurrentlyActive && !b.isCurrentlyActive) return -1;
+    if (!a.isCurrentlyActive && b.isCurrentlyActive) return 1;
+    return b.totalAvg - a.totalAvg;
+  });
+
+  const canAdvance = currentPhase.cutoff && currentPhase.cutoff < currentParticipants.length;
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-zinc-300 font-sans flex flex-col h-screen overflow-hidden">
       
       {/* HEADER */}
-      <header className="h-11 border-b border-zinc-800/80 bg-zinc-950 flex items-center justify-between px-3 lg:px-5 flex-shrink-0 z-10 shadow-md">
-        <div className="flex items-center gap-3 lg:gap-4 min-w-0">
-          <LayoutPanelLeft className="w-4 h-4 text-white shrink-0 hidden sm:block" />
+      <header className="h-11 border-b border-zinc-800/80 bg-zinc-950 flex items-center justify-between px-4 flex-shrink-0 z-10">
+        <div className="flex items-center gap-3 min-w-0">
+          {session.type === 'Global' ? <Globe className="w-4 h-4 text-zinc-500 shrink-0" /> : <MapPin className="w-4 h-4 text-zinc-500 shrink-0" />}
           <h1 className="text-sm font-bold text-white tracking-tight truncate">{session.name}</h1>
-          <button 
-            onClick={copyCode}
-            className="flex items-center gap-1.5 bg-zinc-800 px-2 py-1 rounded text-xs font-mono tracking-widest text-zinc-400 border border-zinc-700 hover:border-zinc-500 hover:text-white transition-colors shrink-0 cursor-pointer"
-            title="Copiar código de sesión"
-          >
+          <span className="text-[10px] text-zinc-600 bg-zinc-900 px-2 py-0.5 rounded border border-zinc-800 shrink-0">{session.type}</span>
+          <span className="text-[10px] text-zinc-600 shrink-0">{judges.length} {judges.length === 1 ? 'juez' : 'jueces'}</span>
+        </div>
+        <div className="flex items-center gap-3 shrink-0">
+          <button onClick={copyCode} className="flex items-center gap-1.5 bg-zinc-800 px-2 py-1 rounded text-[10px] font-mono tracking-widest text-zinc-400 border border-zinc-700 hover:border-zinc-500 hover:text-white transition-colors cursor-pointer" title="Copiar código">
             {session.id}
             {codeCopied ? <Check className="w-3 h-3 text-green-400" /> : <Copy className="w-3 h-3" />}
           </button>
-        </div>
-        <div className="flex items-center gap-3 shrink-0">
-          <div className="text-right hidden sm:block">
-            <p className="text-[10px] text-zinc-500 uppercase tracking-widest leading-none">Panel</p>
-            <p className="text-sm font-medium text-white">{judgeName} {isHost && <span className="text-[10px] ml-1 bg-white/10 text-white px-1.5 py-0.5 rounded">HOST</span>}</p>
-          </div>
-          <div className="w-8 h-8 rounded-full bg-zinc-800 border-2 border-zinc-700 flex items-center justify-center text-xs font-bold text-white uppercase">
-            {judgeName.substring(0, 2)}
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-zinc-400">{judgeName}</span>
+            {isHost && <span className="text-[9px] bg-white/10 text-white px-1.5 py-0.5 rounded">HOST</span>}
           </div>
         </div>
       </header>
 
-      {/* MOBILE: Phase/Event selector */}
-      {hasAnyEvents && (
-        <div className="lg:hidden border-b border-zinc-800 bg-zinc-950/90 p-3 overflow-x-auto flex-shrink-0">
-          <div className="flex gap-2">
-            {Object.keys(session.phases || {}).map(phaseKey => {
-              const events = session.phases[phaseKey] || [];
-              return events.map(ev => {
-                const isActive = activePhase === phaseKey && activeEvent === ev;
-                return (
-                  <button
-                    key={`${phaseKey}-${ev}`}
-                    onClick={() => { setActivePhase(phaseKey); setActiveEvent(ev); }}
-                    className={`whitespace-nowrap px-4 py-2 rounded-lg text-xs font-medium transition-all ${isActive ? 'bg-white text-black' : 'bg-zinc-900 text-zinc-400 border border-zinc-800'}`}
-                  >
-                    {ev}
-                  </button>
-                );
-              });
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* THREE COLUMNS */}
-      <div className="flex flex-col lg:flex-row flex-grow overflow-hidden bg-zinc-950/50">
+      {/* TWO PANELS */}
+      <div className="flex flex-col lg:flex-row flex-grow overflow-hidden">
         
-        {/* LEFT SIDEBAR — Phases + Add Participants (host only) */}
-        <div className="hidden lg:flex w-52 xl:w-60 border-r border-zinc-800 bg-zinc-950/80 flex-col overflow-y-auto shrink-0">
-          <div className="p-3 space-y-4">
-            <div>
-              <p className="text-[10px] font-bold tracking-widest text-zinc-500 uppercase mb-2">Etapas</p>
-              <div className="space-y-3">
-                {Object.keys(session.phases || {}).map(phaseKey => {
-                  const events = session.phases[phaseKey] || [];
-                  return (
-                    <div key={phaseKey} className="space-y-1">
-                      <h3 className="text-[10px] text-zinc-500 capitalize tracking-wider mb-1 pl-1">{phaseKey}</h3>
-                      {events.map(ev => {
-                        const isActive = activePhase === phaseKey && activeEvent === ev;
-                        return (
-                          <div key={ev} className="flex items-center group">
-                            <button onClick={() => { setActivePhase(phaseKey); setActiveEvent(ev); }}
-                              className={`flex-1 text-left px-3 py-1.5 rounded-md text-xs transition-all focus:outline-none ${isActive ? 'bg-white text-black font-semibold shadow-md' : 'text-zinc-400 hover:text-white hover:bg-zinc-800/80'}`}
-                            >
-                              {ev}
-                            </button>
-                            {isHost && (
-                              <button onClick={() => removeEvent(phaseKey, ev)} className="opacity-0 group-hover:opacity-100 ml-1 p-1 text-zinc-600 hover:text-red-400 transition-all" title="Eliminar evento">
-                                <X className="w-3 h-3" />
-                              </button>
-                            )}
-                          </div>
-                        );
-                      })}
-                      {isHost && (
-                        <form onSubmit={(e) => { e.preventDefault(); addEvent(phaseKey); }} className="flex items-center gap-1 mt-1">
-                          <input
-                            type="text"
-                            value={newEventName[phaseKey] || ''}
-                            onChange={e => setNewEventName(prev => ({ ...prev, [phaseKey]: e.target.value }))}
-                            placeholder="+ Nuevo evento"
-                            className="flex-1 bg-transparent border border-zinc-800 rounded-md h-7 px-2 text-[11px] text-zinc-400 focus:outline-none focus:border-zinc-500 focus:text-white transition-colors placeholder:text-zinc-700"
-                          />
-                          <button type="submit" className="h-7 px-1.5 rounded-md bg-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-700 transition-colors">
-                            <Plus className="w-3.5 h-3.5" />
-                          </button>
-                        </form>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* INLINE ADD PARTICIPANTS — Host only */}
-            {isHost && (
-              <div className="border-t border-zinc-800 pt-5">
-                <div className="flex items-center justify-between mb-3">
-                  <p className="text-xs font-bold tracking-widest text-zinc-500 uppercase">Candidatas</p>
-                  <span className="bg-zinc-800 text-zinc-400 text-[10px] px-1.5 py-0.5 rounded font-mono">{allParticipants.length}</span>
+        {/* LEFT: FASE ACTUAL */}
+        <div className="flex-1 flex flex-col overflow-hidden border-r border-zinc-800 min-w-0">
+          {/* Phase header */}
+          <div className="p-4 border-b border-zinc-800/50 bg-zinc-950/50 shrink-0">
+            <div className="flex items-center gap-3 flex-wrap">
+              {/* Phase nav pills (completed + current) */}
+              {session.phases.map((ph, i) => (
+                <div key={i} className={`text-[10px] px-2.5 py-1 rounded-md font-medium ${
+                  i === session.currentPhaseIndex ? 'bg-white text-black' : 
+                  ph.status === 'completed' ? 'bg-zinc-800 text-zinc-500' : 'bg-zinc-900 text-zinc-600'
+                }`}>
+                  {ph.name}
+                  {ph.status === 'completed' && <span className="ml-1 text-zinc-600">✓</span>}
                 </div>
-
-                {/* Nacional: Country selector first */}
-                {session.type === 'Nacional' && !selectedParentCountry && (
-                  <div className="relative mb-3" ref={searchDropdownRef}>
-                    <p className="text-[10px] text-zinc-500 uppercase tracking-widest mb-1.5">1. Seleccionar País Sede</p>
-                    <div className="relative">
-                      <input 
-                        type="text" value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
-                        placeholder="Buscar país..."
-                        className="w-full bg-zinc-950 border border-zinc-800 rounded-lg h-9 pl-9 pr-3 text-xs text-white focus:outline-none focus:border-zinc-500 transition-colors"
-                      />
-                      <Search className="w-3.5 h-3.5 text-zinc-500 absolute left-3 top-2.5" />
-                    </div>
-                    {searchResults.length > 0 && (
-                      <div className="absolute mt-1 left-0 right-0 bg-zinc-800 border border-zinc-700 rounded-lg overflow-hidden z-30 shadow-2xl max-h-48 overflow-y-auto">
-                        {searchResults.map(c => (
-                          <button key={c.id} onClick={() => { setSelectedParentCountry(c); setSearchQuery(''); setSearchResults([]); }} className="w-full flex items-center gap-2 px-3 py-2 hover:bg-zinc-700 transition-colors text-left text-xs border-b border-zinc-700/50 last:border-0">
-                            <span>{c.flag}</span>
-                            <span className="text-zinc-200">{c.name}</span>
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {session.type === 'Nacional' && selectedParentCountry && (
-                  <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-2.5 mb-3 flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span>{selectedParentCountry.flag}</span>
-                      <span className="text-xs text-white font-medium">{selectedParentCountry.name}</span>
-                    </div>
-                    <button onClick={() => {setSelectedParentCountry(null); setCities([]);}} className="text-[10px] text-zinc-500 hover:text-white transition-colors">✕</button>
-                  </div>
-                )}
-
-                {/* Search input: show for Global always, and for Nacional after country selected */}
-                {(session.type === 'Global' || (session.type === 'Nacional' && selectedParentCountry)) && (
-                  <div className="relative" ref={searchDropdownRef}>
-                    {session.type === 'Nacional' && <p className="text-[10px] text-zinc-500 uppercase tracking-widest mb-1.5">2. Agregar Ciudad</p>}
-                    <div className="relative">
-                      <input 
-                        type="text" value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
-                        disabled={session.type === 'Nacional' && loadingCities}
-                        placeholder={session.type === 'Global' ? "Agregar país..." : (loadingCities ? "Cargando..." : "Agregar ciudad...")}
-                        className="w-full bg-zinc-950 border border-zinc-800 rounded-lg h-9 pl-9 pr-3 text-xs text-white focus:outline-none focus:border-zinc-500 transition-colors disabled:opacity-40"
-                      />
-                      <Search className="w-3.5 h-3.5 text-zinc-500 absolute left-3 top-2.5" />
-                    </div>
-                    {searchResults.length > 0 && (
-                      <div className="absolute mt-1 left-0 right-0 bg-zinc-800 border border-zinc-700 rounded-lg overflow-hidden z-30 shadow-2xl max-h-48 overflow-y-auto">
-                        {searchResults.map(c => (
-                          <button key={c.id} onClick={() => addParticipant(c)} className="w-full flex items-center gap-2 px-3 py-2 hover:bg-zinc-700 transition-colors text-left text-xs border-b border-zinc-700/50 last:border-0">
-                            {c.flag && <span>{c.flag}</span>}
-                            <span className="text-zinc-200">{c.name}</span>
-                            <Plus className="w-3 h-3 text-zinc-500 ml-auto" />
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                    {session.type === 'Nacional' && searchQuery.length > 1 && searchResults.length === 0 && cities.length > 0 && !loadingCities && (
-                      <div className="absolute mt-1 left-0 right-0 bg-zinc-800 border border-zinc-700 rounded-lg p-3 z-30 shadow-2xl text-center">
-                        <button onClick={() => addParticipant({name: searchQuery.trim(), id: searchQuery.replace(/\s+/g,'').toUpperCase(), flag: selectedParentCountry.flag})} className="text-[10px] bg-white text-black px-3 py-1.5 rounded font-medium hover:bg-zinc-200 transition-colors">
-                          Añadir "{searchQuery}" 
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* Mini roster list */}
-                {allParticipants.length > 0 && (
-                  <div className="mt-3 space-y-1 max-h-48 overflow-y-auto">
-                    {allParticipants.map(p => (
-                      <div key={p.id} className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-zinc-800/50 transition-colors group text-xs">
-                        <span>{p.flag}</span>
-                        <span className="text-zinc-300 flex-1 truncate">{p.name}</span>
-                        <button onClick={() => removeParticipant(p.id)} className="opacity-0 group-hover:opacity-100 text-zinc-500 hover:text-red-400 transition-all">
-                          <X className="w-3 h-3" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
+              ))}
+            </div>
+            <div className="flex items-center gap-4 mt-3">
+              {isHost ? (
+                <input
+                  type="text" value={currentPhase.name}
+                  onChange={e => updatePhaseName(e.target.value)}
+                  className="bg-transparent text-lg font-bold text-white focus:outline-none border-b border-transparent focus:border-zinc-500 transition-colors flex-1 min-w-0"
+                  placeholder="Nombre de la fase"
+                />
+              ) : (
+                <h2 className="text-lg font-bold text-white">{currentPhase.name}</h2>
+              )}
+              {isHost && (
+                <div className="flex items-center gap-2 bg-zinc-900 border border-zinc-800 rounded-lg px-2.5 py-1.5 shrink-0">
+                  <span className="text-[9px] text-zinc-500 uppercase tracking-widest">Clasifican:</span>
+                  <input
+                    type="number" min="1" max={currentParticipants.length || 99}
+                    value={currentPhase.cutoff || ''}
+                    onChange={e => updatePhaseCutoff(e.target.value)}
+                    placeholder="—"
+                    className="bg-transparent text-sm text-white font-mono font-bold text-center focus:outline-none w-10"
+                  />
+                </div>
+              )}
+            </div>
+            {!isHost && currentPhase.cutoff && (
+              <p className="text-[10px] text-zinc-600 mt-1">Clasifican: {currentPhase.cutoff} de {currentParticipants.length}</p>
             )}
           </div>
-        </div>
 
-        {/* MAIN SCORING TABLE */}
-        <div className="flex-1 flex flex-col bg-[#050505] p-3 lg:p-5 overflow-hidden relative min-w-0">
-          <div className="absolute top-0 inset-x-0 h-32 bg-gradient-to-b from-white/[0.02] to-transparent pointer-events-none"></div>
-          
-          <div className="mb-4 lg:mb-6 flex items-end justify-between z-10 shrink-0">
-            <div>
-              <p className="text-[9px] text-zinc-500 uppercase tracking-widest mb-0.5 capitalize">{activePhase}</p>
-              <h2 className="text-lg lg:text-2xl font-bold text-white tracking-tight">{activeEvent || <span className="text-zinc-600">Sin evento seleccionado</span>}</h2>
-            </div>
-            <div className="flex items-center gap-3">
-              {/* Mobile: Add participant button */}
-              {isHost && (
-                <button onClick={() => setShowSearch(!showSearch)} className="lg:hidden flex items-center gap-1.5 bg-zinc-800 border border-zinc-700 px-3 py-1.5 rounded-lg text-xs text-zinc-300 hover:text-white transition-colors">
-                  <UserPlus className="w-3.5 h-3.5" /> Agregar
-                </button>
+          {/* Search bar (host, first phase only for adding) */}
+          {isHost && session.currentPhaseIndex === 0 && (
+            <div className="px-4 py-2 border-b border-zinc-800/30 bg-zinc-950/30 shrink-0">
+              {session.type === 'Nacional' && !selectedParentCountry && (
+                <div className="relative mb-2" ref={searchRef}>
+                  <div className="relative">
+                    <input type="text" value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
+                      placeholder="Primero, selecciona el país sede..."
+                      className="w-full bg-zinc-900 border border-zinc-800 rounded-lg h-8 pl-8 pr-3 text-xs text-white focus:outline-none focus:border-zinc-600 transition-colors" />
+                    <Search className="w-3.5 h-3.5 text-zinc-500 absolute left-2.5 top-2" />
+                  </div>
+                  {searchResults.length > 0 && (
+                    <div className="absolute mt-1 left-0 right-0 bg-zinc-800 border border-zinc-700 rounded-lg overflow-hidden z-30 shadow-2xl max-h-40 overflow-y-auto">
+                      {searchResults.map(c => (
+                        <button key={c.id} onClick={() => { setSelectedParentCountry(c); setSearchQuery(''); setSearchResults([]); }}
+                          className="w-full flex items-center gap-2 px-3 py-1.5 hover:bg-zinc-700 transition-colors text-left text-xs border-b border-zinc-700/50 last:border-0">
+                          <span>{c.flag}</span><span className="text-zinc-200">{c.name}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
               )}
-              <div className="flex items-center gap-1.5 text-zinc-600 text-[11px]">
-                <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span> <span className="hidden sm:inline">En vivo</span>
-              </div>
-            </div>
-          </div>
-
-          {/* MOBILE: Inline search (toggled) */}
-          {isHost && showSearch && (
-            <div className="lg:hidden mb-4 relative z-20" ref={searchDropdownRef}>
-              <div className="relative">
-                <input 
-                  type="text" value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
-                  placeholder={session.type === 'Global' ? "Agregar país..." : "Agregar ciudad..."}
-                  className="w-full bg-zinc-900 border border-zinc-700 rounded-xl h-11 pl-11 pr-4 text-sm text-white focus:outline-none focus:border-zinc-500 transition-colors"
-                  autoFocus
-                />
-                <Search className="w-4 h-4 text-zinc-500 absolute left-4 top-3.5" />
-              </div>
-              {searchResults.length > 0 && (
-                <div className="absolute mt-1 left-0 right-0 bg-zinc-800 border border-zinc-700 rounded-xl overflow-hidden shadow-2xl max-h-52 overflow-y-auto">
-                  {searchResults.map(c => (
-                    <button key={c.id} onClick={() => { addParticipant(c); setShowSearch(false); }} className="w-full flex items-center gap-3 p-3 hover:bg-zinc-700 transition-colors text-left text-sm border-b border-zinc-700/50 last:border-0">
-                      {c.flag && <span className="text-lg">{c.flag}</span>}
-                      <span className="text-zinc-200">{c.name}</span>
-                      <Plus className="w-4 h-4 text-zinc-500 ml-auto" />
-                    </button>
-                  ))}
+              {session.type === 'Nacional' && selectedParentCountry && (
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-xs">{selectedParentCountry.flag} {selectedParentCountry.name}</span>
+                  <button onClick={() => { setSelectedParentCountry(null); setCities([]); }} className="text-[10px] text-zinc-500 hover:text-white">✕</button>
+                </div>
+              )}
+              {(session.type === 'Global' || (session.type === 'Nacional' && selectedParentCountry)) && (
+                <div className="relative" ref={searchRef}>
+                  <div className="relative">
+                    <input type="text" value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
+                      disabled={session.type === 'Nacional' && loadingCities}
+                      placeholder={session.type === 'Global' ? "Agregar país..." : loadingCities ? "Cargando..." : "Agregar ciudad..."}
+                      className="w-full bg-zinc-900 border border-zinc-800 rounded-lg h-8 pl-8 pr-3 text-xs text-white focus:outline-none focus:border-zinc-600 transition-colors disabled:opacity-40" />
+                    <Search className="w-3.5 h-3.5 text-zinc-500 absolute left-2.5 top-2" />
+                  </div>
+                  {searchResults.length > 0 && (
+                    <div className="absolute mt-1 left-0 right-0 bg-zinc-800 border border-zinc-700 rounded-lg overflow-hidden z-30 shadow-2xl max-h-40 overflow-y-auto">
+                      {searchResults.map(c => (
+                        <button key={c.id} onClick={() => addParticipant(c)}
+                          className="w-full flex items-center gap-2 px-3 py-1.5 hover:bg-zinc-700 transition-colors text-left text-xs border-b border-zinc-700/50 last:border-0">
+                          {c.flag && <span>{c.flag}</span>}<span className="text-zinc-200">{c.name}</span>
+                          <Plus className="w-3 h-3 text-zinc-500 ml-auto" />
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  {session.type === 'Nacional' && searchQuery.length > 1 && searchResults.length === 0 && cities.length > 0 && !loadingCities && (
+                    <div className="absolute mt-1 left-0 right-0 bg-zinc-800 border border-zinc-700 rounded-lg p-2 z-30 shadow-2xl text-center">
+                      <button onClick={() => addParticipant({ name: searchQuery.trim(), id: searchQuery.replace(/\s+/g, '').toUpperCase(), flag: selectedParentCountry.flag })}
+                        className="text-[10px] bg-white text-black px-3 py-1 rounded font-medium hover:bg-zinc-200 transition-colors">
+                        Añadir "{searchQuery}"
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
           )}
 
-          {activeParticipants.length === 0 ? (
-            <div className="flex-1 flex flex-col items-center justify-center text-zinc-600 gap-3">
-              <UserPlus className="w-12 h-12 opacity-20" />
-              <p className="text-sm text-center">{allParticipants.length === 0 ? 'Usa el buscador del panel lateral para agregar candidatas.' : 'No hay candidatas clasificadas para esta fase.'}</p>
-            </div>
-          ) : (
-            <div className="flex-1 overflow-auto rounded-xl border border-zinc-800 bg-zinc-900/40 relative z-10 shadow-2xl">
-              <table className="w-full text-sm text-left">
-                <thead className="bg-zinc-900/80 backdrop-blur-md sticky top-0 border-b border-zinc-800 text-xs tracking-wider text-zinc-500 uppercase">
+          {/* Scoring table */}
+          <div className="flex-1 overflow-auto">
+            {scoredParticipants.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-full text-zinc-600 gap-2 p-4">
+                <Search className="w-10 h-10 opacity-20" />
+                <p className="text-xs text-center">{session.currentPhaseIndex === 0 ? 'Usa la barra de búsqueda para agregar candidatas.' : 'No hay candidatas en esta fase.'}</p>
+              </div>
+            ) : (
+              <table className="w-full text-sm">
+                <thead className="bg-zinc-900/80 sticky top-0 border-b border-zinc-800 text-[10px] tracking-wider text-zinc-500 uppercase">
                   <tr>
-                    <th className="font-normal py-3 lg:py-4 pl-4 lg:pl-6 pr-2 w-12"></th>
-                    <th className="font-normal py-3 lg:py-4 px-2 lg:px-4">Delegada</th>
-                    <th className="font-normal py-3 lg:py-4 px-2 lg:px-4 text-center w-28 lg:w-32 border-x border-zinc-800/50 bg-zinc-900/50">Tu Score</th>
-                    <th className="font-normal py-3 lg:py-4 pr-4 lg:pr-6 pl-2 text-right w-16"></th>
+                    <th className="font-normal py-2 pl-3 pr-1 w-6 text-center">#</th>
+                    <th className="font-normal py-2 px-2 text-left">Delegada</th>
+                    <th className="font-normal py-2 px-2 text-center w-16">Prom.</th>
+                    <th className="font-normal py-2 px-2 text-center w-20 bg-zinc-900/50 border-x border-zinc-800/50">Tu Score</th>
+                    {isHost && session.currentPhaseIndex === 0 && <th className="font-normal py-2 pr-3 w-8"></th>}
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-zinc-800/50">
-                  {activeParticipants.map(p => {
-                    const myScore = currentEventScores[p.id]?.[judgeName];
-                    const hasScore = myScore !== undefined && myScore !== null;
-                    
+                <tbody className="divide-y divide-zinc-800/30">
+                  {scoredParticipants.map((p, idx) => {
+                    const hasScore = p.myScore !== undefined && p.myScore !== null;
+                    const isCutoff = currentPhase.cutoff && idx >= currentPhase.cutoff;
                     return (
-                      <tr key={p.id} className="hover:bg-white/[0.02] transition-colors group">
-                        <td className="py-3 lg:py-4 pl-4 lg:pl-6 pr-2 text-2xl lg:text-3xl">{p.flag}</td>
-                        <td className="py-3 lg:py-4 px-2 lg:px-4 font-medium text-white text-sm">{p.name}</td>
-                        <td className="py-3 lg:py-4 px-2 lg:px-4 border-x border-zinc-800/30 bg-zinc-900/20 text-center relative overflow-hidden">
-                          {hasScore && <div className="absolute left-0 inset-y-0 w-0.5 bg-white shadow-[0_0_10px_white]"></div>}
-                          <input 
+                      <tr key={p.id} className={`transition-colors ${isCutoff ? 'opacity-30 bg-zinc-950' : 'hover:bg-white/[0.02]'}`}>
+                        <td className="py-2 pl-3 pr-1 text-center">
+                          <span className={`text-[10px] font-mono font-bold ${idx === 0 ? 'text-white' : idx <= 2 ? 'text-zinc-400' : 'text-zinc-600'}`}>{idx + 1}</span>
+                        </td>
+                        <td className="py-2 px-2">
+                          <div className="flex items-center gap-2">
+                            <span className="text-base">{p.flag}</span>
+                            <span className="text-xs font-medium text-white truncate">{p.name}</span>
+                          </div>
+                        </td>
+                        <td className="py-2 px-2 text-center">
+                          <span className={`text-xs font-mono ${p.voteCount > 0 ? 'text-zinc-300' : 'text-zinc-700'}`}>{p.avg.toFixed(2)}</span>
+                          <span className="text-[8px] text-zinc-600 ml-0.5">{p.voteCount > 0 && `(${p.voteCount})`}</span>
+                        </td>
+                        <td className="py-2 px-2 bg-zinc-900/10 border-x border-zinc-800/20 text-center">
+                          <input
                             type="number" min="0" max="10" step="0.1"
-                            defaultValue={hasScore ? myScore : ''}
-                            key={`${p.id}-${activePhase}-${activeEvent}-${myScore}`}
-                            onBlur={(e) => handleScoreChange(p.id, e.target.value)}
-                            onKeyDown={(e) => { if (e.key === 'Enter') e.target.blur(); }}
-                            className="w-16 lg:w-20 bg-transparent text-center text-base lg:text-lg font-bold text-white border-b-2 border-zinc-700 hover:border-zinc-500 focus:border-white focus:outline-none transition-colors mx-auto block py-1 font-mono"
+                            defaultValue={hasScore ? p.myScore : ''}
+                            key={`${p.id}-${session.currentPhaseIndex}-${p.myScore}`}
+                            onBlur={e => handleScore(p.id, e.target.value)}
+                            onKeyDown={e => { if (e.key === 'Enter') e.target.blur(); }}
+                            className="w-14 bg-transparent text-center text-sm font-bold text-white border-b border-zinc-700 hover:border-zinc-500 focus:border-white focus:outline-none transition-colors font-mono"
                             placeholder="—"
                           />
                         </td>
-                        <td className="py-3 lg:py-4 pr-4 lg:pr-6 pl-2 text-right">
-                          {hasScore ? (
-                            <button onClick={() => deleteScore(p.id)} className="text-[10px] text-zinc-500 hover:text-red-400 uppercase tracking-widest hover:bg-red-500/10 px-2 py-1 rounded transition-all">Borrar</button>
-                          ) : (
-                            <span className="text-[10px] text-zinc-700 uppercase tracking-widest">—</span>
-                          )}
-                        </td>
+                        {isHost && session.currentPhaseIndex === 0 && (
+                          <td className="py-2 pr-3 text-center">
+                            <button onClick={() => removeParticipant(p.id)} className="text-zinc-700 hover:text-red-400 transition-colors p-0.5">
+                              <X className="w-3 h-3" />
+                            </button>
+                          </td>
+                        )}
                       </tr>
                     );
                   })}
                 </tbody>
               </table>
+            )}
+          </div>
+
+          {/* Advance button (host only) */}
+          {isHost && currentParticipants.length > 0 && (
+            <div className="p-3 border-t border-zinc-800 bg-zinc-950 shrink-0">
+              <div className="flex items-center justify-between gap-3">
+                <div className="text-[10px] text-zinc-500">
+                  <span className={votedJudges === judges.length ? 'text-green-400' : 'text-zinc-400'}>{votedJudges}/{judges.length}</span> jueces completaron
+                </div>
+                {canAdvance && (
+                  <button
+                    onClick={advancePhase}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition-all ${
+                      forceAttempted
+                        ? 'bg-red-500 text-white hover:bg-red-600 animate-pulse'
+                        : allJudgesComplete
+                          ? 'bg-white text-black hover:bg-zinc-200'
+                          : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700 hover:text-white'
+                    }`}
+                  >
+                    {forceAttempted ? (
+                      <><AlertTriangle className="w-3.5 h-3.5" /> Forzar Avance (pendientes = 1)</>
+                    ) : (
+                      <><ChevronRight className="w-3.5 h-3.5" /> Avanzar Fase</>
+                    )}
+                  </button>
+                )}
+              </div>
             </div>
           )}
         </div>
 
-        {/* RIGHT SIDEBAR: RANKING */}
-        <div className="w-full lg:w-72 xl:w-80 border-t lg:border-t-0 lg:border-l border-zinc-800 bg-zinc-950/80 flex flex-col overflow-hidden shrink-0">
-          <div className="p-3 shrink-0 border-b border-zinc-800/50 bg-zinc-950 shadow-sm z-20">
-            {/* Event title */}
-            {activeEvent && (
-              <div className="mb-3">
-                <p className="text-[10px] text-zinc-500 uppercase tracking-widest capitalize">{activePhase}</p>
-                <h3 className="text-base font-bold text-white">{activeEvent}</h3>
-              </div>
-            )}
-            <div className="flex bg-zinc-900 rounded-lg p-1 border border-zinc-800 mb-3">
-              <button onClick={() => setRankingFilter('event')} className={`flex-1 text-xs py-1.5 rounded-md font-medium transition-all ${rankingFilter === 'event' ? 'bg-zinc-800 text-white shadow-sm' : 'text-zinc-500 hover:text-zinc-300'}`}>Evento</button>
-              <button onClick={() => setRankingFilter('global')} className={`flex-1 text-xs py-1.5 rounded-md font-medium transition-all ${rankingFilter === 'global' ? 'bg-zinc-800 text-white shadow-sm' : 'text-zinc-500 hover:text-zinc-300'}`}>Fase Completa</button>
-            </div>
-            {/* Cutoff selector — host only */}
-            {isHost && activePhase && (
-              <div className="flex items-center gap-2 bg-zinc-900/50 border border-zinc-800 rounded-lg px-2 py-1.5">
-                <span className="text-[9px] text-zinc-500 uppercase tracking-widest whitespace-nowrap">Clasifican:</span>
-                <input
-                  type="number" min="1" max={activeParticipants.length}
-                  value={cutoffs[activePhase] || ''}
-                  onChange={e => setCutoff(activePhase, e.target.value)}
-                  placeholder="Todas"
-                  className="flex-1 bg-transparent text-xs text-white font-mono font-bold text-center focus:outline-none w-10 placeholder:text-zinc-700 placeholder:font-normal placeholder:text-[10px]"
-                />
-                <span className="text-[9px] text-zinc-600">de {activeParticipants.length}</span>
-              </div>
-            )}
+        {/* RIGHT: RESULTADOS GLOBALES */}
+        <div className="w-full lg:w-80 xl:w-96 flex flex-col overflow-hidden shrink-0 bg-zinc-950/80">
+          <div className="px-4 py-3 border-b border-zinc-800/50 bg-zinc-950 shrink-0">
+            <h3 className="text-[10px] font-bold tracking-widest text-zinc-500 uppercase">Resultados Globales</h3>
+            <p className="text-[9px] text-zinc-700 mt-0.5">{allParticipants.length} candidatas • {session.phases.filter(p => p.status === 'completed').length} fases completadas</p>
           </div>
-          
-          <div className="flex-1 overflow-y-auto bg-zinc-950/30">
-            <div className="p-3">
-              {rankings.length === 0 && (
-                <p className="text-xs text-zinc-600 text-center py-6">Agrega candidatas para ver la tabla.</p>
+          <div className="flex-1 overflow-y-auto">
+            <div className="p-2">
+              {globalResults.length === 0 && (
+                <p className="text-xs text-zinc-600 text-center py-8">Sin participantes aún.</p>
               )}
-              {rankings.map((p, idx) => {
-                const cutoffVal = cutoffs[activePhase];
-                const isEliminated = cutoffVal && idx >= cutoffVal;
-                const isAtCutoffLine = cutoffVal && idx === cutoffVal;
+              {globalResults.map((p, idx) => {
+                const eliminated = p.eliminated;
                 return (
-                  <div key={p.id}>
-                    {isAtCutoffLine && (
-                      <div className="flex items-center gap-2 my-1.5 px-1">
-                        <div className="flex-1 border-t border-red-500/40"></div>
-                        <span className="text-[8px] text-red-400/70 uppercase tracking-widest whitespace-nowrap">Eliminadas</span>
-                        <div className="flex-1 border-t border-red-500/40"></div>
-                      </div>
-                    )}
-                    <div className={`flex items-center gap-2 px-2 py-2 mb-1 rounded-lg border transition-colors ${
-                      isEliminated ? 'border-zinc-800/30 bg-zinc-950/50 opacity-35' :
-                      idx === 0 && p.votes > 0 ? 'border-zinc-700 bg-zinc-900/60' : 'border-zinc-800/50 bg-zinc-900/20 hover:bg-zinc-900'
-                    }`}>
-                      <div className={`w-5 text-center font-mono text-[10px] font-bold ${isEliminated ? 'text-zinc-700' : idx === 0 ? 'text-white' : idx <= 2 ? 'text-zinc-400' : 'text-zinc-600'}`}>{idx + 1}</div>
-                      <div className={`text-base ${isEliminated ? 'grayscale' : ''}`}>{p.flag}</div>
-                      <div className="flex-1 min-w-0">
-                        <p className={`text-xs truncate ${isEliminated ? 'text-zinc-600' : idx === 0 ? 'text-white font-medium' : 'text-zinc-400'}`}>{p.name}</p>
-                      </div>
-                      <div className="text-right">
-                        <p className={`text-xs font-mono font-medium ${isEliminated ? 'text-zinc-700' : p.votes > 0 ? 'text-white' : 'text-zinc-700'}`}>{p.average.toFixed(2)}</p>
-                        <p className="text-[9px] text-zinc-600">{p.votes}v</p>
-                      </div>
+                  <div key={p.id} className={`flex items-center gap-2 px-2.5 py-2 mb-1 rounded-lg transition-colors ${
+                    eliminated ? 'opacity-30' : 'hover:bg-zinc-900/50'
+                  }`}>
+                    <div className={`w-5 text-center font-mono text-[10px] font-bold ${eliminated ? 'text-zinc-700' : idx === 0 ? 'text-white' : 'text-zinc-500'}`}>{idx + 1}</div>
+                    <span className={`text-base ${eliminated ? 'grayscale' : ''}`}>{p.flag}</span>
+                    <div className="flex-1 min-w-0">
+                      <p className={`text-xs truncate ${eliminated ? 'text-zinc-600 line-through' : idx === 0 ? 'text-white font-medium' : 'text-zinc-400'}`}>{p.name}</p>
+                      {eliminated && (
+                        <p className="text-[9px] text-red-400/50">Eliminada en {session.phases[p.lastActivePhase]?.name || `Fase ${p.lastActivePhase + 1}`}</p>
+                      )}
+                    </div>
+                    <div className="text-right">
+                      <p className={`text-xs font-mono ${eliminated ? 'text-zinc-700' : 'text-white'}`}>{p.totalAvg.toFixed(2)}</p>
                     </div>
                   </div>
                 );
@@ -657,7 +532,6 @@ export default function SessionBoard() {
             </div>
           </div>
         </div>
-
       </div>
     </div>
   );

@@ -11,16 +11,12 @@ export default function CreateSession() {
   const [type, setType] = useState('Global');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
-  
-  const [hasPreliminary, setHasPreliminary] = useState(true);
-  const [hasFinal, setHasFinal] = useState(true);
 
   const generateSessionId = () => 'MU-' + Math.random().toString(36).substring(2, 7).toUpperCase();
 
   const handleCreate = async (e) => {
     e.preventDefault();
     if (!judgeName.trim() || !sessionName.trim()) { setError('Completa todos los campos.'); return; }
-    if (!hasPreliminary && !hasFinal) { setError('Selecciona al menos una fase.'); return; }
     if (submitting) return;
     
     setSubmitting(true);
@@ -32,10 +28,10 @@ export default function CreateSession() {
       name: sessionName.trim(),
       type,
       host: judgeName.trim(),
-      phases: {
-        ...(hasPreliminary ? { preliminary: [] } : {}),
-        ...(hasFinal ? { final: [] } : {})
-      },
+      currentPhaseIndex: 0,
+      phases: [{ name: "Fase 1", cutoff: null, status: "active" }],
+      participants: [],
+      judges: [judgeName.trim()],
       createdAt: Date.now()
     };
 
@@ -58,7 +54,7 @@ export default function CreateSession() {
 
         <div className="bg-zinc-900 border border-zinc-800/80 rounded-2xl p-6 md:p-8 shadow-2xl">
           <h1 className="text-2xl font-bold text-white mb-2 tracking-tight">Nueva Sesión</h1>
-          <p className="text-zinc-500 text-sm mb-8">Configura lo esencial. Podrás agregar eventos y candidatas dentro del tablero.</p>
+          <p className="text-zinc-500 text-sm mb-8">Configura lo esencial. Las fases se crean en vivo durante el certamen.</p>
           
           <form onSubmit={handleCreate} className="space-y-5">
             <div>
@@ -87,23 +83,6 @@ export default function CreateSession() {
                 <option value="Global">Global (Países)</option>
                 <option value="Nacional">Nacional (Ciudades)</option>
               </select>
-            </div>
-
-            <div className="pt-4 border-t border-zinc-800/80">
-              <label className="block text-xs font-bold tracking-widest text-zinc-500 uppercase mb-4">Fases del Certamen</label>
-              <div className="flex gap-3">
-                <button type="button" onClick={() => setHasPreliminary(!hasPreliminary)}
-                  className={`flex-1 py-3 rounded-xl text-sm font-medium border transition-all ${hasPreliminary ? 'bg-white text-black border-white' : 'bg-zinc-950 text-zinc-500 border-zinc-800 hover:border-zinc-600'}`}
-                >
-                  Preliminar
-                </button>
-                <button type="button" onClick={() => setHasFinal(!hasFinal)}
-                  className={`flex-1 py-3 rounded-xl text-sm font-medium border transition-all ${hasFinal ? 'bg-white text-black border-white' : 'bg-zinc-950 text-zinc-500 border-zinc-800 hover:border-zinc-600'}`}
-                >
-                  Final
-                </button>
-              </div>
-              <p className="text-[10px] text-zinc-600 mt-2 text-center">Agregarás los eventos (swimsuit, gown, etc.) dentro del tablero.</p>
             </div>
 
             {error && (
