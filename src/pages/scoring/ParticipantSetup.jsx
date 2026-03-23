@@ -160,7 +160,14 @@ export default function ParticipantSetup({ session }) {
               {!selectedParentCountry ? (
                 <div className="relative" ref={countryDropdownRef}>
                   <label className="block text-xs font-bold tracking-widest text-zinc-500 uppercase mb-2">1. País Sede</label>
-                  <SearchInput value={queryCountry} onChange={setQueryCountry} placeholder="Busca el país anfitrión..." />
+                  <div className="relative">
+                    <input 
+                      type="text" value={queryCountry} onChange={e => setQueryCountry(e.target.value)}
+                      placeholder="Busca el país anfitrión..."
+                      className="w-full bg-zinc-950 border border-zinc-800 rounded-xl h-12 pl-12 pr-4 text-sm text-white focus:outline-none focus:border-zinc-500 transition-colors"
+                    />
+                    <Search className="w-5 h-5 text-zinc-500 absolute left-4 top-3.5" />
+                  </div>
                   {countryResults.length > 0 && (
                     <div className="absolute top-[72px] left-0 right-0 bg-zinc-800 border border-zinc-700 rounded-xl overflow-hidden z-30 shadow-2xl max-h-60 overflow-y-auto">
                       {countryResults.map(c => (
