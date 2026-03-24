@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { db } from '../../../core/firebase.js';
 import { doc, getDoc } from 'firebase/firestore';
 import { ArrowLeft, Loader2 } from 'lucide-react';
@@ -7,12 +7,17 @@ import ScoringLanguageToggle from './ScoringLanguageToggle';
 import { getStoredScoringLanguage, normalizeScoringLanguage, persistScoringLanguage, scoringCopy } from './scoringI18n';
 import { getScoringThemeStyleVars, getStoredScoringAccent, getStoredScoringTheme } from './scoringTheme';
 
+function normalizeJudgeIdentity(value) {
+  return String(value || '').trim().toLowerCase();
+}
+
 export default function JoinSession() {
   const [theme] = useState(getStoredScoringTheme());
   const [accentColor] = useState(getStoredScoringAccent());
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [judgeName, setJudgeName] = useState('');
-  const [sessionCode, setSessionCode] = useState('');
+  const [sessionCode, setSessionCode] = useState(searchParams.get('code')?.toUpperCase() || '');
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [language, setLanguage] = useState(getStoredScoringLanguage());
@@ -22,6 +27,17 @@ export default function JoinSession() {
     persistScoringLanguage(language);
     document.title = t.appTitle;
   }, [language, t]);
+
+  useEffect(() => {
+    const prefilledCode = searchParams.get('code');
+    if (prefilledCode) {
+      setSessionCode(prev => prev || prefilledCode.toUpperCase());
+    }
+
+    if (searchParams.get('removed') === '1') {
+      setError(t.join.removedJudge);
+    }
+  }, [searchParams, t]);
 
   const handleJoin = async (e) => {
     e.preventDefault();
@@ -37,8 +53,17 @@ export default function JoinSession() {
       const docSnap = await getDoc(sessionRef);
       
       if (docSnap.exists()) {
-        const sessionLanguage = normalizeScoringLanguage(docSnap.data()?.language || language);
+        const sessionData = docSnap.data();
+        const sessionLanguage = normalizeScoringLanguage(sessionData?.language || language);
         persistScoringLanguage(sessionLanguage);
+        const removedJudge = (sessionData?.removedJudges || []).some(
+          removedName => normalizeJudgeIdentity(removedName) === normalizeJudgeIdentity(judgeName)
+        );
+        if (removedJudge) {
+          setError(scoringCopy[sessionLanguage].join.removedJudge);
+          setSubmitting(false);
+          return;
+        }
         navigate(`/session/${code}?judge=${encodeURIComponent(judgeName.trim())}`);
       } else {
         setError(t.join.sessionMissing);

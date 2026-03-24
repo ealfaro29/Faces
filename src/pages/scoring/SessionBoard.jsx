@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { db } from '../../../core/firebase.js';
 import { doc, onSnapshot, setDoc, updateDoc, arrayUnion, deleteField } from 'firebase/firestore';
-import { Copy, Check, Search, Plus, X, ChevronRight, Globe, MapPin, AlertTriangle, Crown, BarChart3, Sun, Moon, RotateCcw } from 'lucide-react';
+import { Copy, Check, Search, Plus, X, ChevronRight, Globe, MapPin, AlertTriangle, Crown, BarChart3, Sun, Moon, RotateCcw, Settings2 } from 'lucide-react';
 import {
   getCountryDisplayName,
   getDefaultPhaseName,
@@ -14,6 +14,7 @@ import {
   scoringCopy
 } from './scoringI18n';
 import PhaseReportModal from './PhaseReportModal';
+import SessionSettingsModal from './SessionSettingsModal';
 import {
   getScoringBodyBackground,
   getScoringThemeStyleVars,
@@ -89,6 +90,15 @@ function rankParticipantsByPhaseScores(participants, phaseScores) {
     .sort((a, b) => b.avg - a.avg || a.name.localeCompare(b.name));
 }
 
+function normalizeJudgeIdentity(value) {
+  return String(value || '').trim().toLowerCase();
+}
+
+function judgeListIncludes(list, judgeName) {
+  const normalizedJudge = normalizeJudgeIdentity(judgeName);
+  return Array.isArray(list) && list.some(entry => normalizeJudgeIdentity(entry) === normalizedJudge);
+}
+
 export default function SessionBoard() {
   useEffect(() => {
     const html = document.documentElement;
@@ -117,6 +127,7 @@ export default function SessionBoard() {
   const [undoAttempted, setUndoAttempted] = useState(false);
   const [scoreDrafts, setScoreDrafts] = useState({});
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [theme, setTheme] = useState(getStoredScoringTheme());
   const [accentColor] = useState(getStoredScoringAccent());
 
@@ -129,6 +140,7 @@ export default function SessionBoard() {
   const [loadingCities, setLoadingCities] = useState(false);
   const searchRef = useRef(null);
   const scoreSaveTimersRef = useRef({});
+  const judgeRegistrationAttemptedRef = useRef(false);
   const fallbackLanguage = getStoredScoringLanguage();
   const currentLanguage = normalizeScoringLanguage(session?.language || fallbackLanguage);
   const t = scoringCopy[currentLanguage];
@@ -201,22 +213,43 @@ export default function SessionBoard() {
     };
   }, []);
 
+  useEffect(() => {
+    judgeRegistrationAttemptedRef.current = false;
+  }, [sessionId, judgeName]);
+
   // Session + scores listener
   useEffect(() => {
     if (!sessionId || !judgeName) { if (!judgeName) navigate('/session/join'); return; }
     const unsubS = onSnapshot(doc(db, "sessions", sessionId), snap => {
-      if (snap.exists()) setSession(snap.data());
+      if (!snap.exists()) return;
+
+      const nextSession = snap.data();
+      const isHostJudge = nextSession.host === judgeName;
+      const isRemovedJudge = !isHostJudge && judgeListIncludes(nextSession.removedJudges, judgeName);
+
+      setSession(nextSession);
+
+      if (isRemovedJudge) {
+        navigate(`/session/join?code=${encodeURIComponent(sessionId)}&removed=1`, { replace: true });
+        return;
+      }
+
+      if (!judgeRegistrationAttemptedRef.current && !isHostJudge && !judgeListIncludes(nextSession.judges, judgeName)) {
+        judgeRegistrationAttemptedRef.current = true;
+        updateDoc(doc(db, "sessions", sessionId), { judges: arrayUnion(judgeName) }).catch(() => {
+          judgeRegistrationAttemptedRef.current = false;
+        });
+      }
     });
     const unsubSc = onSnapshot(doc(db, "sessions", `${sessionId}_scores`), snap => {
       setScores(snap.exists() ? snap.data() : {});
     });
-    // Register judge
-    updateDoc(doc(db, "sessions", sessionId), { judges: arrayUnion(judgeName) }).catch(() => {});
     return () => { unsubS(); unsubSc(); };
   }, [sessionId, judgeName, navigate]);
 
   // --- Actions ---
   const handleScore = async (participantId, value) => {
+    if (judgeListIncludes(session?.removedJudges, judgeName) && session?.host !== judgeName) return;
     if (value === '' || value === undefined) {
       await deleteScore(participantId);
       return;
@@ -230,6 +263,7 @@ export default function SessionBoard() {
   };
 
   const deleteScore = async (participantId) => {
+    if (judgeListIncludes(session?.removedJudges, judgeName) && session?.host !== judgeName) return;
     const phaseKey = `phase_${currentPhaseIndex}`;
     await setDoc(doc(db, "sessions", `${sessionId}_scores`), {
       [phaseKey]: { [participantId]: { [judgeName]: null } }
@@ -284,6 +318,23 @@ export default function SessionBoard() {
     const num = parseInt(value);
     nextPhases[currentPhaseIndex] = { ...nextPhases[currentPhaseIndex], cutoff: isNaN(num) || num <= 0 ? null : num };
     await updateDoc(doc(db, "sessions", session.id), { phases: nextPhases });
+  };
+
+  const renameSession = async (nextName) => {
+    if (!nextName || !nextName.trim()) return;
+    await updateDoc(doc(db, "sessions", session.id), {
+      name: nextName.trim()
+    });
+  };
+
+  const expelJudge = async (judgeToExpel) => {
+    if (!judgeToExpel || judgeToExpel === session.host) return;
+
+    const remainingJudges = (session.judges || []).filter(judge => normalizeJudgeIdentity(judge) !== normalizeJudgeIdentity(judgeToExpel));
+    await updateDoc(doc(db, "sessions", session.id), {
+      judges: remainingJudges,
+      removedJudges: arrayUnion(judgeToExpel)
+    });
   };
 
   const advancePhase = async () => {
@@ -426,6 +477,7 @@ export default function SessionBoard() {
   );
 
   const isHost = session.host === judgeName;
+  const isJudgeRemoved = !isHost && judgeListIncludes(session.removedJudges, judgeName);
   const allParticipants = session.participants || [];
   const judges = session.judges || [];
   const requestedPhaseIndex = Number.isInteger(session.currentPhaseIndex) ? session.currentPhaseIndex : 0;
@@ -597,6 +649,30 @@ export default function SessionBoard() {
 
   const canAdvance = !isSessionComplete && currentParticipants.length > 0;
 
+  if (isJudgeRemoved) {
+    return (
+      <div
+        className={`theme-scoring-${theme} min-h-screen bg-app-bg text-app-text font-sans flex items-center justify-center p-4`}
+        style={getScoringThemeStyleVars(accentColor)}
+      >
+        <div className="scoring-panel rounded-2xl max-w-md w-full p-8 text-center">
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-red-500/10 text-red-400">
+            <AlertTriangle className="w-7 h-7" />
+          </div>
+          <h1 className="text-2xl font-bold text-app-text mb-2">{t.board.removedJudgeTitle}</h1>
+          <p className="text-sm text-app-muted/80 mb-6">{t.board.removedJudgeMessage}</p>
+          <button
+            type="button"
+            onClick={() => navigate(`/session/join?code=${encodeURIComponent(sessionId)}`, { replace: true })}
+            className="scoring-btn-primary h-12 px-5 rounded-lg text-xs font-bold uppercase tracking-widest inline-flex items-center justify-center"
+          >
+            {t.board.backToJoin}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div 
       className={`theme-scoring-${theme} min-h-screen bg-app-bg text-app-text font-sans flex flex-col h-screen overflow-hidden`}
@@ -614,10 +690,16 @@ export default function SessionBoard() {
         </div>
         <div className="flex items-center gap-3 shrink-0 flex-wrap justify-end">
           {isHost && (
-            <button onClick={() => setIsReportModalOpen(true)} className="scoring-btn-icon flex items-center gap-1.5 px-2 py-1 rounded text-[10px] font-medium">
-              <BarChart3 className="w-3 h-3" />
-              {t.board.reportsButton}
-            </button>
+            <>
+              <button onClick={() => setIsSettingsModalOpen(true)} className="scoring-btn-icon flex items-center gap-1.5 px-2 py-1 rounded text-[10px] font-medium">
+                <Settings2 className="w-3 h-3" />
+                {t.board.settingsButton}
+              </button>
+              <button onClick={() => setIsReportModalOpen(true)} className="scoring-btn-icon flex items-center gap-1.5 px-2 py-1 rounded text-[10px] font-medium">
+                <BarChart3 className="w-3 h-3" />
+                {t.board.reportsButton}
+              </button>
+            </>
           )}
           <button onClick={copyCode} className="scoring-btn-icon flex items-center gap-1.5 px-2 py-1 rounded text-[10px] font-mono tracking-widest" title={t.board.copyCode}>
             {session.id}
@@ -1014,6 +1096,14 @@ export default function SessionBoard() {
         winner={winner}
         winnerResult={winnerResult}
         winnerPhaseName={winnerPhaseName}
+      />
+      <SessionSettingsModal
+        isOpen={isSettingsModalOpen}
+        onClose={() => setIsSettingsModalOpen(false)}
+        session={session}
+        language={currentLanguage}
+        onRenameSession={renameSession}
+        onExpelJudge={expelJudge}
       />
     </div>
   );

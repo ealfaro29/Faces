@@ -85,7 +85,8 @@ export const scoringCopy = {
       submitIdle: 'Unirse al Panel',
       submitBusy: 'Conectando...',
       sessionMissing: 'La sesión no existe. Revisa el código e intenta de nuevo.',
-      connectionError: 'Error de conexión con la base de datos.'
+      connectionError: 'Error de conexión con la base de datos.',
+      removedJudge: 'Fuiste expulsado de esta sesión y no puedes volver a entrar con ese nombre.'
     },
     board: {
       judgeSingular: 'juez',
@@ -147,7 +148,22 @@ export const scoringCopy = {
       average: 'Prom.',
       noParticipantsInPhase: 'No hay participantes clasificados en esta fase.',
       officialWinnerTab: 'Ganadora Oficial',
-      closeReports: 'Cerrar reportes'
+      closeReports: 'Cerrar reportes',
+      settingsButton: 'Ajustes',
+      removedJudgeTitle: 'Acceso revocado',
+      removedJudgeMessage: 'El host te expulsó de esta sesión.',
+      backToJoin: 'Volver al acceso',
+      settings: {
+        title: 'Ajustes de sesión',
+        contestName: 'Nombre del concurso',
+        contestPlaceholder: 'Ej. Miss Universe 2026',
+        saveName: 'Guardar nombre',
+        judgesTitle: 'Jueces conectados',
+        hostBadge: 'Host',
+        noGuestJudges: 'No hay jueces adicionales todavía.',
+        expelJudge: 'Expulsar juez',
+        close: 'Cerrar ajustes'
+      }
     },
     participantSetup: {
       title: 'Añadir candidatas',
@@ -221,7 +237,8 @@ export const scoringCopy = {
       submitIdle: 'Join Panel',
       submitBusy: 'Connecting...',
       sessionMissing: 'This session does not exist. Check the code and try again.',
-      connectionError: 'Database connection error.'
+      connectionError: 'Database connection error.',
+      removedJudge: 'You were removed from this session and cannot rejoin with that name.'
     },
     board: {
       judgeSingular: 'judge',
@@ -283,7 +300,22 @@ export const scoringCopy = {
       average: 'Avg.',
       noParticipantsInPhase: 'No qualified participants in this phase.',
       officialWinnerTab: 'Official Winner',
-      closeReports: 'Close reports'
+      closeReports: 'Close reports',
+      settingsButton: 'Settings',
+      removedJudgeTitle: 'Access revoked',
+      removedJudgeMessage: 'The host removed you from this session.',
+      backToJoin: 'Back to join',
+      settings: {
+        title: 'Session settings',
+        contestName: 'Contest name',
+        contestPlaceholder: 'Example: Miss Universe 2026',
+        saveName: 'Save name',
+        judgesTitle: 'Connected judges',
+        hostBadge: 'Host',
+        noGuestJudges: 'There are no additional judges yet.',
+        expelJudge: 'Remove judge',
+        close: 'Close settings'
+      }
     },
     participantSetup: {
       title: 'Add contestants',
