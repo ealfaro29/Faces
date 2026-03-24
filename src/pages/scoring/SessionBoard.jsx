@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { db } from '../../../core/firebase.js';
 import { doc, onSnapshot, setDoc, updateDoc, arrayUnion } from 'firebase/firestore';
-import { Copy, Check, Search, Plus, X, ChevronRight, Globe, MapPin, AlertTriangle, Crown } from 'lucide-react';
+import { Copy, Check, Search, Plus, X, ChevronRight, Globe, MapPin, AlertTriangle, Crown, BarChart3 } from 'lucide-react';
 import {
   getCountryDisplayName,
   getDefaultPhaseName,
@@ -12,6 +12,7 @@ import {
   persistScoringLanguage,
   scoringCopy
 } from './scoringI18n';
+import PhaseReportModal from './PhaseReportModal';
 
 function getDefaultPhase(language) {
   return { name: getDefaultPhaseName(0, language), cutoff: null, participantIds: null, status: 'active' };
@@ -100,6 +101,7 @@ export default function SessionBoard() {
   const [codeCopied, setCodeCopied] = useState(false);
   const [forceAttempted, setForceAttempted] = useState(false);
   const [scoreDrafts, setScoreDrafts] = useState({});
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
 
   // Search state
   const [countries, setCountries] = useState([]);
@@ -487,7 +489,7 @@ export default function SessionBoard() {
   const winnerResult = session.winnerId ? globalResults.find(participant => participant.id === session.winnerId) : null;
   const winnerPhaseName = phases[session.winnerPhaseIndex]?.name || currentPhase.name;
 
-  const canAdvance = !isSessionComplete && currentPhase.cutoff && currentPhase.cutoff < currentParticipants.length;
+  const canAdvance = !isSessionComplete && currentParticipants.length > 0;
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-zinc-300 font-sans flex flex-col h-screen overflow-hidden">
@@ -501,6 +503,12 @@ export default function SessionBoard() {
           <span className="text-[10px] text-zinc-600 shrink-0">{judges.length} {judges.length === 1 ? t.board.judgeSingular : t.board.judgePlural}</span>
         </div>
         <div className="flex items-center gap-3 shrink-0">
+          {isHost && (
+            <button onClick={() => setIsReportModalOpen(true)} className="flex items-center gap-1.5 bg-zinc-800 px-2 py-1 rounded text-[10px] font-medium text-zinc-300 border border-zinc-700 hover:border-zinc-500 hover:text-white transition-colors cursor-pointer">
+              <BarChart3 className="w-3 h-3" />
+              Reportes
+            </button>
+          )}
           <button onClick={copyCode} className="flex items-center gap-1.5 bg-zinc-800 px-2 py-1 rounded text-[10px] font-mono tracking-widest text-zinc-400 border border-zinc-700 hover:border-zinc-500 hover:text-white transition-colors cursor-pointer" title={t.board.copyCode}>
             {session.id}
             {codeCopied ? <Check className="w-3 h-3 text-green-400" /> : <Copy className="w-3 h-3" />}
@@ -702,7 +710,7 @@ export default function SessionBoard() {
                                   onMouseUp={e => flushScoreSave(p.id, e.currentTarget.value)}
                                   onTouchEnd={e => flushScoreSave(p.id, e.currentTarget.value)}
                                   onBlur={e => flushScoreSave(p.id, e.target.value)}
-                                  className="h-1.5 flex-1 cursor-pointer appearance-none rounded-full bg-zinc-800 accent-white"
+                                  className="h-2 flex-1 cursor-pointer appearance-none rounded-full bg-zinc-800 accent-white"
                                   aria-label={`${t.board.yourScoreHeader}: ${p.name}`}
                                 />
                                 <button
@@ -822,6 +830,18 @@ export default function SessionBoard() {
           </div>
         </div>
       </div>
+
+      <PhaseReportModal
+        isOpen={isReportModalOpen}
+        onClose={() => setIsReportModalOpen(false)}
+        session={session}
+        scores={scores}
+        phases={phases}
+        currentPhaseIndex={currentPhaseIndex}
+        getPhaseParticipants={getPhaseParticipants}
+        rankParticipantsByPhaseScores={rankParticipantsByPhaseScores}
+        language={currentLanguage}
+      />
     </div>
   );
 }
