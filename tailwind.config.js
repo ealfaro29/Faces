@@ -6,7 +6,15 @@ export default {
     theme: {
         extend: {
             colors: {
-                // Keep your custom colors here if needed, or rely on CSS variables
+                // Shared Dynamic App Colors
+                app: {
+                    bg: 'var(--app-bg)',
+                    card: 'var(--app-card)',
+                    border: 'var(--app-border)',
+                    text: 'var(--app-text)',
+                    muted: 'var(--app-muted)',
+                    accent: 'var(--app-accent)'
+                }
             }
         },
     },

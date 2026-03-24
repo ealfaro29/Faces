@@ -57,26 +57,26 @@ export default function PhaseReportModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-      <div className="bg-zinc-950 border border-zinc-800 rounded-2xl w-full max-w-5xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
+      <div className="bg-app-card border border-app-border rounded-2xl w-full max-w-5xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
         
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-zinc-800/80 bg-zinc-900/50">
+        <div className="flex items-center justify-between p-4 border-b border-app-border/80 bg-app-border/30/50">
           <h2 className="text-lg font-bold text-white flex items-center gap-2">
-            <ImageIcon className="w-5 h-5 text-zinc-400" />
+            <ImageIcon className="w-5 h-5 text-app-muted" />
             Reportes por Fase
           </h2>
           <div className="flex items-center gap-3">
             <button
               onClick={exportReport}
               disabled={isExporting}
-              className="flex items-center gap-2 px-4 py-2 bg-white text-black text-sm font-semibold rounded-lg hover:bg-zinc-200 transition-colors disabled:opacity-50"
+              className="flex items-center gap-2 px-5 py-4 bg-white text-black text-sm font-semibold rounded-lg hover:bg-zinc-200 transition-colors disabled:opacity-50"
             >
               <Download className="w-4 h-4" />
               {isExporting ? 'Generando...' : 'Descargar Imagen'}
             </button>
             <button
               onClick={onClose}
-              className="p-2 text-zinc-400 hover:text-white hover:bg-zinc-800 rounded-lg transition-colors"
+              className="p-2 text-app-muted hover:text-white hover:bg-app-border rounded-lg transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
@@ -84,15 +84,15 @@ export default function PhaseReportModal({
         </div>
 
         {/* Tabs */}
-        <div className="flex overflow-x-auto border-b border-zinc-800 bg-zinc-950 px-4 py-2 scrollbar-none">
+        <div className="flex overflow-x-auto border-b border-app-border bg-app-card px-5 py-4 scrollbar-none">
           {phases.slice(0, currentPhaseIndex + 1).map((ph, idx) => (
             <button
               key={idx}
               onClick={() => setSelectedPhaseIdx(idx)}
-              className={`px-4 py-2 text-sm font-medium rounded-lg whitespace-nowrap transition-colors mr-2 ${
+              className={`px-5 py-4 text-sm font-medium rounded-lg whitespace-nowrap transition-colors mr-2 ${
                 selectedPhaseIdx === idx
-                  ? 'bg-zinc-800 text-white'
-                  : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900'
+                  ? 'bg-app-border text-white'
+                  : 'text-app-muted/70 hover:text-app-text hover:bg-app-border/30'
               }`}
             >
               {ph.name}
@@ -101,7 +101,7 @@ export default function PhaseReportModal({
           {session.status === 'completed' && winner && (
             <button
               onClick={() => setSelectedPhaseIdx(-1)}
-              className={`px-4 py-2 text-sm font-medium rounded-lg whitespace-nowrap transition-colors flex items-center gap-2 ${
+              className={`px-5 py-4 text-sm font-medium rounded-lg whitespace-nowrap transition-colors flex items-center gap-2 ${
                 selectedPhaseIdx === -1
                   ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
                   : 'text-amber-500/60 hover:text-amber-400 hover:bg-amber-500/10'
@@ -113,15 +113,15 @@ export default function PhaseReportModal({
         </div>
 
         {/* Content to Export */}
-        <div className="flex-1 overflow-y-auto bg-zinc-950 p-6 scrollbar-thin scrollbar-thumb-zinc-800">
-          <div ref={reportRef} className="bg-zinc-950 p-6 rounded-xl border border-zinc-800/50 max-w-4xl mx-auto">
+        <div className="flex-1 overflow-y-auto bg-app-card p-6 scrollbar-thin scrollbar-thumb-zinc-800">
+          <div ref={reportRef} className="bg-app-card p-6 rounded-xl border border-app-border/50 max-w-4xl mx-auto">
             
             {/* Report Title */}
             <div className="text-center mb-8">
               <h1 className="text-2xl font-black text-white tracking-tight uppercase mb-1">
                 {session.name}
               </h1>
-              <h3 className="text-lg text-zinc-400 font-medium tracking-wide">
+              <h3 className="text-lg text-app-muted font-medium tracking-wide">
                 Resultados Oficiales — {selectedPhase?.name || `Fase ${selectedPhaseIdx + 1}`}
               </h3>
             </div>
@@ -136,35 +136,35 @@ export default function PhaseReportModal({
                   </div>
                   <p className="text-xs uppercase tracking-[0.45em] text-amber-200/70">{t.board.winnerTitle}</p>
                   <h2 className="mt-4 text-5xl font-black tracking-tight text-white md:text-6xl">{winner?.flag} {winner?.name || t.board.winnerPending}</h2>
-                  <p className="mt-3 text-lg text-zinc-400">{t.board.winnerSubtitle}</p>
+                  <p className="mt-3 text-lg text-app-muted">{t.board.winnerSubtitle}</p>
                   {winnerResult && (
                     <div className="mt-10 grid w-full max-w-md grid-cols-2 gap-4">
-                      <div className="rounded-2xl border border-zinc-800 bg-zinc-950/70 px-6 py-4">
-                        <p className="text-xs uppercase tracking-[0.3em] text-zinc-500">{t.board.winnerScore}</p>
+                      <div className="rounded-2xl border border-app-border bg-app-card/70 px-6 py-4">
+                        <p className="text-xs uppercase tracking-[0.3em] text-app-muted/70">{t.board.winnerScore}</p>
                         <p className="mt-3 text-3xl font-mono text-white">{winnerResult.totalAvg.toFixed(2)}</p>
                       </div>
-                      <div className="rounded-2xl border border-zinc-800 bg-zinc-950/70 px-6 py-4">
-                        <p className="text-xs uppercase tracking-[0.3em] text-zinc-500">{winnerPhaseName}</p>
-                        <p className="mt-3 text-base text-zinc-300 tracking-wide font-medium">{t.board.winnerFromPhase(winnerPhaseName).replace(winnerPhaseName, '').trim()}</p>
+                      <div className="rounded-2xl border border-app-border bg-app-card/70 px-6 py-4">
+                        <p className="text-xs uppercase tracking-[0.3em] text-app-muted/70">{winnerPhaseName}</p>
+                        <p className="mt-3 text-base text-app-text tracking-wide font-medium">{t.board.winnerFromPhase(winnerPhaseName).replace(winnerPhaseName, '').trim()}</p>
                       </div>
                     </div>
                   )}
                 </div>
               </div>
             ) : (
-              <div className="overflow-x-auto rounded-lg border border-zinc-800/80">
+              <div className="overflow-x-auto rounded-lg border border-app-border/80">
                 <table className="w-full text-left border-collapse">
                   <thead>
-                    <tr className="bg-zinc-900 border-b border-zinc-800 text-xs uppercase tracking-widest text-zinc-500">
-                      <th className="px-4 py-3 text-center w-12 font-semibold">#</th>
-                      <th className="px-4 py-3 font-semibold">Participante</th>
+                    <tr className="bg-app-border/30 border-b border-app-border text-xs uppercase tracking-widest text-app-muted/70">
+                      <th className="px-5 py-4 text-center w-12 font-semibold">#</th>
+                      <th className="px-5 py-4 font-semibold">Participante</th>
                       {judges.map(judge => (
-                        <th key={judge} className="px-4 py-3 text-center font-semibold whitespace-nowrap">
+                        <th key={judge} className="px-5 py-4 text-center font-semibold whitespace-nowrap">
                           {judge}
                         </th>
                       ))}
-                      <th className="px-4 py-3 text-center font-bold text-white bg-zinc-800/30">Total</th>
-                      <th className="px-4 py-3 text-center font-bold text-white bg-zinc-800/50">Prom.</th>
+                      <th className="px-5 py-4 text-center font-bold text-white bg-app-border/30">Total</th>
+                      <th className="px-5 py-4 text-center font-bold text-white bg-app-border/50">Prom.</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-zinc-800/50">
@@ -175,11 +175,11 @@ export default function PhaseReportModal({
                       const avg = vals.length > 0 ? total / vals.length : 0;
 
                       return (
-                        <tr key={p.id} className="bg-zinc-950 hover:bg-zinc-900/50 transition-colors">
-                          <td className="px-4 py-3.5 text-center text-sm font-medium text-zinc-500">
+                        <tr key={p.id} className="bg-app-card hover:bg-app-border/30/50 transition-colors">
+                          <td className="px-4 py-4 text-center text-sm font-medium text-app-muted/70">
                             {idx + 1}
                           </td>
-                          <td className="px-4 py-3.5">
+                          <td className="px-4 py-4">
                             <div className="flex items-center gap-3">
                               <span className="text-xl">{p.flag}</span>
                               <span className="text-sm font-semibold text-zinc-200">
@@ -190,15 +190,15 @@ export default function PhaseReportModal({
                           {judges.map(judge => {
                             const val = pScores[judge];
                             return (
-                              <td key={judge} className="px-4 py-3.5 text-center text-sm font-mono text-zinc-400">
+                              <td key={judge} className="px-4 py-4 text-center text-sm font-mono text-app-muted">
                                 {val !== undefined && val !== null ? val.toFixed(1) : '-'}
                               </td>
                             );
                           })}
-                          <td className="px-4 py-3.5 text-center text-sm font-mono font-semibold text-zinc-300 bg-zinc-800/10">
+                          <td className="px-4 py-4 text-center text-sm font-mono font-semibold text-app-text bg-app-border/10">
                             {total.toFixed(2)}
                           </td>
-                          <td className="px-4 py-3.5 text-center text-sm font-mono font-bold text-white bg-zinc-800/30">
+                          <td className="px-4 py-4 text-center text-sm font-mono font-bold text-white bg-app-border/30">
                             {avg.toFixed(2)}
                           </td>
                         </tr>
@@ -206,7 +206,7 @@ export default function PhaseReportModal({
                     })}
                     {rankedParticipants.length === 0 && (
                       <tr>
-                        <td colSpan={judges.length + 4} className="px-4 py-12 text-center text-zinc-500 text-sm">
+                        <td colSpan={judges.length + 4} className="px-4 py-12 text-center text-app-muted/70 text-sm">
                           No hay participantes clasificados en esta fase.
                         </td>
                       </tr>
@@ -218,7 +218,7 @@ export default function PhaseReportModal({
             
             
             <div className="mt-6 text-center">
-              <p className="text-[10px] text-zinc-600 uppercase tracking-widest font-mono">
+              <p className="text-[10px] text-app-muted/50 uppercase tracking-widest font-mono">
                 © {new Date().getFullYear()} Faces Scoring Engine
               </p>
             </div>
