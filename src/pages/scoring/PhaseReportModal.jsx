@@ -11,7 +11,6 @@ export default function PhaseReportModal({
   phases,
   currentPhaseIndex,
   getPhaseParticipants,
-  getPhaseParticipants,
   rankParticipantsByPhaseScores,
   language,
   globalResults,
