@@ -42,7 +42,7 @@ export const scoringCopy = {
     backToStart: 'Volver al inicio',
     loading: 'Cargando...',
     landing: {
-      title: 'Scoring System',
+      title: `Scoring System v${typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : ''}`,
       subtitle: 'Panel de evaluación en tiempo real para certámenes y competencias.',
       createTitle: 'Crear Sesión',
       createDescription: 'Configura un nuevo tablero de evaluación como anfitrión (Host).',
@@ -119,7 +119,7 @@ export const scoringCopy = {
     backToStart: 'Back to start',
     loading: 'Loading...',
     landing: {
-      title: 'Scoring System',
+      title: `Scoring System v${typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : ''}`,
       subtitle: 'Real-time judging panel for pageants and live competitions.',
       createTitle: 'Create Session',
       createDescription: 'Set up a new scoring board as the host.',

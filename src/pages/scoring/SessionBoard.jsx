@@ -87,7 +87,7 @@ export default function SessionBoard() {
     const body = document.body;
     const prev = { htmlP: html.style.padding, bodyP: body.style.padding, bodyO: body.style.overflow, bodyBg: body.style.background };
     html.style.padding = '0'; body.style.padding = '0'; body.style.overflow = 'hidden'; body.style.background = '#0a0a0a';
-    document.title = `Faces v${__APP_VERSION__}`;
+    document.title = `Scoring System v${__APP_VERSION__}`;
     return () => { html.style.padding = prev.htmlP; body.style.padding = prev.bodyP; body.style.overflow = prev.bodyO; body.style.background = prev.bodyBg; };
   }, []);
 
