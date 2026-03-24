@@ -438,6 +438,11 @@ export default function SessionBoard() {
     return { ...p, avg, voteCount: vals.length, myScore };
   });
 
+  // Calculate who is actually making the cut based on scores, not alphabetical order
+  const rankedForCutoff = rankParticipantsByPhaseScores(currentParticipants, phaseScores);
+  const cutoffLimit = currentPhase.cutoff || rankedForCutoff.length;
+  const qualifiedIds = new Set(rankedForCutoff.slice(0, cutoffLimit).map(p => p.id));
+
   // Check completion for advance button
   const allJudgesComplete = currentParticipants.length > 0 && currentParticipants.every(p => {
     const pScores = phaseScores[p.id] || {};
@@ -492,10 +497,10 @@ export default function SessionBoard() {
   const canAdvance = !isSessionComplete && currentParticipants.length > 0;
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-zinc-300 font-sans flex flex-col h-screen overflow-hidden">
+    <div className="min-h-screen bg-[#070707] text-zinc-300 font-sans flex flex-col h-screen overflow-hidden">
       
       {/* HEADER */}
-      <header className="h-11 border-b border-zinc-800/80 bg-zinc-950 flex items-center justify-between px-4 flex-shrink-0 z-10">
+      <header className="h-12 border-b border-zinc-800/60 bg-zinc-950/80 backdrop-blur-md flex items-center justify-between px-5 flex-shrink-0 z-20">
         <div className="flex items-center gap-3 min-w-0">
           {session.type === 'Global' ? <Globe className="w-4 h-4 text-zinc-500 shrink-0" /> : <MapPin className="w-4 h-4 text-zinc-500 shrink-0" />}
           <h1 className="text-sm font-bold text-white tracking-tight truncate">{session.name}</h1>
@@ -680,13 +685,13 @@ export default function SessionBoard() {
                     <tbody className="divide-y divide-zinc-800/30">
                       {scoredParticipants.map((p, idx) => {
                         const hasScore = p.myScore !== undefined && p.myScore !== null;
-                        const isCutoff = currentPhase.cutoff && idx >= currentPhase.cutoff;
+                        const isCutoff = currentPhase.cutoff && !qualifiedIds.has(p.id);
                         const sliderValue = scoreDrafts[p.id] ?? (hasScore ? String(p.myScore) : '0');
                         const displayScore = Number.parseFloat(sliderValue);
                         const showScoreValue = Number.isFinite(displayScore);
                         return (
-                          <tr key={p.id} className={`transition-colors ${isCutoff ? 'opacity-30 bg-zinc-950' : 'hover:bg-white/[0.02]'}`}>
-                            <td className="py-2 pl-3 pr-1 text-center">
+                          <tr key={p.id} className={`transition-all duration-300 ${isCutoff ? 'opacity-40 bg-red-950/5 grayscale-[50%]' : 'hover:bg-zinc-900/40'}`}>
+                            <td className="py-2.5 pl-4 pr-2 text-center">
                               <span className={`text-[10px] font-mono font-bold ${idx === 0 ? 'text-white' : idx <= 2 ? 'text-zinc-400' : 'text-zinc-600'}`}>{idx + 1}</span>
                             </td>
                             <td className="py-2 px-2">
