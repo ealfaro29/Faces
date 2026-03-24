@@ -189,7 +189,7 @@ export default function PhaseReportModal({
                           {showElimLine && (
                             <tr className="bg-red-500/10 border-y border-red-500/30">
                               <td colSpan={judges.length + 4} className="py-2 px-4 text-[9px] font-bold text-red-100 uppercase tracking-[0.2em] text-center">
-                                LÍNEA DE ELIMINACIÓN / {t.board.cutoffLine || 'CUTOFF LINE'}
+                                {t.board.cutoffLine}
                               </td>
                             </tr>
                           )}

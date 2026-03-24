@@ -110,7 +110,7 @@ export const scoringCopy = {
       winnerFromPhase: phaseName => `Coronada en ${phaseName}`,
       winnerPending: 'Esperando el cierre final...',
       copyCode: 'Copiar código',
-      cutoffLine: 'LÍNEA DE CORTE',
+      cutoffLine: 'LÍNEA DE ELIMINACIÓN',
       reportsTitle: 'Reportes por Fase',
       downloadImage: 'Descargar Imagen',
       generating: 'Generando...',
