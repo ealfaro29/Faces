@@ -1028,19 +1028,19 @@ main.panel {
 
 /* --- SCORING APP THEMES --- */
 .theme-scoring-dark {
-    --app-bg: 7 7 7;
-    --app-card: 9 9 11;
-    --app-border: 39 39 42;
-    --app-text: 244 244 245;
-    --app-muted: 161 161 170;
-    --app-accent: 255 255 255;
+    --app-bg: #070707;
+    --app-card: #09090b;
+    --app-border: #27272a;
+    --app-text: #f4f4f5;
+    --app-muted: #a1a1aa;
+    --app-accent: #ffffff;
 }
 
 .theme-scoring-light {
-    --app-bg: 248 250 252;
-    --app-card: 255 255 255;
-    --app-border: 226 232 240;
-    --app-text: 15 23 42;
-    --app-muted: 100 116 139;
-    --app-accent: 15 23 42;
+    --app-bg: #f8fafc;
+    --app-card: #ffffff;
+    --app-border: #e2e8f0;
+    --app-text: #0f172a;
+    --app-muted: #64748b;
+    --app-accent: #0f172a;
 }
