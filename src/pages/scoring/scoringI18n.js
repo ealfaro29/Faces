@@ -109,7 +109,8 @@ export const scoringCopy = {
       winnerScore: 'Promedio final',
       winnerFromPhase: phaseName => `Coronada en ${phaseName}`,
       winnerPending: 'Esperando el cierre final...',
-      copyCode: 'Copiar código'
+      copyCode: 'Copiar código',
+      cutoffLine: 'LÍNEA DE CORTE'
     }
   },
   en: {
@@ -186,7 +187,8 @@ export const scoringCopy = {
       winnerScore: 'Final average',
       winnerFromPhase: phaseName => `Crowned in ${phaseName}`,
       winnerPending: 'Waiting for the final reveal...',
-      copyCode: 'Copy code'
+      copyCode: 'Copy code',
+      cutoffLine: 'CUTOFF LINE'
     }
   }
 };

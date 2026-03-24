@@ -1,19 +1,28 @@
 :root {
-    /* Variables de color y tamaño */
-    --ink: #5c183b;
-    --muted: #ad487c;
-    --card: #ffe4f0;
-    --card-light: #ffebf5;
-    --card-lighter: #ffffff;
-    --card-hover: #ffd1e6;
-    --border: #ff85c2;
-    --shadow: 0 10px 40px rgba(255, 105, 180, 0.35);
-    --gold1: #ff69b4;
-    --gold2: #ff1493;
-    --gold3: #c71585;
-    --font-family-sans: 'Quicksand', sans-serif;
-    --font-family-serif: 'Quicksand', sans-serif;
-    --body-bg: linear-gradient(120deg, #ffb6c1 0%, #ff69b4 100%);
+    /* TAILWIND V4 DYNAMIC COLORS */
+    /* Declared in :root to ensure utility generation */
+    --color-app-bg: #070707;
+    --color-app-card: #09090b;
+    --color-app-border: #27272a;
+    --color-app-text: #f4f4f5;
+    --color-app-muted: #a1a1aa;
+    --color-app-accent: #ffffff;
+
+    /* Variables de color y tamaño originales (CLEANED) */
+    --ink: #f4f4f5;
+    --muted: #a1a1aa;
+    --card: #09090b;
+    --card-light: #18181b;
+    --card-lighter: #27272a;
+    --card-hover: #3f3f46;
+    --border: #27272a;
+    --shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+    --gold1: var(--color-app-accent);
+    --gold2: var(--color-app-accent);
+    --gold3: var(--color-app-accent);
+    --font-family-sans: 'Inter', sans-serif;
+    --font-family-serif: 'Inter', sans-serif;
+    --body-bg: #000000;
     --space-4: 16px;
     --space-5: 24px;
     --radius-md: 8px;
@@ -162,11 +171,11 @@
 html,
 body {
     font-family: var(--font-family-sans);
-    background: var(--body-bg);
+    background: #000;
     color: var(--ink);
     margin: 0;
-    padding: var(--space-4);
-    overflow: hidden;
+    padding: 0;
+    overflow-x: hidden;
     transition: background 0.4s ease, color 0.4s ease;
 }
 
@@ -1028,19 +1037,36 @@ main.panel {
 
 /* --- SCORING APP THEMES --- */
 .theme-scoring-dark {
-    --app-bg: #070707;
-    --app-card: #09090b;
-    --app-border: #27272a;
-    --app-text: #f4f4f5;
-    --app-muted: #a1a1aa;
-    --app-accent: #ffffff;
+    --color-app-bg: #070707;
+    --color-app-card: #09090b;
+    --color-app-border: #27272a;
+    --color-app-text: #f4f4f5;
+    --color-app-muted: #a1a1aa;
+    --color-app-accent: #ffffff; /* Default, can be overridden by inline style */
+    --color-app-accent-muted: rgba(255, 255, 255, 0.1);
 }
 
 .theme-scoring-light {
-    --app-bg: #f8fafc;
-    --app-card: #ffffff;
-    --app-border: #e2e8f0;
-    --app-text: #0f172a;
-    --app-muted: #64748b;
-    --app-accent: #0f172a;
+    --color-app-bg: #f8fafc;
+    --color-app-card: #ffffff;
+    --color-app-border: #e2e8f0;
+    --color-app-text: #0f172a;
+    --color-app-muted: #64748b;
+    --color-app-accent: #0f172a; /* Default, can be overridden by inline style */
+    --color-app-accent-muted: rgba(15, 23, 42, 0.1);
 }
+
+/* Glassmorphism and Professional Utilities */
+.glass-panel {
+    background: color-mix(in srgb, var(--color-app-card) 60%, transparent) !important;
+    backdrop-filter: blur(12px) !important;
+    border: 1px solid var(--color-app-border) !important;
+}
+
+.text-app-accent { color: var(--color-app-accent) !important; }
+.bg-app-accent { background-color: var(--color-app-accent) !important; }
+.border-app-accent { border-color: var(--color-app-accent) !important; }
+.shadow-app-accent { box-shadow: 0 0 20px color-mix(in srgb, var(--color-app-accent) 25%, transparent) !important; }
+
+.bg-app-accent-muted { background-color: var(--color-app-accent-muted) !important; }
+.text-app-accent-muted { color: var(--color-app-accent-muted) !important; }

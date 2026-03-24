@@ -1,14 +1,6 @@
 /* Import Tailwind CSS v4 */
 @import "tailwindcss";
+@config "./tailwind.config.js";
 
 /* Import original styles */
 @import "./style.css";
-
-@theme {
-  --color-app-bg: var(--app-bg);
-  --color-app-card: var(--app-card);
-  --color-app-border: var(--app-border);
-  --color-app-text: var(--app-text);
-  --color-app-muted: var(--app-muted);
-  --color-app-accent: var(--app-accent);
-}

@@ -5,6 +5,7 @@ import { Search, Plus, X, Globe, MapPin, Loader2 } from 'lucide-react';
 
 export default function ParticipantSetup({ session }) {
   const [theme] = useState(localStorage.getItem('faces-scoring-theme') || 'dark');
+  const [accentColor] = useState(localStorage.getItem('faces-scoring-accent') || '#ffffff');
   const [countries, setCountries] = useState([]);
   const [queryCountry, setQueryCountry] = useState('');
   const [countryResults, setCountryResults] = useState([]);
@@ -121,16 +122,21 @@ export default function ParticipantSetup({ session }) {
   };
 
   return (
-    <div className={`theme-scoring-${theme} min-h-screen bg-app-bg text-app-text font-sans flex justify-center p-4 md:p-10`}>
+    <div 
+      className={`theme-scoring-${theme} min-h-screen bg-app-bg text-app-text font-sans flex justify-center p-4 md:p-10`}
+      style={{ '--color-app-accent': accentColor, '--color-app-accent-muted': `${accentColor}22` }}
+    >
       <div className="w-full max-w-4xl grid grid-cols-1 lg:grid-cols-2 gap-6 h-fit">
         
         {/* Search Panel */}
         <div className="bg-app-border/30 border border-app-border rounded-2xl p-6 shadow-lg h-fit">
-          <h2 className="text-xl font-bold text-white mb-1 flex items-center gap-2">
-            {session.type === 'Global' ? <Globe className="w-5 h-5 text-app-muted"/> : <MapPin className="w-5 h-5 text-app-muted"/>}
-            Añadir Candidatas
-          </h2>
-          <p className="text-app-muted/70 text-sm mb-6">Busca y selecciona perfiles para agregar a la competencia.</p>
+          <div className="min-h-[85px] mb-4">
+            <h2 className="text-xl font-bold text-white mb-1 flex items-center gap-2">
+              {session.type === 'Global' ? <Globe className="w-5 h-5 text-app-accent opacity-70"/> : <MapPin className="w-5 h-5 text-app-accent opacity-70"/>}
+              Añadir Candidatas
+            </h2>
+            <p className="text-app-muted/70 text-sm">Busca y selecciona perfiles para agregar a la competencia.</p>
+          </div>
 
           {session.type === 'Global' && (
             <div className="relative" ref={countryDropdownRef}>
@@ -148,7 +154,7 @@ export default function ParticipantSetup({ session }) {
                     <button key={item.id} onClick={() => handleAddGlobal(item)} className="w-full flex items-center gap-3 p-3 hover:bg-zinc-700 transition-colors text-left border-b border-app-border/70/50 last:border-0">
                       {item.flag && <span className="text-lg">{item.flag}</span>}
                       <span className="text-zinc-200 text-sm">{item.name}</span>
-                      <Plus className="w-4 h-4 text-app-muted/70 ml-auto shrink-0" />
+                      <Plus className="w-4 h-4 text-app-accent ml-auto shrink-0" />
                     </button>
                   ))}
                 </div>
@@ -210,7 +216,7 @@ export default function ParticipantSetup({ session }) {
                         {cityResults.map(c => (
                           <button key={c.id} onClick={() => handleAddNational(c)} className="w-full flex items-center gap-3 p-3 hover:bg-zinc-700 transition-colors text-left border-b border-app-border/70/50 last:border-0">
                             <span className="text-zinc-200 text-sm">{c.name}</span>
-                            <Plus className="w-4 h-4 text-app-muted/70 ml-auto shrink-0" />
+                            <Plus className="w-4 h-4 text-app-accent ml-auto shrink-0" />
                           </button>
                         ))}
                       </div>
@@ -234,7 +240,7 @@ export default function ParticipantSetup({ session }) {
         <div className="bg-app-border/30 border border-app-border rounded-2xl p-6 shadow-lg flex flex-col min-h-[420px]">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-sm font-bold text-white uppercase tracking-widest">Nómina Base</h3>
-            <span className="bg-app-border text-app-text text-xs px-2.5 py-1 rounded-md font-mono">{selectedParticipants.length}</span>
+            <span className="bg-app-accent text-app-bg text-[10px] px-2.5 py-1 rounded-md font-mono font-bold shadow-[0_0_10px_var(--color-app-accent-muted)]">{selectedParticipants.length}</span>
           </div>
 
           <div className="flex-grow overflow-y-auto border border-app-border rounded-xl bg-app-card/30 mb-6">

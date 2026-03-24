@@ -8,6 +8,7 @@ import { getStoredScoringLanguage, normalizeScoringLanguage, persistScoringLangu
 
 export default function JoinSession() {
   const [theme] = useState(localStorage.getItem('faces-scoring-theme') || 'dark');
+  const [accentColor] = useState(localStorage.getItem('faces-scoring-accent') || '#ffffff');
   const navigate = useNavigate();
   const [judgeName, setJudgeName] = useState('');
   const [sessionCode, setSessionCode] = useState('');
@@ -49,7 +50,10 @@ export default function JoinSession() {
   };
 
   return (
-    <div className={`theme-scoring-${theme} min-h-screen bg-app-bg text-app-text font-sans flex items-center justify-center p-4`}>
+    <div 
+      className={`theme-scoring-${theme} min-h-screen bg-app-bg text-app-text font-sans flex items-center justify-center p-4`}
+      style={{ '--color-app-accent': accentColor, '--color-app-accent-muted': `${accentColor}22` }}
+    >
       <div className="w-full max-w-sm">
         <Link to="/session" className="inline-flex items-center gap-2 text-xs text-app-muted/70 hover:text-white transition-colors mb-6 no-underline uppercase tracking-widest">
           <ArrowLeft className="w-4 h-4" /> {t.backToStart}
@@ -59,8 +63,10 @@ export default function JoinSession() {
           <div className="mb-6 flex justify-end">
             <ScoringLanguageToggle language={language} label={t.languageLabel} onChange={setLanguage} />
           </div>
-          <h1 className="text-2xl font-bold text-white mb-2 text-center tracking-tight">{t.join.title}</h1>
-          <p className="text-sm text-app-muted/70 mb-8 text-center">{t.join.subtitle}</p>
+          <div className="min-h-[100px] mb-4">
+            <h1 className="text-2xl font-bold text-white mb-2 text-center tracking-tight">{t.join.title}</h1>
+            <p className="text-sm text-app-muted/70 text-center leading-relaxed">{t.join.subtitle}</p>
+          </div>
           
           <form onSubmit={handleJoin} className="space-y-5">
             <div>

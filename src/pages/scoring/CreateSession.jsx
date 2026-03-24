@@ -8,6 +8,7 @@ import { getDefaultPhaseName, getStoredScoringLanguage, persistScoringLanguage, 
 
 export default function CreateSession() {
   const [theme] = useState(localStorage.getItem('faces-scoring-theme') || 'dark');
+  const [accentColor] = useState(localStorage.getItem('faces-scoring-accent') || '#ffffff');
   const navigate = useNavigate();
   const [judgeName, setJudgeName] = useState('');
   const [sessionName, setSessionName] = useState('');
@@ -56,7 +57,10 @@ export default function CreateSession() {
   };
 
   return (
-    <div className={`theme-scoring-${theme} min-h-screen bg-app-bg text-app-text font-sans flex justify-center p-4 md:p-10`}>
+    <div 
+      className={`theme-scoring-${theme} min-h-screen bg-app-bg text-app-text font-sans flex justify-center p-4 md:p-10`}
+      style={{ '--color-app-accent': accentColor, '--color-app-accent-muted': `${accentColor}22` }}
+    >
       <div className="w-full max-w-md h-fit">
         <Link to="/session" className="inline-flex items-center gap-2 text-xs text-app-muted/70 hover:text-white transition-colors mb-6 no-underline uppercase tracking-widest">
           <ArrowLeft className="w-4 h-4" /> {t.backToStart}
@@ -66,8 +70,10 @@ export default function CreateSession() {
           <div className="mb-6 flex justify-end">
             <ScoringLanguageToggle language={language} label={t.languageLabel} onChange={setLanguage} />
           </div>
-          <h1 className="text-2xl font-bold text-white mb-2 tracking-tight">{t.create.title}</h1>
-          <p className="text-app-muted/70 text-sm mb-8">{t.create.subtitle}</p>
+          <div className="min-h-[100px] mb-4">
+            <h1 className="text-2xl font-bold text-white mb-2 tracking-tight">{t.create.title}</h1>
+            <p className="text-app-muted/70 text-sm leading-relaxed">{t.create.subtitle}</p>
+          </div>
           
           <form onSubmit={handleCreate} className="space-y-5">
             <div>

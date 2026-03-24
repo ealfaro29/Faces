@@ -20,6 +20,7 @@ export default function PhaseReportModal({
 }) {
   const [selectedPhaseIdx, setSelectedPhaseIdx] = useState(currentPhaseIndex);
   const [isExporting, setIsExporting] = useState(false);
+  const [accentColor] = useState(localStorage.getItem('faces-scoring-accent') || '#ffffff');
   const reportRef = useRef(null);
   const t = scoringCopy[language] || scoringCopy['es'];
 
@@ -56,7 +57,7 @@ export default function PhaseReportModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" style={{ '--color-app-accent': accentColor, '--color-app-accent-muted': `${accentColor}22` }}>
       <div className="bg-app-card border border-app-border rounded-2xl w-full max-w-5xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
         
         {/* Header */}
@@ -128,24 +129,24 @@ export default function PhaseReportModal({
 
             {/* Table or Winner Card */}
             {selectedPhaseIdx === -1 ? (
-              <div className="relative flex min-h-[500px] items-center justify-center overflow-hidden rounded-[2rem] border border-amber-300/20 bg-[radial-gradient(circle_at_top,#fde68a22,transparent_40%),linear-gradient(180deg,#18181b_0%,#09090b_100%)] p-8 text-center shadow-[0_0_60px_rgba(251,191,36,0.08)]">
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.08),transparent_18%),radial-gradient(circle_at_80%_15%,rgba(251,191,36,0.18),transparent_20%),radial-gradient(circle_at_50%_85%,rgba(255,255,255,0.05),transparent_20%)] opacity-80" />
+              <div className="relative flex min-h-[500px] items-center justify-center overflow-hidden rounded-[2rem] border border-app-accent/20 bg-[radial-gradient(circle_at_top,var(--color-app-accent-muted),transparent_50%),linear-gradient(180deg,#0a0a0a_0%,#000000_100%)] p-8 text-center shadow-[0_0_60px_var(--color-app-accent-muted)]">
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.05),transparent_18%),radial-gradient(circle_at_80%_15%,var(--color-app-accent-muted),transparent_25%),radial-gradient(circle_at_50%_85%,rgba(255,255,255,0.03),transparent_20%)] opacity-80" />
                 <div className="relative z-10 flex max-w-xl flex-col items-center">
-                  <div className="mb-6 flex h-24 w-24 items-center justify-center rounded-full border border-amber-200/20 bg-amber-300/10 text-amber-200 shadow-[0_0_40px_rgba(251,191,36,0.2)]">
+                  <div className="mb-6 flex h-24 w-24 items-center justify-center rounded-full border border-app-accent/20 bg-app-accent/10 text-app-accent shadow-[0_0_40px_var(--color-app-accent-muted)] transition-all animate-pulse">
                     <Crown className="h-12 w-12" />
                   </div>
-                  <p className="text-xs uppercase tracking-[0.45em] text-amber-200/70">{t.board.winnerTitle}</p>
-                  <h2 className="mt-4 text-5xl font-black tracking-tight text-white md:text-6xl">{winner?.flag} {winner?.name || t.board.winnerPending}</h2>
-                  <p className="mt-3 text-lg text-app-muted">{t.board.winnerSubtitle}</p>
+                  <p className="text-xs uppercase tracking-[0.45em] text-app-accent opacity-70">{t.board.winnerTitle}</p>
+                  <h2 className="mt-4 text-5xl font-black tracking-tight text-white md:text-6xl drop-shadow-[0_0_15px_var(--color-app-accent-muted)]">{winner?.flag} {winner?.name || t.board.winnerPending}</h2>
+                  <p className="mt-4 text-lg text-app-muted font-medium tracking-wide">{t.board.winnerSubtitle}</p>
                   {winnerResult && (
-                    <div className="mt-10 grid w-full max-w-md grid-cols-2 gap-4">
-                      <div className="rounded-2xl border border-app-border bg-app-card/70 px-6 py-4">
-                        <p className="text-xs uppercase tracking-[0.3em] text-app-muted/70">{t.board.winnerScore}</p>
-                        <p className="mt-3 text-3xl font-mono text-white">{winnerResult.totalAvg.toFixed(2)}</p>
+                    <div className="mt-12 grid w-full max-w-md grid-cols-2 gap-4">
+                      <div className="glass-panel px-6 py-6 rounded-2xl border-app-accent/20">
+                        <p className="text-[10px] uppercase tracking-[0.3em] text-app-muted/70 font-bold mb-3">{t.board.winnerScore}</p>
+                        <p className="text-4xl font-mono text-app-accent font-black tracking-tighter">{winnerResult.totalAvg.toFixed(2)}</p>
                       </div>
-                      <div className="rounded-2xl border border-app-border bg-app-card/70 px-6 py-4">
-                        <p className="text-xs uppercase tracking-[0.3em] text-app-muted/70">{winnerPhaseName}</p>
-                        <p className="mt-3 text-base text-app-text tracking-wide font-medium">{t.board.winnerFromPhase(winnerPhaseName).replace(winnerPhaseName, '').trim()}</p>
+                      <div className="glass-panel px-6 py-6 rounded-2xl border-app-accent/20">
+                        <p className="text-[10px] uppercase tracking-[0.3em] text-app-muted/70 font-bold mb-3">{winnerPhaseName}</p>
+                        <p className="text-base text-white tracking-wide font-bold leading-tight uppercase">{t.board.winnerFromPhase(winnerPhaseName).replace(winnerPhaseName, '').trim()}</p>
                       </div>
                     </div>
                   )}

@@ -1,3 +1,4 @@
+/** @type {import('tailwindcss').Config} */
 export default {
     content: [
         "./index.html",
@@ -6,14 +7,13 @@ export default {
     theme: {
         extend: {
             colors: {
-                // Shared Dynamic App Colors
                 app: {
-                    bg: 'var(--app-bg)',
-                    card: 'var(--app-card)',
-                    border: 'var(--app-border)',
-                    text: 'var(--app-text)',
-                    muted: 'var(--app-muted)',
-                    accent: 'var(--app-accent)'
+                    bg: 'var(--color-app-bg)',
+                    card: 'var(--color-app-card)',
+                    border: 'var(--color-app-border)',
+                    text: 'var(--color-app-text)',
+                    muted: 'var(--color-app-muted)',
+                    accent: 'var(--color-app-accent)'
                 }
             }
         },
