@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, Fragment } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { db } from '../../../core/firebase.js';
 import { doc, onSnapshot, setDoc, updateDoc, arrayUnion } from 'firebase/firestore';
@@ -597,16 +598,25 @@ export default function SessionBoard() {
                       className="w-full bg-app-border/30 border border-app-border rounded-lg h-8 pl-8 pr-3 text-xs text-white focus:outline-none focus:border-zinc-600 transition-colors" />
                     <Search className="w-3.5 h-3.5 text-app-muted/70 absolute left-2.5 top-2" />
                   </div>
-                  {searchResults.length > 0 && (
-                    <div className="absolute mt-1 left-0 right-0 bg-app-border border border-app-border/70 rounded-lg overflow-hidden z-30 shadow-2xl max-h-40 overflow-y-auto">
-                      {searchResults.map(c => (
-                        <button key={c.id} onClick={() => { setSelectedParentCountry(c); setSearchQuery(''); setSearchResults([]); }}
-                          className="w-full flex items-center gap-2 px-3 py-1.5 hover:bg-zinc-700 transition-colors text-left text-xs border-b border-app-border/70/50 last:border-0">
-                          <span>{c.flag}</span><span className="text-zinc-200">{c.name}</span>
-                        </button>
-                      ))}
-                    </div>
-                  )}
+                  <AnimatePresence>
+                    {searchResults.length > 0 && (
+                      <motion.div 
+                        initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.95 }}
+                        transition={{ duration: 0.2, ease: "easeOut" }}
+                        className="absolute mt-2 left-0 right-0 bg-zinc-900/95 backdrop-blur-2xl border border-white/10 rounded-xl overflow-hidden z-30 shadow-[0_20px_50px_rgba(0,0,0,0.6)] max-h-48 overflow-y-auto p-1 custom-scrollbar"
+                      >
+                        {searchResults.map(c => (
+                          <button key={c.id} onClick={() => { setSelectedParentCountry(c); setSearchQuery(''); setSearchResults([]); }}
+                            className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-[var(--color-app-accent)] hover:text-black transition-all text-left text-xs rounded-lg group">
+                            <span className="text-base group-hover:scale-110 transition-transform">{c.flag}</span>
+                            <span className="text-zinc-200 group-hover:text-black font-medium">{c.name}</span>
+                          </button>
+                        ))}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
               )}
               {session.type === 'Nacional' && selectedParentCountry && (
@@ -624,25 +634,38 @@ export default function SessionBoard() {
                       className="w-full bg-app-border/30 border border-app-border rounded-lg h-8 pl-8 pr-3 text-xs text-white focus:outline-none focus:border-zinc-600 transition-colors disabled:opacity-40" />
                     <Search className="w-3.5 h-3.5 text-app-muted/70 absolute left-2.5 top-2" />
                   </div>
-                  {searchResults.length > 0 && (
-                    <div className="absolute mt-1 left-0 right-0 bg-app-border border border-app-border/70 rounded-lg overflow-hidden z-30 shadow-2xl max-h-40 overflow-y-auto">
-                      {searchResults.map(c => (
-                        <button key={c.id} onClick={() => addParticipant(c)}
-                          className="w-full flex items-center gap-2 px-3 py-1.5 hover:bg-zinc-700 transition-colors text-left text-xs border-b border-app-border/70/50 last:border-0">
-                          {c.flag && <span>{c.flag}</span>}<span className="text-zinc-200">{c.name}</span>
-                          <Plus className="w-3 h-3 text-app-muted/70 ml-auto" />
+                  <AnimatePresence>
+                    {searchResults.length > 0 && (
+                      <motion.div 
+                        initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.95 }}
+                        transition={{ duration: 0.2, ease: "easeOut" }}
+                        className="absolute mt-2 left-0 right-0 bg-zinc-900/95 backdrop-blur-2xl border border-white/10 rounded-xl overflow-hidden z-30 shadow-[0_20px_50px_rgba(0,0,0,0.6)] max-h-48 overflow-y-auto p-1 custom-scrollbar"
+                      >
+                        {searchResults.map(c => (
+                          <button key={c.id} onClick={() => addParticipant(c)}
+                            className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-[var(--color-app-accent)] hover:text-black transition-all text-left text-xs rounded-lg group">
+                            {c.flag && <span className="text-base group-hover:scale-110 transition-transform">{c.flag}</span>}
+                            <span className="text-zinc-200 group-hover:text-black font-medium">{c.name}</span>
+                            <Plus className="w-3 h-3 text-app-muted/70 ml-auto group-hover:text-black transition-colors" />
+                          </button>
+                        ))}
+                      </motion.div>
+                    )}
+                    {session.type === 'Nacional' && searchQuery.length > 1 && searchResults.length === 0 && cities.length > 0 && !loadingCities && (
+                      <motion.div 
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="absolute mt-2 left-0 right-0 bg-zinc-900/95 backdrop-blur-xl border border-white/10 rounded-xl p-4 z-30 shadow-2xl text-center"
+                      >
+                        <button onClick={() => addParticipant({ name: searchQuery.trim(), id: searchQuery.replace(/\s+/g, '').toUpperCase(), flag: selectedParentCountry.flag })}
+                          className="text-[10px] bg-white text-black px-4 py-2 rounded-lg font-bold hover:bg-zinc-200 transition-all uppercase tracking-widest">
+                          {t.board.addManualEntry(searchQuery)}
                         </button>
-                      ))}
-                    </div>
-                  )}
-                  {session.type === 'Nacional' && searchQuery.length > 1 && searchResults.length === 0 && cities.length > 0 && !loadingCities && (
-                    <div className="absolute mt-1 left-0 right-0 bg-app-border border border-app-border/70 rounded-lg p-2 z-30 shadow-2xl text-center">
-                      <button onClick={() => addParticipant({ name: searchQuery.trim(), id: searchQuery.replace(/\s+/g, '').toUpperCase(), flag: selectedParentCountry.flag })}
-                        className="text-[10px] bg-white text-black px-3 py-1 rounded font-medium hover:bg-zinc-200 transition-colors">
-                        {t.board.addManualEntry(searchQuery)}
-                      </button>
-                    </div>
-                  )}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
               )}
             </div>

@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { db } from '../../../core/firebase.js';
 import { doc, updateDoc } from 'firebase/firestore';
 import { Search, Plus, X, Globe, MapPin, Loader2 } from 'lucide-react';
@@ -148,17 +149,26 @@ export default function ParticipantSetup({ session }) {
                 />
                 <Search className="w-5 h-5 text-app-muted/70 absolute left-4 top-3.5" />
               </div>
-              {countryResults.length > 0 && (
-                <div className="absolute top-14 left-0 right-0 bg-app-border border border-app-border/70 rounded-xl overflow-hidden z-30 shadow-2xl max-h-60 overflow-y-auto">
-                  {countryResults.map(item => (
-                    <button key={item.id} onClick={() => handleAddGlobal(item)} className="w-full flex items-center gap-3 p-3 hover:bg-zinc-700 transition-colors text-left border-b border-app-border/70/50 last:border-0">
-                      {item.flag && <span className="text-lg">{item.flag}</span>}
-                      <span className="text-zinc-200 text-sm">{item.name}</span>
-                      <Plus className="w-4 h-4 text-app-accent ml-auto shrink-0" />
-                    </button>
-                  ))}
-                </div>
-              )}
+              <AnimatePresence>
+                {countryResults.length > 0 && (
+                  <motion.div 
+                    initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    transition={{ duration: 0.2, ease: "easeOut" }}
+                    className="absolute top-14 left-0 right-0 bg-zinc-900/95 backdrop-blur-2xl border border-white/10 rounded-xl overflow-hidden z-30 shadow-[0_20px_50px_rgba(0,0,0,0.6)] max-h-60 overflow-y-auto p-1 custom-scrollbar"
+                  >
+                    {countryResults.map(item => (
+                      <button key={item.id} onClick={() => handleAddGlobal(item)} 
+                        className="w-full flex items-center gap-3 p-3 hover:bg-[var(--color-app-accent)] hover:text-black transition-all text-left rounded-lg group">
+                        {item.flag && <span className="text-xl group-hover:scale-110 transition-transform">{item.flag}</span>}
+                        <span className="text-zinc-200 group-hover:text-black font-medium text-sm">{item.name}</span>
+                        <Plus className="w-4 h-4 text-app-accent group-hover:text-black ml-auto shrink-0 transition-colors" />
+                      </button>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           )}
 
@@ -175,16 +185,25 @@ export default function ParticipantSetup({ session }) {
                     />
                     <Search className="w-5 h-5 text-app-muted/70 absolute left-4 top-3.5" />
                   </div>
-                  {countryResults.length > 0 && (
-                    <div className="absolute top-[72px] left-0 right-0 bg-app-border border border-app-border/70 rounded-xl overflow-hidden z-30 shadow-2xl max-h-60 overflow-y-auto">
-                      {countryResults.map(c => (
-                        <button key={c.id} onClick={() => { setSelectedParentCountry(c); setQueryCountry(''); setCountryResults([]); }} className="w-full flex items-center gap-3 p-3 hover:bg-zinc-700 transition-colors text-left border-b border-app-border/70/50 last:border-0">
-                          <span className="text-lg">{c.flag}</span>
-                          <span className="text-zinc-200 text-sm">{c.name}</span>
-                        </button>
-                      ))}
-                    </div>
-                  )}
+                  <AnimatePresence>
+                    {countryResults.length > 0 && (
+                      <motion.div 
+                        initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.95 }}
+                        transition={{ duration: 0.2, ease: "easeOut" }}
+                        className="absolute top-[75px] left-0 right-0 bg-zinc-900/95 backdrop-blur-2xl border border-white/10 rounded-xl overflow-hidden z-30 shadow-[0_20px_50px_rgba(0,0,0,0.6)] max-h-60 overflow-y-auto p-1 custom-scrollbar"
+                      >
+                        {countryResults.map(c => (
+                          <button key={c.id} onClick={() => { setSelectedParentCountry(c); setQueryCountry(''); setCountryResults([]); }} 
+                            className="w-full flex items-center gap-3 p-3 hover:bg-[var(--color-app-accent)] hover:text-black transition-all text-left rounded-lg group">
+                            <span className="text-xl group-hover:scale-110 transition-transform">{c.flag}</span>
+                            <span className="text-zinc-200 group-hover:text-black font-medium text-sm">{c.name}</span>
+                          </button>
+                        ))}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
               ) : (
                 <div className="space-y-6">
@@ -211,24 +230,38 @@ export default function ParticipantSetup({ session }) {
                       <Search className="w-5 h-5 text-app-muted/70 absolute left-4 top-3.5" />
                     </div>
                     
-                    {cityResults.length > 0 && (
-                      <div className="absolute mt-2 left-0 right-0 bg-app-border border border-app-border/70 rounded-xl overflow-hidden z-30 shadow-2xl max-h-60 overflow-y-auto">
-                        {cityResults.map(c => (
-                          <button key={c.id} onClick={() => handleAddNational(c)} className="w-full flex items-center gap-3 p-3 hover:bg-zinc-700 transition-colors text-left border-b border-app-border/70/50 last:border-0">
-                            <span className="text-zinc-200 text-sm">{c.name}</span>
-                            <Plus className="w-4 h-4 text-app-accent ml-auto shrink-0" />
+                    <AnimatePresence>
+                      {cityResults.length > 0 && (
+                        <motion.div 
+                          initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                          animate={{ opacity: 1, y: 0, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.95 }}
+                          transition={{ duration: 0.2, ease: "easeOut" }}
+                          className="absolute mt-2 left-0 right-0 bg-zinc-900/95 backdrop-blur-2xl border border-white/10 rounded-xl overflow-hidden z-30 shadow-[0_20px_50px_rgba(0,0,0,0.6)] max-h-60 overflow-y-auto p-1 custom-scrollbar"
+                        >
+                          {cityResults.map(c => (
+                            <button key={c.id} onClick={() => handleAddNational(c)} 
+                              className="w-full flex items-center gap-3 p-3 hover:bg-[var(--color-app-accent)] hover:text-black transition-all text-left rounded-lg group">
+                              <span className="text-zinc-200 group-hover:text-black font-medium text-sm">{c.name}</span>
+                              <Plus className="w-4 h-4 text-app-accent group-hover:text-black ml-auto shrink-0 transition-colors" />
+                            </button>
+                          ))}
+                        </motion.div>
+                      )}
+                      {queryCity.length > 1 && cityResults.length === 0 && cities.length > 0 && !loadingCities && (
+                        <motion.div 
+                          initial={{ opacity: 0, y: -10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="absolute mt-2 left-0 right-0 bg-zinc-900/95 backdrop-blur-xl border border-white/10 rounded-xl p-6 z-30 shadow-2xl text-center"
+                        >
+                          <p className="text-sm text-app-muted mb-4 opacity-70">No se encontró en la base de datos.</p>
+                          <button onClick={() => handleAddNational({name: queryCity.trim(), id: queryCity.replace(/\s+/g,'').toUpperCase(), flag: selectedParentCountry.flag})} 
+                            className="text-xs bg-white text-black px-5 py-2.5 rounded-xl font-bold hover:bg-zinc-200 transition-all uppercase tracking-widest shadow-lg">
+                            Añadir "{queryCity}" Manualmente
                           </button>
-                        ))}
-                      </div>
-                    )}
-                    {queryCity.length > 1 && cityResults.length === 0 && cities.length > 0 && !loadingCities && (
-                      <div className="absolute mt-2 left-0 right-0 bg-app-border border border-app-border/70 rounded-xl p-4 z-30 shadow-2xl text-center">
-                        <p className="text-sm text-app-muted mb-3">No se encontró en la base de datos.</p>
-                        <button onClick={() => handleAddNational({name: queryCity.trim(), id: queryCity.replace(/\s+/g,'').toUpperCase(), flag: selectedParentCountry.flag})} className="text-xs bg-white text-black px-4 py-2 rounded-lg font-medium hover:bg-zinc-200 transition-colors">
-                          Añadir "{queryCity}" Manualmente
-                        </button>
-                      </div>
-                    )}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </div>
                 </div>
               )}
