@@ -415,6 +415,7 @@ export default function SessionBoard() {
 
   // Get participants for a given phase index
   const getPhaseParticipants = (phaseIdx) => {
+    if (phaseIdx < 0) return [];
     if (phaseIdx === 0) return allParticipants;
     const phase = phases[phaseIdx];
     if (phase?.participantIds?.length) {

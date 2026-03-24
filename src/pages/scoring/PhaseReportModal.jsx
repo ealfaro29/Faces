@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, Fragment } from 'react';
 import { X, Download, ImageIcon, Crown } from 'lucide-react';
 import { toPng } from 'html-to-image';
 import { scoringCopy } from './scoringI18n';
@@ -27,11 +27,15 @@ export default function PhaseReportModal({
   if (!isOpen) return null;
 
   const judges = session?.judges || [];
-  const selectedPhase = phases[selectedPhaseIdx];
-  const participants = getPhaseParticipants(selectedPhaseIdx);
+  const selectedPhase = selectedPhaseIdx >= 0 ? phases[selectedPhaseIdx] : null;
+  const participants = selectedPhaseIdx >= 0 ? getPhaseParticipants(selectedPhaseIdx) : [];
   const phaseKey = `phase_${selectedPhaseIdx}`;
   const phaseScores = scores[phaseKey] || {};
   const rankedParticipants = rankParticipantsByPhaseScores(participants, phaseScores);
+  
+  // Calculate elimination line for the table
+  const cutoffLimit = selectedPhase?.cutoff || rankedParticipants.length;
+  const qualifiedIds = new Set(rankedParticipants.slice(0, cutoffLimit).map(p => p.id));
 
   const exportReport = async () => {
     if (!reportRef.current) return;
@@ -174,35 +178,46 @@ export default function PhaseReportModal({
                       const vals = judges.map(j => pScores[j]).filter(v => v !== null && v !== undefined);
                       const total = vals.reduce((sum, v) => sum + v, 0);
                       const avg = vals.length > 0 ? total / vals.length : 0;
+                      const isQualified = qualifiedIds.has(p.id);
+                      const showElimLine = selectedPhase?.cutoff && idx === selectedPhase.cutoff;
 
                       return (
-                        <tr key={p.id} className="bg-app-card hover:bg-app-border/30/50 transition-colors">
-                          <td className="px-4 py-4 text-center text-sm font-medium text-app-muted/70">
-                            {idx + 1}
-                          </td>
-                          <td className="px-4 py-4">
-                            <div className="flex items-center gap-3">
-                              <span className="text-xl">{p.flag}</span>
-                              <span className="text-sm font-semibold text-zinc-200">
-                                {p.name}
-                              </span>
-                            </div>
-                          </td>
-                          {judges.map(judge => {
-                            const val = pScores[judge];
-                            return (
-                              <td key={judge} className="px-4 py-4 text-center text-sm font-mono text-app-muted">
-                                {val !== undefined && val !== null ? val.toFixed(1) : '-'}
+                        <Fragment key={p.id}>
+                          {showElimLine && (
+                            <tr className="bg-red-500/10 border-y border-red-500/30">
+                              <td colSpan={judges.length + 4} className="py-2 px-4 text-[9px] font-bold text-red-100 uppercase tracking-[0.2em] text-center">
+                                LÍNEA DE ELIMINACIÓN / {t.board.cutoffLine || 'CUTOFF LINE'}
                               </td>
-                            );
-                          })}
-                          <td className="px-4 py-4 text-center text-sm font-mono font-semibold text-app-text bg-app-border/10">
-                            {total.toFixed(2)}
-                          </td>
-                          <td className="px-4 py-4 text-center text-sm font-mono font-bold text-white bg-app-border/30">
-                            {avg.toFixed(2)}
-                          </td>
-                        </tr>
+                            </tr>
+                          )}
+                          <tr className={`transition-colors ${isQualified ? 'bg-app-card hover:bg-app-border/30/50' : 'bg-red-950/5 opacity-40 grayscale-[50%]'}`}>
+                            <td className="px-4 py-4 text-center text-sm font-medium text-app-muted/70">
+                              {idx + 1}
+                            </td>
+                            <td className="px-4 py-4">
+                              <div className="flex items-center gap-3">
+                                <span className="text-xl">{p.flag}</span>
+                                <span className={`text-sm font-semibold ${isQualified ? 'text-zinc-200' : 'text-zinc-500'}`}>
+                                  {p.name}
+                                </span>
+                              </div>
+                            </td>
+                            {judges.map(judge => {
+                              const val = pScores[judge];
+                              return (
+                                <td key={judge} className="px-4 py-4 text-center text-sm font-mono text-app-muted">
+                                  {val !== undefined && val !== null ? val.toFixed(1) : '-'}
+                                </td>
+                              );
+                            })}
+                            <td className="px-4 py-4 text-center text-sm font-mono font-semibold text-app-text bg-app-border/10">
+                              {total.toFixed(2)}
+                            </td>
+                            <td className={`px-4 py-4 text-center text-sm font-mono font-bold bg-app-border/30 ${isQualified ? 'text-white' : 'text-zinc-500'}`}>
+                              {avg.toFixed(2)}
+                            </td>
+                          </tr>
+                        </Fragment>
                       );
                     })}
                     {rankedParticipants.length === 0 && (
