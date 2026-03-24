@@ -82,12 +82,12 @@ function rankParticipantsByPhaseScores(participants, phaseScores) {
 }
 
 export default function SessionBoard() {
-  // Reset body styles
   useEffect(() => {
     const html = document.documentElement;
     const body = document.body;
     const prev = { htmlP: html.style.padding, bodyP: body.style.padding, bodyO: body.style.overflow, bodyBg: body.style.background };
     html.style.padding = '0'; body.style.padding = '0'; body.style.overflow = 'hidden'; body.style.background = '#0a0a0a';
+    document.title = `Faces v${__APP_VERSION__}`;
     return () => { html.style.padding = prev.htmlP; body.style.padding = prev.bodyP; body.style.overflow = prev.bodyO; body.style.background = prev.bodyBg; };
   }, []);
 
@@ -501,6 +501,7 @@ export default function SessionBoard() {
           <h1 className="text-sm font-bold text-white tracking-tight truncate">{session.name}</h1>
           <span className="text-[10px] text-zinc-600 bg-zinc-900 px-2 py-0.5 rounded border border-zinc-800 shrink-0">{getSessionTypeLabel(session.type, currentLanguage)}</span>
           <span className="text-[10px] text-zinc-600 shrink-0">{judges.length} {judges.length === 1 ? t.board.judgeSingular : t.board.judgePlural}</span>
+          <span className="text-[9px] text-zinc-500 font-mono bg-zinc-900 px-1.5 py-0.5 rounded border border-zinc-800 shrink-0" title="Versión de despliegue">v{__APP_VERSION__}</span>
         </div>
         <div className="flex items-center gap-3 shrink-0">
           {isHost && (
