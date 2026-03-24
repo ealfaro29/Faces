@@ -104,12 +104,76 @@ export default function PhaseReportModal({
         : isOverallView
           ? t.board.overallResultsTitle
           : (selectedPhase?.name || t.board.phaseResults('', selectedPhaseIdx));
-      const backgroundColor = window.getComputedStyle(reportRef.current).backgroundColor || '#0a0a0a';
+      const exportNode = reportRef.current;
+      const backgroundColor = window.getComputedStyle(exportNode).backgroundColor || '#0a0a0a';
+      const expandableContainers = Array.from(exportNode.querySelectorAll('[data-export-scroll]'));
+      const originalRootStyle = {
+        width: exportNode.style.width,
+        maxWidth: exportNode.style.maxWidth,
+        overflow: exportNode.style.overflow
+      };
+      const originalContainerStyles = expandableContainers.map(container => ({
+        container,
+        overflowX: container.style.overflowX,
+        overflowY: container.style.overflowY,
+        width: container.style.width,
+        maxWidth: container.style.maxWidth
+      }));
+
+      if (document.fonts?.ready) {
+        await document.fonts.ready;
+      }
+
+      exportNode.style.maxWidth = 'none';
+      exportNode.style.overflow = 'visible';
+      expandableContainers.forEach(container => {
+        container.style.overflowX = 'visible';
+        container.style.overflowY = 'visible';
+        container.style.width = 'max-content';
+        container.style.maxWidth = 'none';
+      });
+
+      await new Promise(resolve => requestAnimationFrame(() => resolve()));
+      await new Promise(resolve => requestAnimationFrame(() => resolve()));
+
+      const exportWidth = Math.ceil(Math.max(
+        exportNode.scrollWidth,
+        exportNode.getBoundingClientRect().width,
+        ...expandableContainers.map(container => container.scrollWidth)
+      ));
+      exportNode.style.width = `${exportWidth}px`;
+
+      await new Promise(resolve => requestAnimationFrame(() => resolve()));
+
+      const exportHeight = Math.ceil(Math.max(
+        exportNode.scrollHeight,
+        exportNode.getBoundingClientRect().height
+      ));
       const dataUrl = await toPng(reportRef.current, {
         cacheBust: true,
         backgroundColor,
-        style: { transform: 'scale(1)', margin: '0' }
+        pixelRatio: 2,
+        width: exportWidth,
+        height: exportHeight,
+        style: {
+          transform: 'scale(1)',
+          margin: '0',
+          width: `${exportWidth}px`,
+          maxWidth: 'none',
+          overflow: 'visible'
+        }
       });
+
+      exportNode.style.width = originalRootStyle.width;
+      exportNode.style.maxWidth = originalRootStyle.maxWidth;
+      exportNode.style.overflow = originalRootStyle.overflow;
+      originalContainerStyles.forEach(({ container, overflowX, overflowY, width, maxWidth }) => {
+        container.style.overflowX = overflowX;
+        container.style.overflowY = overflowY;
+        container.style.width = width;
+        container.style.maxWidth = maxWidth;
+      });
+
       const link = document.createElement('a');
       const filename = `${session.name.replace(/\s+/g, '_')}_${phaseLabel.replace(/\s+/g, '_')}.png`;
       link.download = filename;
@@ -118,6 +182,17 @@ export default function PhaseReportModal({
     } catch (err) {
       console.error('Failed to export image', err);
     } finally {
+      if (reportRef.current) {
+        reportRef.current.style.width = '';
+        reportRef.current.style.maxWidth = '';
+        reportRef.current.style.overflow = '';
+        Array.from(reportRef.current.querySelectorAll('[data-export-scroll]')).forEach(container => {
+          container.style.overflowX = '';
+          container.style.overflowY = '';
+          container.style.width = '';
+          container.style.maxWidth = '';
+        });
+      }
       setIsExporting(false);
     }
   };
@@ -242,7 +317,7 @@ export default function PhaseReportModal({
                 </div>
               </div>
             ) : isOverallView ? (
-              <div className="overflow-x-auto rounded-lg border border-app-border/80">
+              <div data-export-scroll className="overflow-x-auto rounded-lg border border-app-border/80">
                 <table className="w-full text-left border-collapse">
                   <thead>
                     <tr className="bg-app-border/30 border-b border-app-border text-xs uppercase tracking-widest text-app-muted/70">
@@ -307,7 +382,7 @@ export default function PhaseReportModal({
                 </table>
               </div>
             ) : (
-              <div className="overflow-x-auto rounded-lg border border-app-border/80">
+              <div data-export-scroll className="overflow-x-auto rounded-lg border border-app-border/80">
                 <table className="w-full text-left border-collapse">
                   <thead>
                     <tr className="bg-app-border/30 border-b border-app-border text-xs uppercase tracking-widest text-app-muted/70">
