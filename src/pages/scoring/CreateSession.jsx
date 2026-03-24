@@ -7,6 +7,7 @@ import ScoringLanguageToggle from './ScoringLanguageToggle';
 import { getDefaultPhaseName, getStoredScoringLanguage, persistScoringLanguage, scoringCopy } from './scoringI18n';
 
 export default function CreateSession() {
+  const [theme] = useState(localStorage.getItem('faces-scoring-theme') || 'dark');
   const navigate = useNavigate();
   const [judgeName, setJudgeName] = useState('');
   const [sessionName, setSessionName] = useState('');
@@ -55,42 +56,42 @@ export default function CreateSession() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-zinc-300 font-sans flex justify-center p-4 md:p-10">
+    <div className={`theme-scoring-${theme} min-h-screen bg-app-bg text-app-text font-sans flex justify-center p-4 md:p-10`}>
       <div className="w-full max-w-md h-fit">
-        <Link to="/session" className="inline-flex items-center gap-2 text-xs text-zinc-500 hover:text-white transition-colors mb-6 no-underline uppercase tracking-widest">
+        <Link to="/session" className="inline-flex items-center gap-2 text-xs text-app-muted/70 hover:text-white transition-colors mb-6 no-underline uppercase tracking-widest">
           <ArrowLeft className="w-4 h-4" /> {t.backToStart}
         </Link>
 
-        <div className="bg-zinc-900 border border-zinc-800/80 rounded-2xl p-6 md:p-8 shadow-2xl">
+        <div className="bg-app-border/30 border border-app-border/80 rounded-2xl p-6 md:p-8 shadow-2xl">
           <div className="mb-6 flex justify-end">
             <ScoringLanguageToggle language={language} label={t.languageLabel} onChange={setLanguage} />
           </div>
           <h1 className="text-2xl font-bold text-white mb-2 tracking-tight">{t.create.title}</h1>
-          <p className="text-zinc-500 text-sm mb-8">{t.create.subtitle}</p>
+          <p className="text-app-muted/70 text-sm mb-8">{t.create.subtitle}</p>
           
           <form onSubmit={handleCreate} className="space-y-5">
             <div>
-              <label className="block text-xs font-bold tracking-widest text-zinc-500 uppercase mb-2">{t.create.hostLabel}</label>
+              <label className="block text-xs font-bold tracking-widest text-app-muted/70 uppercase mb-2">{t.create.hostLabel}</label>
               <input 
                 required type="text" value={judgeName} onChange={e => { setJudgeName(e.target.value); setError(''); }}
-                className="w-full bg-zinc-950 border border-zinc-800 rounded-lg h-12 px-4 text-sm text-white focus:outline-none focus:border-zinc-500 transition-colors" 
+                className="w-full bg-app-card border border-app-border rounded-lg h-12 px-4 text-sm text-white focus:outline-none focus:border-zinc-500 transition-colors" 
                 placeholder={t.create.hostPlaceholder}
               />
             </div>
             <div>
-              <label className="block text-xs font-bold tracking-widest text-zinc-500 uppercase mb-2">{t.create.sessionNameLabel}</label>
+              <label className="block text-xs font-bold tracking-widest text-app-muted/70 uppercase mb-2">{t.create.sessionNameLabel}</label>
               <input 
                 required type="text" value={sessionName} onChange={e => { setSessionName(e.target.value); setError(''); }}
-                className="w-full bg-zinc-950 border border-zinc-800 rounded-lg h-12 px-4 text-sm text-white focus:outline-none focus:border-zinc-500 transition-colors"
+                className="w-full bg-app-card border border-app-border rounded-lg h-12 px-4 text-sm text-white focus:outline-none focus:border-zinc-500 transition-colors"
                 placeholder={t.create.sessionNamePlaceholder}
               />
             </div>
             
             <div>
-              <label className="block text-xs font-bold tracking-widest text-zinc-500 uppercase mb-2">{t.create.typeLabel}</label>
+              <label className="block text-xs font-bold tracking-widest text-app-muted/70 uppercase mb-2">{t.create.typeLabel}</label>
               <select 
                 value={type} onChange={e => setType(e.target.value)} 
-                className="w-full bg-zinc-950 border border-zinc-800 rounded-lg h-12 px-4 text-sm text-white focus:outline-none focus:border-zinc-500 transition-colors appearance-none cursor-pointer"
+                className="w-full bg-app-card border border-app-border rounded-lg h-12 px-4 text-sm text-white focus:outline-none focus:border-zinc-500 transition-colors appearance-none cursor-pointer"
               >
                 <option value="Global">{t.create.globalOption}</option>
                 <option value="Nacional">{t.create.nationalOption}</option>

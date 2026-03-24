@@ -7,6 +7,7 @@ import ScoringLanguageToggle from './ScoringLanguageToggle';
 import { getStoredScoringLanguage, normalizeScoringLanguage, persistScoringLanguage, scoringCopy } from './scoringI18n';
 
 export default function JoinSession() {
+  const [theme] = useState(localStorage.getItem('faces-scoring-theme') || 'dark');
   const navigate = useNavigate();
   const [judgeName, setJudgeName] = useState('');
   const [sessionCode, setSessionCode] = useState('');
@@ -48,40 +49,40 @@ export default function JoinSession() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-zinc-300 font-sans flex items-center justify-center p-4">
+    <div className={`theme-scoring-${theme} min-h-screen bg-app-bg text-app-text font-sans flex items-center justify-center p-4`}>
       <div className="w-full max-w-sm">
-        <Link to="/session" className="inline-flex items-center gap-2 text-xs text-zinc-500 hover:text-white transition-colors mb-6 no-underline uppercase tracking-widest">
+        <Link to="/session" className="inline-flex items-center gap-2 text-xs text-app-muted/70 hover:text-white transition-colors mb-6 no-underline uppercase tracking-widest">
           <ArrowLeft className="w-4 h-4" /> {t.backToStart}
         </Link>
 
-        <div className="bg-zinc-900/50 backdrop-blur-xl border border-zinc-800 rounded-2xl p-8 shadow-2xl">
+        <div className="bg-app-border/30/50 backdrop-blur-xl border border-app-border rounded-2xl p-8 shadow-2xl">
           <div className="mb-6 flex justify-end">
             <ScoringLanguageToggle language={language} label={t.languageLabel} onChange={setLanguage} />
           </div>
           <h1 className="text-2xl font-bold text-white mb-2 text-center tracking-tight">{t.join.title}</h1>
-          <p className="text-sm text-zinc-500 mb-8 text-center">{t.join.subtitle}</p>
+          <p className="text-sm text-app-muted/70 mb-8 text-center">{t.join.subtitle}</p>
           
           <form onSubmit={handleJoin} className="space-y-5">
             <div>
-              <label className="block text-xs font-bold tracking-widest text-zinc-500 uppercase mb-2">{t.join.judgeNameLabel}</label>
+              <label className="block text-xs font-bold tracking-widest text-app-muted/70 uppercase mb-2">{t.join.judgeNameLabel}</label>
               <input 
                 type="text" 
                 required
                 value={judgeName}
                 onChange={e => { setJudgeName(e.target.value); setError(''); }}
-                className="w-full bg-zinc-950 border border-zinc-800 rounded-lg h-12 px-4 text-sm text-white focus:outline-none focus:border-zinc-500 transition-colors"
+                className="w-full bg-app-card border border-app-border rounded-lg h-12 px-4 text-sm text-white focus:outline-none focus:border-zinc-500 transition-colors"
                 placeholder={t.join.judgeNamePlaceholder}
               />
             </div>
             
             <div>
-              <label className="block text-xs font-bold tracking-widest text-zinc-500 uppercase mb-2">{t.join.sessionCodeLabel}</label>
+              <label className="block text-xs font-bold tracking-widest text-app-muted/70 uppercase mb-2">{t.join.sessionCodeLabel}</label>
               <input 
                 type="text" 
                 required
                 value={sessionCode}
                 onChange={e => { setSessionCode(e.target.value); setError(''); }}
-                className="w-full bg-zinc-950 border border-zinc-800 rounded-lg h-12 px-4 text-sm text-white focus:outline-none focus:border-zinc-500 transition-colors uppercase font-mono tracking-widest"
+                className="w-full bg-app-card border border-app-border rounded-lg h-12 px-4 text-sm text-white focus:outline-none focus:border-zinc-500 transition-colors uppercase font-mono tracking-widest"
                 placeholder={t.join.sessionCodePlaceholder}
               />
             </div>
