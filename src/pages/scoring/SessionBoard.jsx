@@ -847,6 +847,10 @@ export default function SessionBoard() {
         getPhaseParticipants={getPhaseParticipants}
         rankParticipantsByPhaseScores={rankParticipantsByPhaseScores}
         language={currentLanguage}
+        globalResults={globalResults}
+        winner={winner}
+        winnerResult={winnerResult}
+        winnerPhaseName={winnerPhaseName}
       />
     </div>
   );
