@@ -438,7 +438,7 @@ export default function SessionBoard() {
     const avg = vals.length > 0 ? vals.reduce((a, b) => a + b, 0) / vals.length : 0;
     const myScore = pScores[judgeName];
     return { ...p, avg, voteCount: vals.length, myScore };
-  }).sort((a, b) => b.avg - a.avg || a.name.localeCompare(b.name));
+  });
 
   // Calculate who is actually making the cut based on scores, not alphabetical order
   const rankedForCutoff = rankParticipantsByPhaseScores(currentParticipants, phaseScores);
@@ -697,92 +697,80 @@ export default function SessionBoard() {
                     <tbody className="divide-y divide-zinc-800/30">
                       {scoredParticipants.map((p, idx) => {
                         const hasScore = p.myScore !== undefined && p.myScore !== null;
-                        const isCutoff = currentPhase.cutoff && !qualifiedIds.has(p.id);
-                        
-                        // Show "Cutoff Line" BEFORE the first item that is NOT qualified
-                        const showLine = currentPhase.cutoff && idx === currentPhase.cutoff;
-
+                        const isQualified = qualifiedIds.has(p.id);
                         const sliderValue = scoreDrafts[p.id] ?? (hasScore ? String(p.myScore) : '0');
                         const displayScore = Number.parseFloat(sliderValue);
                         const showScoreValue = Number.isFinite(displayScore);
+
                         return (
-                          <Fragment key={p.id}>
-                            {showLine && (
-                              <tr className="bg-red-500/10 border-y border-red-500/30">
-                                <td colSpan="5" className="py-1 px-4 text-[9px] font-bold text-red-100 uppercase tracking-[0.2em] text-center">
-                                  {t.board.cutoffLine || 'LÍNEA DE CORTE / CUTOFF LINE'}
-                                </td>
-                              </tr>
+                          <tr key={p.id} className={`transition-all duration-300 ${!isQualified ? 'opacity-40 bg-red-950/5 grayscale-[50%]' : 'hover:bg-app-border/30/40'}`}>
+                            <td className="py-4 pl-4 pr-2 text-center">
+                              <span className={`text-[10px] font-mono font-bold ${idx === 0 ? 'text-app-accent' : isQualified ? 'text-white' : 'text-app-muted/50'}`}>{idx + 1}</span>
+                            </td>
+                            <td className="py-3 px-2">
+                              <div className="flex items-center gap-2">
+                                <span className="text-base">{p.flag}</span>
+                                <span className={`text-xs font-medium truncate ${isQualified ? 'text-white' : 'text-app-muted/70'}`}>{p.name}</span>
+                              </div>
+                            </td>
+                            <td className="py-3 px-2 text-center">
+                              <span className={`text-xs font-mono font-bold ${isQualified ? 'text-app-accent' : 'text-app-muted/30'}`}>{p.avg.toFixed(2)}</span>
+                              <span className="text-[8px] text-app-muted/50 ml-0.5">{p.voteCount > 0 && `(${p.voteCount})`}</span>
+                            </td>
+                            <td className="py-3 px-3 bg-app-border/30/10 border-x border-app-border/20 text-center">
+                              <div className="flex items-center gap-2">
+                                <input
+                                  type="range"
+                                  min="0"
+                                  max="10"
+                                  step="0.1"
+                                  value={sliderValue}
+                                  onChange={e => queueScoreSave(p.id, e.target.value)}
+                                  onMouseUp={e => flushScoreSave(p.id, e.currentTarget.value)}
+                                  onTouchEnd={e => flushScoreSave(p.id, e.currentTarget.value)}
+                                  onBlur={e => flushScoreSave(p.id, e.target.value)}
+                                  className="h-2 flex-1 cursor-pointer appearance-none rounded-full bg-app-border accent-app-accent"
+                                  aria-label={`${t.board.yourScoreHeader}: ${p.name}`}
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    if (scoreSaveTimersRef.current[p.id]) {
+                                      clearTimeout(scoreSaveTimersRef.current[p.id]);
+                                      delete scoreSaveTimersRef.current[p.id];
+                                    }
+                                    setScoreDrafts(prev => {
+                                      const next = { ...prev };
+                                      delete next[p.id];
+                                      return next;
+                                    });
+                                    deleteScore(p.id).catch(() => {});
+                                  }}
+                                  className="w-6 h-6 rounded border border-app-border text-[10px] text-app-muted/70 hover:border-zinc-600 hover:text-white transition-colors"
+                                  title={t.board.removeVote}
+                                  aria-label={`${t.board.removeVote}: ${p.name}`}
+                                >
+                                  ×
+                                </button>
+                              </div>
+                              <div className="mt-1 flex items-center justify-between text-[10px] font-mono">
+                                <span className="text-app-muted/50">0.0</span>
+                                <span className={hasScore ? 'text-app-accent' : 'text-app-muted'}>
+                                  {hasScore || scoreDrafts[p.id] !== undefined
+                                    ? (showScoreValue ? displayScore.toFixed(1) : '0.0')
+                                    : t.board.notVoted}
+                                </span>
+                                <span className="text-app-muted/50">10.0</span>
+                              </div>
+                            </td>
+                            {isHost && currentPhaseIndex === 0 && (
+                              <td className="py-3 pr-3 text-center">
+                                <button onClick={() => removeParticipant(p.id)} className="text-app-muted/30 hover:text-red-400 transition-colors p-0.5">
+                                  <X className="w-3 h-3" />
+                                </button>
+                              </td>
                             )}
-                            <tr className={`transition-all duration-300 ${isCutoff ? 'opacity-40 bg-red-950/5 grayscale-[50%]' : 'hover:bg-app-border/30/40'}`}>
-                              <td className="py-4 pl-4 pr-2 text-center">
-                                <span className={`text-[10px] font-mono font-bold ${idx === 0 ? 'text-app-accent' : idx < (currentPhase.cutoff || 999) ? 'text-white' : 'text-app-muted/50'}`}>{idx + 1}</span>
-                              </td>
-                              <td className="py-3 px-2">
-                                <div className="flex items-center gap-2">
-                                  <span className="text-base">{p.flag}</span>
-                                  <span className={`text-xs font-medium truncate ${idx < (currentPhase.cutoff || 999) ? 'text-white' : 'text-app-muted/70'}`}>{p.name}</span>
-                                </div>
-                              </td>
-                              <td className="py-3 px-2 text-center">
-                                <span className={`text-xs font-mono font-bold ${idx < (currentPhase.cutoff || 999) ? 'text-app-accent' : 'text-app-muted/30'}`}>{p.avg.toFixed(2)}</span>
-                                <span className="text-[8px] text-app-muted/50 ml-0.5">{p.voteCount > 0 && `(${p.voteCount})`}</span>
-                              </td>
-                              <td className="py-3 px-3 bg-app-border/30/10 border-x border-app-border/20 text-center">
-                                <div className="flex items-center gap-2">
-                                  <input
-                                    type="range"
-                                    min="0"
-                                    max="10"
-                                    step="0.1"
-                                    value={sliderValue}
-                                    onChange={e => queueScoreSave(p.id, e.target.value)}
-                                    onMouseUp={e => flushScoreSave(p.id, e.currentTarget.value)}
-                                    onTouchEnd={e => flushScoreSave(p.id, e.currentTarget.value)}
-                                    onBlur={e => flushScoreSave(p.id, e.target.value)}
-                                    className="h-2 flex-1 cursor-pointer appearance-none rounded-full bg-app-border accent-app-accent"
-                                    aria-label={`${t.board.yourScoreHeader}: ${p.name}`}
-                                  />
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      if (scoreSaveTimersRef.current[p.id]) {
-                                        clearTimeout(scoreSaveTimersRef.current[p.id]);
-                                        delete scoreSaveTimersRef.current[p.id];
-                                      }
-                                      setScoreDrafts(prev => {
-                                        const next = { ...prev };
-                                        delete next[p.id];
-                                        return next;
-                                      });
-                                      deleteScore(p.id).catch(() => {});
-                                    }}
-                                    className="w-6 h-6 rounded border border-app-border text-[10px] text-app-muted/70 hover:border-zinc-600 hover:text-white transition-colors"
-                                    title={t.board.removeVote}
-                                    aria-label={`${t.board.removeVote}: ${p.name}`}
-                                  >
-                                    ×
-                                  </button>
-                                </div>
-                                <div className="mt-1 flex items-center justify-between text-[10px] font-mono">
-                                  <span className="text-app-muted/50">0.0</span>
-                                  <span className={hasScore ? 'text-app-accent' : 'text-app-muted'}>
-                                    {hasScore || scoreDrafts[p.id] !== undefined
-                                      ? (showScoreValue ? displayScore.toFixed(1) : '0.0')
-                                      : t.board.notVoted}
-                                  </span>
-                                  <span className="text-app-muted/50">10.0</span>
-                                </div>
-                              </td>
-                              {isHost && currentPhaseIndex === 0 && (
-                                <td className="py-3 pr-3 text-center">
-                                  <button onClick={() => removeParticipant(p.id)} className="text-app-muted/30 hover:text-red-400 transition-colors p-0.5">
-                                    <X className="w-3 h-3" />
-                                  </button>
-                                </td>
-                              )}
-                            </tr>
-                          </Fragment>
+                          </tr>
                         );
                       })}
                     </tbody>
