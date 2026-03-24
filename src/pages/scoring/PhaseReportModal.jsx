@@ -68,7 +68,7 @@ export default function PhaseReportModal({
         <div className="flex items-center justify-between p-4 border-b border-app-border/80 bg-app-border/30/50">
           <h2 className="text-lg font-bold text-white flex items-center gap-2">
             <ImageIcon className="w-5 h-5 text-app-muted" />
-            Reportes por Fase
+            {t.board.reportsTitle}
           </h2>
           <div className="flex items-center gap-3">
             <button
@@ -77,7 +77,7 @@ export default function PhaseReportModal({
               className="flex items-center gap-2 px-5 py-4 bg-white text-black text-sm font-semibold rounded-lg hover:bg-zinc-200 transition-colors disabled:opacity-50"
             >
               <Download className="w-4 h-4" />
-              {isExporting ? 'Generando...' : 'Descargar Imagen'}
+              {isExporting ? t.board.generating : t.board.downloadImage}
             </button>
             <button
               onClick={onClose}
@@ -112,7 +112,7 @@ export default function PhaseReportModal({
                   : 'text-amber-500/60 hover:text-amber-400 hover:bg-amber-500/10'
               }`}
             >
-              <Crown className="w-4 h-4" /> Ganadora Oficial
+              <Crown className="w-4 h-4" /> {t.board.officialWinnerTab}
             </button>
           )}
         </div>
@@ -127,7 +127,10 @@ export default function PhaseReportModal({
                 {session.name}
               </h1>
               <h3 className="text-lg text-app-muted font-medium tracking-wide">
-                Resultados Oficiales — {selectedPhase?.name || `Fase ${selectedPhaseIdx + 1}`}
+                {selectedPhaseIdx === -1 
+                  ? t.board.winnerTitle 
+                  : `${t.board.officialResults} — ${t.board.phaseResults(selectedPhase?.name, selectedPhaseIdx)}`
+                }
               </h3>
             </div>
 
@@ -162,14 +165,14 @@ export default function PhaseReportModal({
                   <thead>
                     <tr className="bg-app-border/30 border-b border-app-border text-xs uppercase tracking-widest text-app-muted/70">
                       <th className="px-5 py-4 text-center w-12 font-semibold">#</th>
-                      <th className="px-5 py-4 font-semibold">Participante</th>
+                      <th className="px-5 py-4 font-semibold">{t.board.contestant}</th>
                       {judges.map(judge => (
                         <th key={judge} className="px-5 py-4 text-center font-semibold whitespace-nowrap">
                           {judge}
                         </th>
                       ))}
-                      <th className="px-5 py-4 text-center font-bold text-white bg-app-border/30">Total</th>
-                      <th className="px-5 py-4 text-center font-bold text-white bg-app-border/50">Prom.</th>
+                      <th className="px-5 py-4 text-center font-bold text-white bg-app-border/30">{t.board.total}</th>
+                      <th className="px-5 py-4 text-center font-bold text-white bg-app-border/50">{t.board.average}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-zinc-800/50">
@@ -223,7 +226,7 @@ export default function PhaseReportModal({
                     {rankedParticipants.length === 0 && (
                       <tr>
                         <td colSpan={judges.length + 4} className="px-4 py-12 text-center text-app-muted/70 text-sm">
-                          No hay participantes clasificados en esta fase.
+                          {t.board.noParticipantsInPhase}
                         </td>
                       </tr>
                     )}

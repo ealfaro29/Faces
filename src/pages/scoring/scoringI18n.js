@@ -110,7 +110,17 @@ export const scoringCopy = {
       winnerFromPhase: phaseName => `Coronada en ${phaseName}`,
       winnerPending: 'Esperando el cierre final...',
       copyCode: 'Copiar código',
-      cutoffLine: 'LÍNEA DE CORTE'
+      cutoffLine: 'LÍNEA DE CORTE',
+      reportsTitle: 'Reportes por Fase',
+      downloadImage: 'Descargar Imagen',
+      generating: 'Generando...',
+      officialResults: 'Resultados Oficiales',
+      phaseResults: (name, idx) => name || `Fase ${idx + 1}`,
+      contestant: 'Participante',
+      total: 'Total',
+      average: 'Prom.',
+      noParticipantsInPhase: 'No hay participantes clasificados en esta fase.',
+      officialWinnerTab: 'Ganadora Oficial'
     }
   },
   en: {
@@ -188,7 +198,17 @@ export const scoringCopy = {
       winnerFromPhase: phaseName => `Crowned in ${phaseName}`,
       winnerPending: 'Waiting for the final reveal...',
       copyCode: 'Copy code',
-      cutoffLine: 'CUTOFF LINE'
+      cutoffLine: 'CUTOFF LINE',
+      reportsTitle: 'Phase Reports',
+      downloadImage: 'Download Image',
+      generating: 'Generating...',
+      officialResults: 'Official Results',
+      phaseResults: (name, idx) => name || `Phase ${idx + 1}`,
+      contestant: 'Contestant',
+      total: 'Total',
+      average: 'Avg.',
+      noParticipantsInPhase: 'No qualified participants in this phase.',
+      officialWinnerTab: 'Official Winner'
     }
   }
 };
