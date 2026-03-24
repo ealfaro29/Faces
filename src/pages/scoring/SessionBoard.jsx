@@ -2,8 +2,8 @@ import { useState, useEffect, useRef, Fragment } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { db } from '../../../core/firebase.js';
-import { doc, onSnapshot, setDoc, updateDoc, arrayUnion } from 'firebase/firestore';
-import { Copy, Check, Search, Plus, X, ChevronRight, Globe, MapPin, AlertTriangle, Crown, BarChart3, Sun, Moon } from 'lucide-react';
+import { doc, onSnapshot, setDoc, updateDoc, arrayUnion, deleteField } from 'firebase/firestore';
+import { Copy, Check, Search, Plus, X, ChevronRight, Globe, MapPin, AlertTriangle, Crown, BarChart3, Sun, Moon, RotateCcw } from 'lucide-react';
 import {
   getCountryDisplayName,
   getDefaultPhaseName,
@@ -114,6 +114,7 @@ export default function SessionBoard() {
   const [scores, setScores] = useState({});
   const [codeCopied, setCodeCopied] = useState(false);
   const [forceAttempted, setForceAttempted] = useState(false);
+  const [undoAttempted, setUndoAttempted] = useState(false);
   const [scoreDrafts, setScoreDrafts] = useState({});
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [theme, setTheme] = useState(getStoredScoringTheme());
@@ -190,7 +191,9 @@ export default function SessionBoard() {
     Object.values(scoreSaveTimersRef.current).forEach(clearTimeout);
     scoreSaveTimersRef.current = {};
     setScoreDrafts({});
-  }, [sessionId, judgeName, session?.currentPhaseIndex]);
+    setForceAttempted(false);
+    setUndoAttempted(false);
+  }, [sessionId, judgeName, session?.currentPhaseIndex, session?.status]);
 
   useEffect(() => {
     return () => {
@@ -399,6 +402,8 @@ export default function SessionBoard() {
   };
 
   const handlePhaseAction = () => {
+    setUndoAttempted(false);
+
     if (currentPhase.cutoff === 1) {
       revealWinner().catch(() => {});
       return;
@@ -451,6 +456,17 @@ export default function SessionBoard() {
 
   const currentParticipants = getPhaseParticipants(currentPhaseIndex);
 
+  const phaseHasSavedScores = (phaseIdx) => {
+    const phaseScoresMap = scores[`phase_${phaseIdx}`];
+    if (!phaseScoresMap || typeof phaseScoresMap !== 'object') return false;
+
+    return Object.values(phaseScoresMap).some(participantScores => (
+      participantScores
+      && typeof participantScores === 'object'
+      && Object.values(participantScores).some(value => value !== null && value !== undefined)
+    ));
+  };
+
   // Score + sort participants for current phase
   const scoredParticipants = currentParticipants.map(p => {
     const pScores = phaseScores[p.id] || {};
@@ -477,6 +493,69 @@ export default function SessionBoard() {
   const pendingJudges = Math.max(judges.length - votedJudges, 0);
   const isFinalRound = currentPhase.cutoff === 1;
   const isSessionComplete = session.status === 'completed' && Boolean(session.winnerId);
+  const canUndoPhase = isHost && (currentPhaseIndex > 0 || isSessionComplete);
+  const currentPhaseHasSavedScores = phaseHasSavedScores(currentPhaseIndex);
+  const undoNeedsConfirm = !isSessionComplete && currentPhaseIndex > 0 && currentPhaseHasSavedScores && !undoAttempted;
+
+  const undoPhaseAdvance = async () => {
+    setForceAttempted(false);
+
+    if (isSessionComplete) {
+      const reopenedPhases = [...phases];
+      reopenedPhases[currentPhaseIndex] = {
+        ...reopenedPhases[currentPhaseIndex],
+        status: 'active'
+      };
+
+      await updateDoc(doc(db, "sessions", session.id), {
+        phases: reopenedPhases,
+        currentPhaseIndex,
+        status: 'active',
+        winnerId: deleteField(),
+        winnerPhaseIndex: deleteField(),
+        completedAt: deleteField()
+      });
+      setUndoAttempted(false);
+      return;
+    }
+
+    if (currentPhaseIndex <= 0) return;
+
+    if (currentPhaseHasSavedScores && !undoAttempted) {
+      setUndoAttempted(true);
+      return;
+    }
+
+    const previousPhaseIndex = currentPhaseIndex - 1;
+    const rewoundPhases = phases.slice(0, currentPhaseIndex).map((phase, index) => (
+      index === previousPhaseIndex
+        ? { ...phase, status: 'active' }
+        : phase
+    ));
+    const discardedPhaseIndexes = Array.from(
+      { length: phases.length - currentPhaseIndex },
+      (_, offset) => currentPhaseIndex + offset
+    );
+
+    if (discardedPhaseIndexes.length > 0) {
+      const scoreDeletes = discardedPhaseIndexes.reduce((acc, phaseIdx) => {
+        acc[`phase_${phaseIdx}`] = deleteField();
+        return acc;
+      }, {});
+
+      await setDoc(doc(db, "sessions", `${sessionId}_scores`), scoreDeletes, { merge: true });
+    }
+
+    await updateDoc(doc(db, "sessions", session.id), {
+      phases: rewoundPhases,
+      currentPhaseIndex: previousPhaseIndex,
+      status: 'active',
+      winnerId: deleteField(),
+      winnerPhaseIndex: deleteField(),
+      completedAt: deleteField()
+    });
+    setUndoAttempted(false);
+  };
 
   // Global results: track all participants + their elimination phase
   const globalResults = allParticipants.map(p => {
@@ -713,6 +792,16 @@ export default function SessionBoard() {
                       </div>
                     </div>
                   )}
+                  {isHost && canUndoPhase && (
+                    <button
+                      type="button"
+                      onClick={() => undoPhaseAdvance().catch(() => {})}
+                      className="scoring-btn-secondary mt-8 inline-flex items-center gap-2 rounded-xl px-5 py-3 text-xs font-bold uppercase tracking-widest"
+                    >
+                      <RotateCcw className="w-3.5 h-3.5" />
+                      {t.board.reopenFinal}
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
@@ -821,30 +910,49 @@ export default function SessionBoard() {
               </div>
 
               {/* Advance button (host only) */}
-              {isHost && currentParticipants.length > 0 && (
+              {isHost && (currentParticipants.length > 0 || currentPhaseIndex > 0) && (
                 <div className="p-3 border-t border-app-border bg-app-card shrink-0">
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="text-[10px] text-app-muted/70">
+                  <div className="flex items-center justify-between gap-3 flex-wrap">
+                    <div className="text-[10px] text-app-muted/70 space-y-1">
                       <span style={votedJudges === judges.length ? { color: 'var(--color-app-success)' } : undefined}>{t.board.judgesCompleted(votedJudges, judges.length)}</span>
+                      {!isSessionComplete && currentPhaseIndex > 0 && undoAttempted && currentPhaseHasSavedScores && (
+                        <p style={{ color: 'var(--color-app-danger)' }}>{t.board.undoPhaseWarning}</p>
+                      )}
                     </div>
-                    {canAdvance && (
-                      <button
-                        onClick={handlePhaseAction}
-                        className={`flex items-center gap-2 px-5 py-4 rounded-lg text-xs font-bold uppercase tracking-widest transition-all ${
-                          forceAttempted
-                            ? 'scoring-btn-danger animate-pulse'
-                            : allJudgesComplete
-                              ? 'scoring-btn-primary'
+                    <div className="flex items-center gap-2 flex-wrap justify-end">
+                      {canUndoPhase && !isSessionComplete && (
+                        <button
+                          type="button"
+                          onClick={() => undoPhaseAdvance().catch(() => {})}
+                          className={`flex items-center gap-2 px-5 py-4 rounded-lg text-xs font-bold uppercase tracking-widest transition-all ${
+                            undoAttempted && currentPhaseHasSavedScores
+                              ? 'scoring-btn-danger animate-pulse'
                               : 'scoring-btn-secondary'
-                        }`}
-                      >
-                        {forceAttempted ? (
-                          <><AlertTriangle className="w-3.5 h-3.5" /> {isFinalRound ? t.board.forceViewWinner(pendingJudges) : t.board.forceAdvance(pendingJudges)}</>
-                        ) : (
-                          <><ChevronRight className="w-3.5 h-3.5" /> {isFinalRound ? t.board.viewWinner : t.board.advancePhase}</>
-                        )}
-                      </button>
-                    )}
+                          }`}
+                        >
+                          <RotateCcw className="w-3.5 h-3.5" />
+                          {undoAttempted && currentPhaseHasSavedScores ? t.board.confirmUndoPhase : t.board.undoPhase}
+                        </button>
+                      )}
+                      {canAdvance && (
+                        <button
+                          onClick={handlePhaseAction}
+                          className={`flex items-center gap-2 px-5 py-4 rounded-lg text-xs font-bold uppercase tracking-widest transition-all ${
+                            forceAttempted
+                              ? 'scoring-btn-danger animate-pulse'
+                              : allJudgesComplete
+                                ? 'scoring-btn-primary'
+                                : 'scoring-btn-secondary'
+                          }`}
+                        >
+                          {forceAttempted ? (
+                            <><AlertTriangle className="w-3.5 h-3.5" /> {isFinalRound ? t.board.forceViewWinner(pendingJudges) : t.board.forceAdvance(pendingJudges)}</>
+                          ) : (
+                            <><ChevronRight className="w-3.5 h-3.5" /> {isFinalRound ? t.board.viewWinner : t.board.advancePhase}</>
+                          )}
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
               )}
