@@ -1,6 +1,7 @@
 /* Import Tailwind CSS v4 */
 @import "tailwindcss";
-@config "./tailwind.config.js";
 
 /* Import original styles */
 @import "./style.css";
+
+@config "./tailwind.config.js";

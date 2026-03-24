@@ -14,6 +14,13 @@ import {
   scoringCopy
 } from './scoringI18n';
 import PhaseReportModal from './PhaseReportModal';
+import {
+  getScoringBodyBackground,
+  getScoringThemeStyleVars,
+  getStoredScoringAccent,
+  getStoredScoringTheme,
+  persistScoringTheme
+} from './scoringTheme';
 
 function getDefaultPhase(language) {
   return { name: getDefaultPhaseName(0, language), cutoff: null, participantIds: null, status: 'active' };
@@ -87,9 +94,15 @@ export default function SessionBoard() {
     const html = document.documentElement;
     const body = document.body;
     const prev = { htmlP: html.style.padding, bodyP: body.style.padding, bodyO: body.style.overflow, bodyBg: body.style.background };
-    html.style.padding = '0'; body.style.padding = '0'; body.style.overflow = 'hidden'; body.style.background = '#0a0a0a';
-    document.title = `Scoring System v${__APP_VERSION__}`;
-    return () => { html.style.padding = prev.htmlP; body.style.padding = prev.bodyP; body.style.overflow = prev.bodyO; body.style.background = prev.bodyBg; };
+    html.style.padding = '0';
+    body.style.padding = '0';
+    body.style.overflow = 'hidden';
+    return () => {
+      html.style.padding = prev.htmlP;
+      body.style.padding = prev.bodyP;
+      body.style.overflow = prev.bodyO;
+      body.style.background = prev.bodyBg;
+    };
   }, []);
 
   const { sessionId } = useParams();
@@ -103,8 +116,8 @@ export default function SessionBoard() {
   const [forceAttempted, setForceAttempted] = useState(false);
   const [scoreDrafts, setScoreDrafts] = useState({});
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
-  const [theme, setTheme] = useState(localStorage.getItem('faces-scoring-theme') || 'dark');
-  const [accentColor, setAccentColor] = useState(localStorage.getItem('faces-scoring-accent') || '#ffffff');
+  const [theme, setTheme] = useState(getStoredScoringTheme());
+  const [accentColor] = useState(getStoredScoringAccent());
 
   // Search state
   const [countries, setCountries] = useState([]);
@@ -122,6 +135,11 @@ export default function SessionBoard() {
   useEffect(() => {
     persistScoringLanguage(currentLanguage);
   }, [currentLanguage]);
+
+  useEffect(() => {
+    document.body.style.background = getScoringBodyBackground(theme);
+    document.title = t.appTitle;
+  }, [theme, t]);
 
   // Load countries
   useEffect(() => {
@@ -397,8 +415,8 @@ export default function SessionBoard() {
 
   // --- Computed ---
   if (!session) return (
-    <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
-      <div className="w-8 h-8 border-2 border-app-border border-t-white rounded-full animate-spin"></div>
+    <div className={`theme-scoring-${theme} min-h-screen bg-app-bg text-app-text flex items-center justify-center`} style={getScoringThemeStyleVars(accentColor)}>
+      <div className="w-8 h-8 border-2 border-app-border rounded-full animate-spin" style={{ borderTopColor: 'var(--color-app-text)' }}></div>
     </div>
   );
 
@@ -503,37 +521,37 @@ export default function SessionBoard() {
   return (
     <div 
       className={`theme-scoring-${theme} min-h-screen bg-app-bg text-app-text font-sans flex flex-col h-screen overflow-hidden`}
-      style={{ '--color-app-accent': accentColor, '--color-app-accent-muted': `${accentColor}22` }}
+      style={getScoringThemeStyleVars(accentColor)}
     >
       
       {/* HEADER */}
-      <header className="h-12 border-b border-app-border/60 bg-app-card/80 backdrop-blur-md flex items-center justify-between px-5 flex-shrink-0 z-20">
-        <div className="flex items-center gap-3 min-w-0">
+      <header className="min-h-12 border-b border-app-border/60 bg-app-card/80 backdrop-blur-md flex items-center justify-between gap-3 px-3 md:px-5 py-2 flex-shrink-0 z-20 flex-wrap">
+        <div className="flex items-center gap-3 min-w-0 flex-wrap">
           {session.type === 'Global' ? <Globe className="w-4 h-4 text-app-muted/70 shrink-0" /> : <MapPin className="w-4 h-4 text-app-muted/70 shrink-0" />}
-          <h1 className="text-sm font-bold text-white tracking-tight truncate">{session.name}</h1>
+          <h1 className="text-sm font-bold text-app-text tracking-tight truncate">{session.name}</h1>
           <span className="text-[10px] text-app-muted/50 bg-app-border/30 px-2 py-0.5 rounded border border-app-border shrink-0">{getSessionTypeLabel(session.type, currentLanguage)}</span>
           <span className="text-[10px] text-app-muted/50 shrink-0">{judges.length} {judges.length === 1 ? t.board.judgeSingular : t.board.judgePlural}</span>
-          <span className="text-[9px] text-app-muted/70 font-mono bg-app-border/30 px-1.5 py-0.5 rounded border border-app-border shrink-0" title="Versión de despliegue">v{__APP_VERSION__}</span>
+          <span className="text-[9px] text-app-muted/70 font-mono bg-app-border/30 px-1.5 py-0.5 rounded border border-app-border shrink-0" title={t.board.versionLabel}>v{__APP_VERSION__}</span>
         </div>
-        <div className="flex items-center gap-3 shrink-0">
+        <div className="flex items-center gap-3 shrink-0 flex-wrap justify-end">
           {isHost && (
-            <button onClick={() => setIsReportModalOpen(true)} className="flex items-center gap-1.5 bg-app-border px-2 py-1 rounded text-[10px] font-medium text-app-text border border-app-border/70 hover:border-zinc-500 hover:text-white transition-colors cursor-pointer">
+            <button onClick={() => setIsReportModalOpen(true)} className="scoring-btn-icon flex items-center gap-1.5 px-2 py-1 rounded text-[10px] font-medium">
               <BarChart3 className="w-3 h-3" />
-              Reportes
+              {t.board.reportsButton}
             </button>
           )}
-          <button onClick={copyCode} className="flex items-center gap-1.5 bg-app-border px-2 py-1 rounded text-[10px] font-mono tracking-widest text-app-muted border border-app-border/70 hover:border-zinc-500 hover:text-white transition-colors cursor-pointer" title={t.board.copyCode}>
+          <button onClick={copyCode} className="scoring-btn-icon flex items-center gap-1.5 px-2 py-1 rounded text-[10px] font-mono tracking-widest" title={t.board.copyCode}>
             {session.id}
-            {codeCopied ? <Check className="w-3 h-3 text-green-400" /> : <Copy className="w-3 h-3" />}
+            {codeCopied ? <Check className="w-3 h-3" style={{ color: 'var(--color-app-success)' }} /> : <Copy className="w-3 h-3" />}
           </button>
           <div className="flex items-center gap-2">
             <span className="text-xs text-app-muted">{judgeName}</span>
-            {isHost && <span className="text-[9px] bg-white/10 text-white px-1.5 py-0.5 rounded">HOST</span>}
+            {isHost && <span className="scoring-badge text-[9px] px-1.5 py-0.5 rounded">{t.board.hostBadge}</span>}
             <button onClick={() => {
               const newTheme = theme === 'dark' ? 'light' : 'dark';
               setTheme(newTheme);
-              localStorage.setItem('faces-scoring-theme', newTheme);
-            }} className="p-1.5 bg-app-border/50 hover:bg-app-border rounded cursor-pointer transition-colors text-app-muted hover:text-app-text">
+              persistScoringTheme(newTheme);
+            }} className="scoring-btn-icon p-1.5 rounded" title={t.board.themeToggle} aria-label={t.board.themeToggle}>
               {theme === 'dark' ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
             </button>
           </div>
@@ -541,17 +559,17 @@ export default function SessionBoard() {
       </header>
 
       {/* TWO PANELS */}
-      <div className="flex flex-col lg:flex-row flex-grow overflow-hidden">
+      <div className="flex flex-col lg:flex-row flex-grow min-h-0 overflow-hidden">
         
         {/* LEFT: FASE ACTUAL */}
-        <div className="flex-1 flex flex-col overflow-hidden border-r border-app-border min-w-0">
+        <div className="flex-1 flex flex-col overflow-hidden lg:border-r border-app-border min-w-0">
           {/* Phase header */}
           <div className="p-4 border-b border-app-border/50 bg-app-card/50 shrink-0">
             <div className="flex items-center gap-3 flex-wrap">
               {/* Phase nav pills (completed + current) */}
               {phases.map((ph, i) => (
                 <div key={i} className={`text-[10px] px-2.5 py-1 rounded-md font-medium ${
-                  i === currentPhaseIndex ? 'bg-white text-black' : 
+                  i === currentPhaseIndex ? 'scoring-badge-active' :
                   ph.status === 'completed' ? 'bg-app-border text-app-muted/70' : 'bg-app-border/30 text-app-muted/50'
                 }`}>
                   {ph.name}
@@ -564,11 +582,11 @@ export default function SessionBoard() {
                 <input
                   type="text" value={currentPhase.name}
                   onChange={e => updatePhaseName(e.target.value)}
-                  className="bg-transparent text-lg font-bold text-white focus:outline-none border-b border-transparent focus:border-zinc-500 transition-colors flex-1 min-w-0"
+                  className="bg-transparent text-lg font-bold text-app-text focus:outline-none border-b border-transparent focus:border-app-border transition-colors flex-1 min-w-0"
                   placeholder={t.board.phaseNamePlaceholder}
                 />
               ) : (
-                <h2 className="text-lg font-bold text-white">{currentPhase.name}</h2>
+                <h2 className="text-lg font-bold text-app-text">{currentPhase.name}</h2>
               )}
               {isHost && (
                 <div className="flex items-center gap-2 bg-app-border/30 border border-app-border rounded-lg px-2.5 py-1.5 shrink-0">
@@ -578,7 +596,7 @@ export default function SessionBoard() {
                     value={currentPhase.cutoff || ''}
                     onChange={e => updatePhaseCutoff(e.target.value)}
                     placeholder="—"
-                    className="bg-transparent text-sm text-white font-mono font-bold text-center focus:outline-none w-10"
+                    className="bg-transparent text-sm text-app-text font-mono font-bold text-center focus:outline-none w-10"
                   />
                 </div>
               )}
@@ -596,7 +614,7 @@ export default function SessionBoard() {
                   <div className="relative">
                     <input type="text" value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
                       placeholder={t.board.addHostCountryFirst}
-                      className="w-full bg-app-border/30 border border-app-border rounded-lg h-8 pl-8 pr-3 text-xs text-white focus:outline-none focus:border-zinc-600 transition-colors" />
+                      className="scoring-input w-full rounded-lg h-8 pl-8 pr-3 text-xs" />
                     <Search className="w-3.5 h-3.5 text-app-muted/70 absolute left-2.5 top-2" />
                   </div>
                   <AnimatePresence>
@@ -606,13 +624,13 @@ export default function SessionBoard() {
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, scale: 0.95 }}
                         transition={{ duration: 0.2, ease: "easeOut" }}
-                        className="absolute mt-2 left-0 right-0 bg-zinc-900/95 backdrop-blur-2xl border border-white/10 rounded-xl overflow-hidden z-30 shadow-[0_20px_50px_rgba(0,0,0,0.6)] max-h-48 overflow-y-auto p-1 custom-scrollbar"
+                        className="scoring-popover absolute mt-2 left-0 right-0 rounded-xl overflow-hidden z-30 max-h-48 overflow-y-auto p-1 custom-scrollbar"
                       >
                         {searchResults.map(c => (
                           <button key={c.id} onClick={() => { setSelectedParentCountry(c); setSearchQuery(''); setSearchResults([]); }}
-                            className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-[var(--color-app-accent)] hover:text-black transition-all text-left text-xs rounded-lg group">
+                            className="scoring-popover-option w-full flex items-center gap-3 px-3 py-2.5 text-left text-xs rounded-lg group">
                             <span className="text-base group-hover:scale-110 transition-transform">{c.flag}</span>
-                            <span className="text-zinc-200 group-hover:text-black font-medium">{c.name}</span>
+                            <span className="scoring-popover-secondary font-medium">{c.name}</span>
                           </button>
                         ))}
                       </motion.div>
@@ -623,7 +641,7 @@ export default function SessionBoard() {
               {session.type === 'Nacional' && selectedParentCountry && (
                 <div className="flex items-center gap-2 mb-2">
                   <span className="text-xs">{t.board.hostCountryLabel}: {selectedParentCountry.flag} {selectedParentCountry.name}</span>
-                  <button onClick={() => { setSelectedParentCountry(null); setCities([]); }} className="text-[10px] text-app-muted/70 hover:text-white">✕</button>
+                  <button onClick={() => { setSelectedParentCountry(null); setCities([]); }} className="text-[10px] text-app-muted/70 hover:text-app-text" title={t.board.changeHostCountry} aria-label={t.board.changeHostCountry}>✕</button>
                 </div>
               )}
               {(session.type === 'Global' || (session.type === 'Nacional' && selectedParentCountry)) && (
@@ -632,7 +650,7 @@ export default function SessionBoard() {
                     <input type="text" value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
                       disabled={session.type === 'Nacional' && loadingCities}
                       placeholder={session.type === 'Global' ? t.board.addCountryPlaceholder : loadingCities ? t.board.loadingCities : t.board.addCityPlaceholder}
-                      className="w-full bg-app-border/30 border border-app-border rounded-lg h-8 pl-8 pr-3 text-xs text-white focus:outline-none focus:border-zinc-600 transition-colors disabled:opacity-40" />
+                      className="scoring-input w-full rounded-lg h-8 pl-8 pr-3 text-xs disabled:opacity-40" />
                     <Search className="w-3.5 h-3.5 text-app-muted/70 absolute left-2.5 top-2" />
                   </div>
                   <AnimatePresence>
@@ -642,14 +660,14 @@ export default function SessionBoard() {
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, scale: 0.95 }}
                         transition={{ duration: 0.2, ease: "easeOut" }}
-                        className="absolute mt-2 left-0 right-0 bg-zinc-900/95 backdrop-blur-2xl border border-white/10 rounded-xl overflow-hidden z-30 shadow-[0_20px_50px_rgba(0,0,0,0.6)] max-h-48 overflow-y-auto p-1 custom-scrollbar"
+                        className="scoring-popover absolute mt-2 left-0 right-0 rounded-xl overflow-hidden z-30 max-h-48 overflow-y-auto p-1 custom-scrollbar"
                       >
                         {searchResults.map(c => (
                           <button key={c.id} onClick={() => addParticipant(c)}
-                            className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-[var(--color-app-accent)] hover:text-black transition-all text-left text-xs rounded-lg group">
+                            className="scoring-popover-option w-full flex items-center gap-3 px-3 py-2.5 text-left text-xs rounded-lg group">
                             {c.flag && <span className="text-base group-hover:scale-110 transition-transform">{c.flag}</span>}
-                            <span className="text-zinc-200 group-hover:text-black font-medium">{c.name}</span>
-                            <Plus className="w-3 h-3 text-app-muted/70 ml-auto group-hover:text-black transition-colors" />
+                            <span className="scoring-popover-secondary font-medium">{c.name}</span>
+                            <Plus className="scoring-popover-icon w-3 h-3 text-app-muted/70 ml-auto transition-colors" />
                           </button>
                         ))}
                       </motion.div>
@@ -658,10 +676,10 @@ export default function SessionBoard() {
                       <motion.div 
                         initial={{ opacity: 0, y: -10 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="absolute mt-2 left-0 right-0 bg-zinc-900/95 backdrop-blur-xl border border-white/10 rounded-xl p-4 z-30 shadow-2xl text-center"
+                        className="scoring-popover absolute mt-2 left-0 right-0 rounded-xl p-4 z-30 text-center"
                       >
                         <button onClick={() => addParticipant({ name: searchQuery.trim(), id: searchQuery.replace(/\s+/g, '').toUpperCase(), flag: selectedParentCountry.flag })}
-                          className="text-[10px] bg-white text-black px-4 py-2 rounded-lg font-bold hover:bg-zinc-200 transition-all uppercase tracking-widest">
+                          className="scoring-btn-primary text-[10px] px-4 py-2 rounded-lg font-bold uppercase tracking-widest">
                           {t.board.addManualEntry(searchQuery)}
                         </button>
                       </motion.div>
@@ -674,24 +692,24 @@ export default function SessionBoard() {
 
           {isSessionComplete ? (
             <div className="flex-1 overflow-auto p-4 md:p-6">
-              <div className="relative flex min-h-full items-center justify-center overflow-hidden rounded-[2rem] border border-amber-300/20 bg-[radial-gradient(circle_at_top,#fde68a22,transparent_40%),linear-gradient(180deg,#18181b_0%,#09090b_100%)] p-8 text-center shadow-[0_0_60px_rgba(251,191,36,0.08)]">
+              <div className="scoring-winner-stage relative flex min-h-full items-center justify-center overflow-hidden rounded-[2rem] border border-amber-300/20 p-8 text-center">
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.08),transparent_18%),radial-gradient(circle_at_80%_15%,rgba(251,191,36,0.18),transparent_20%),radial-gradient(circle_at_50%_85%,rgba(255,255,255,0.05),transparent_20%)] opacity-80" />
                 <div className="relative z-10 flex max-w-xl flex-col items-center">
                   <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-full border border-amber-200/20 bg-amber-300/10 text-amber-200 shadow-[0_0_30px_rgba(251,191,36,0.2)]">
                     <Crown className="h-10 w-10" />
                   </div>
                   <p className="text-[11px] uppercase tracking-[0.45em] text-amber-200/70">{t.board.winnerTitle}</p>
-                  <h2 className="mt-3 text-4xl font-black tracking-tight text-white md:text-5xl">{winner?.flag} {winner?.name || t.board.winnerPending}</h2>
+                  <h2 className="mt-3 text-4xl font-black tracking-tight text-app-text md:text-5xl">{winner?.flag} {winner?.name || t.board.winnerPending}</h2>
                   <p className="mt-3 text-sm text-app-muted">{t.board.winnerSubtitle}</p>
                   {winnerResult && (
                     <div className="mt-8 grid w-full max-w-sm grid-cols-2 gap-3">
                       <div className="rounded-2xl border border-app-border bg-app-card/70 px-5 py-4">
                         <p className="text-[10px] uppercase tracking-[0.3em] text-app-muted/70">{t.board.winnerScore}</p>
-                        <p className="mt-2 text-2xl font-mono text-white">{winnerResult.totalAvg.toFixed(2)}</p>
+                        <p className="mt-2 text-2xl font-mono text-app-text">{winnerResult.totalAvg.toFixed(2)}</p>
                       </div>
                       <div className="rounded-2xl border border-app-border bg-app-card/70 px-5 py-4">
-                        <p className="text-[10px] uppercase tracking-[0.3em] text-app-muted/70">{currentPhase.name}</p>
-                        <p className="mt-2 text-sm text-app-text">{t.board.winnerFromPhase(winnerPhaseName)}</p>
+                        <p className="text-[10px] uppercase tracking-[0.3em] text-app-muted/70">{t.board.winnerPhaseLabel}</p>
+                        <p className="mt-2 text-sm text-app-text">{winnerPhaseName}</p>
                       </div>
                     </div>
                   )}
@@ -709,16 +727,16 @@ export default function SessionBoard() {
                   </div>
                 ) : (
                   <table className="w-full text-sm">
-                    <thead className="bg-app-border/30/80 sticky top-0 border-b border-app-border text-[10px] tracking-wider text-app-muted/70 uppercase">
+                    <thead className="bg-app-border/30 sticky top-0 border-b border-app-border text-[10px] tracking-wider text-app-muted/70 uppercase">
                       <tr>
                         <th className="font-normal py-3 pl-3 pr-1 w-6 text-center">#</th>
                         <th className="font-normal py-3 px-2 text-left">{t.board.contestantHeader}</th>
                         <th className="font-normal py-3 px-2 text-center w-16">{t.board.averageHeader}</th>
-                        <th className="font-normal py-3 px-2 text-center w-44 bg-app-border/30/50 border-x border-app-border/50">{t.board.yourScoreHeader}</th>
+                        <th className="font-normal py-3 px-2 text-center w-44 bg-app-border/40 border-x border-app-border/50">{t.board.yourScoreHeader}</th>
                         {isHost && currentPhaseIndex === 0 && <th className="font-normal py-3 pr-3 w-8"></th>}
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-zinc-800/30">
+                    <tbody className="divide-y divide-app-border/50">
                       {scoredParticipants.map((p, idx) => {
                         const hasScore = p.myScore !== undefined && p.myScore !== null;
                         const isQualified = qualifiedIds.has(p.id);
@@ -727,21 +745,21 @@ export default function SessionBoard() {
                         const showScoreValue = Number.isFinite(displayScore);
 
                         return (
-                          <tr key={p.id} className={`transition-all duration-300 ${!isQualified ? 'opacity-40 bg-red-950/5 grayscale-[50%]' : 'hover:bg-app-border/30/40'}`}>
+                          <tr key={p.id} className={`transition-all duration-300 ${!isQualified ? 'opacity-40 grayscale-[50%]' : 'hover:bg-app-border/30'}`} style={!isQualified ? { backgroundColor: 'var(--color-app-danger-soft)' } : undefined}>
                             <td className="py-4 pl-4 pr-2 text-center">
-                              <span className={`text-[10px] font-mono font-bold ${idx === 0 ? 'text-app-accent' : isQualified ? 'text-white' : 'text-app-muted/50'}`}>{idx + 1}</span>
+                              <span className={`text-[10px] font-mono font-bold ${idx === 0 ? 'text-app-accent' : isQualified ? 'text-app-text' : 'text-app-muted/50'}`}>{idx + 1}</span>
                             </td>
                             <td className="py-3 px-2">
                               <div className="flex items-center gap-2">
                                 <span className="text-base">{p.flag}</span>
-                                <span className={`text-xs font-medium truncate ${isQualified ? 'text-white' : 'text-app-muted/70'}`}>{p.name}</span>
+                                <span className={`text-xs font-medium truncate ${isQualified ? 'text-app-text' : 'text-app-muted/70'}`}>{p.name}</span>
                               </div>
                             </td>
                             <td className="py-3 px-2 text-center">
                               <span className={`text-xs font-mono font-bold ${isQualified ? 'text-app-accent' : 'text-app-muted/30'}`}>{p.avg.toFixed(2)}</span>
                               <span className="text-[8px] text-app-muted/50 ml-0.5">{p.voteCount > 0 && `(${p.voteCount})`}</span>
                             </td>
-                            <td className="py-3 px-3 bg-app-border/30/10 border-x border-app-border/20 text-center">
+                            <td className="py-3 px-3 bg-app-border/10 border-x border-app-border/20 text-center">
                               <div className="flex items-center gap-2">
                                 <input
                                   type="range"
@@ -770,7 +788,7 @@ export default function SessionBoard() {
                                     });
                                     deleteScore(p.id).catch(() => {});
                                   }}
-                                  className="w-6 h-6 rounded border border-app-border text-[10px] text-app-muted/70 hover:border-zinc-600 hover:text-white transition-colors"
+                                  className="scoring-btn-icon w-6 h-6 rounded text-[10px]"
                                   title={t.board.removeVote}
                                   aria-label={`${t.board.removeVote}: ${p.name}`}
                                 >
@@ -789,7 +807,7 @@ export default function SessionBoard() {
                             </td>
                             {isHost && currentPhaseIndex === 0 && (
                               <td className="py-3 pr-3 text-center">
-                                <button onClick={() => removeParticipant(p.id)} className="text-app-muted/30 hover:text-red-400 transition-colors p-0.5">
+                                <button onClick={() => removeParticipant(p.id)} className="text-app-muted/30 transition-colors p-0.5 hover:opacity-80" style={{ color: 'var(--color-app-danger)' }} title={t.board.removeParticipant} aria-label={`${t.board.removeParticipant}: ${p.name}`}>
                                   <X className="w-3 h-3" />
                                 </button>
                               </td>
@@ -807,17 +825,17 @@ export default function SessionBoard() {
                 <div className="p-3 border-t border-app-border bg-app-card shrink-0">
                   <div className="flex items-center justify-between gap-3">
                     <div className="text-[10px] text-app-muted/70">
-                      <span className={votedJudges === judges.length ? 'text-green-400' : 'text-app-muted'}>{t.board.judgesCompleted(votedJudges, judges.length)}</span>
+                      <span style={votedJudges === judges.length ? { color: 'var(--color-app-success)' } : undefined}>{t.board.judgesCompleted(votedJudges, judges.length)}</span>
                     </div>
                     {canAdvance && (
                       <button
                         onClick={handlePhaseAction}
                         className={`flex items-center gap-2 px-5 py-4 rounded-lg text-xs font-bold uppercase tracking-widest transition-all ${
                           forceAttempted
-                            ? 'bg-red-500 text-white hover:bg-red-600 animate-pulse'
+                            ? 'scoring-btn-danger animate-pulse'
                             : allJudgesComplete
-                              ? 'bg-white text-black hover:bg-zinc-200'
-                              : 'bg-app-border text-app-muted hover:bg-zinc-700 hover:text-white'
+                              ? 'scoring-btn-primary'
+                              : 'scoring-btn-secondary'
                         }`}
                       >
                         {forceAttempted ? (
@@ -835,7 +853,7 @@ export default function SessionBoard() {
         </div>
 
         {/* RIGHT: RESULTADOS GLOBALES */}
-        <div className="w-full lg:w-80 xl:w-96 flex flex-col overflow-hidden shrink-0 bg-app-card/80">
+        <div className="w-full lg:w-80 xl:w-96 max-h-[38vh] lg:max-h-none flex flex-col overflow-hidden shrink-0 bg-app-card/80 border-t lg:border-t-0 border-app-border">
           <div className="px-5 py-4 border-b border-app-border/50 bg-app-card shrink-0">
             <h3 className="text-[10px] font-bold tracking-widest text-app-muted/70 uppercase">{t.board.globalResults}</h3>
             <p className="text-[9px] text-app-muted/30 mt-0.5">{t.board.phasesCompleted(allParticipants.length, phases.filter(p => p.status === 'completed').length)}</p>
@@ -850,12 +868,12 @@ export default function SessionBoard() {
                 const isWinner = session.winnerId === p.id;
                 return (
                   <div key={p.id} className={`flex items-center gap-2 px-2.5 py-3 mb-1 rounded-lg transition-colors ${
-                    isWinner ? 'border border-amber-300/20 bg-amber-300/5' : eliminated ? 'opacity-30' : 'hover:bg-app-border/30/50'
+                    isWinner ? 'border border-amber-300/20 bg-amber-300/5' : eliminated ? 'opacity-30' : 'hover:bg-app-border/30'
                   }`}>
-                    <div className={`w-5 text-center font-mono text-[10px] font-bold ${eliminated ? 'text-app-muted/30' : isWinner || idx === 0 ? 'text-white' : 'text-app-muted/70'}`}>{idx + 1}</div>
+                    <div className={`w-5 text-center font-mono text-[10px] font-bold ${eliminated ? 'text-app-muted/30' : isWinner || idx === 0 ? 'text-app-text' : 'text-app-muted/70'}`}>{idx + 1}</div>
                     <span className={`text-base ${eliminated ? 'grayscale' : ''}`}>{p.flag}</span>
                     <div className="flex-1 min-w-0">
-                      <p className={`text-xs truncate ${eliminated ? 'text-app-muted/50 line-through' : isWinner || idx === 0 ? 'text-white font-medium' : 'text-app-muted'}`}>{p.name}</p>
+                      <p className={`text-xs truncate ${eliminated ? 'text-app-muted/50 line-through' : isWinner || idx === 0 ? 'text-app-text font-medium' : 'text-app-muted'}`}>{p.name}</p>
                       {isWinner && (
                         <p className="text-[9px] text-amber-200/70">{t.board.winnerTitle}</p>
                       )}
@@ -864,7 +882,7 @@ export default function SessionBoard() {
                       )}
                     </div>
                     <div className="text-right">
-                      <p className={`text-xs font-mono ${eliminated ? 'text-app-muted/30' : 'text-white'}`}>{p.totalAvg.toFixed(2)}</p>
+                      <p className={`text-xs font-mono ${eliminated ? 'text-app-muted/30' : 'text-app-text'}`}>{p.totalAvg.toFixed(2)}</p>
                     </div>
                   </div>
                 );

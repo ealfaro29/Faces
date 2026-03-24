@@ -1044,6 +1044,18 @@ main.panel {
     --color-app-muted: #a1a1aa;
     --color-app-accent: #ffffff; /* Default, can be overridden by inline style */
     --color-app-accent-muted: rgba(255, 255, 255, 0.1);
+    --color-app-surface: rgba(24, 24, 27, 0.78);
+    --color-app-surface-strong: rgba(9, 9, 11, 0.92);
+    --color-app-surface-soft: rgba(39, 39, 42, 0.24);
+    --color-app-hover: rgba(255, 255, 255, 0.04);
+    --color-app-on-primary: #09090b;
+    --color-app-success: #4ade80;
+    --color-app-danger: #f87171;
+    --color-app-danger-soft: rgba(127, 29, 29, 0.16);
+    --color-app-warning: #fbbf24;
+    --color-app-warning-soft: rgba(251, 191, 36, 0.12);
+    --color-app-shadow: rgba(0, 0, 0, 0.55);
+    color-scheme: dark;
 }
 
 .theme-scoring-light {
@@ -1054,6 +1066,18 @@ main.panel {
     --color-app-muted: #64748b;
     --color-app-accent: #0f172a; /* Default, can be overridden by inline style */
     --color-app-accent-muted: rgba(15, 23, 42, 0.1);
+    --color-app-surface: rgba(255, 255, 255, 0.82);
+    --color-app-surface-strong: rgba(255, 255, 255, 0.96);
+    --color-app-surface-soft: rgba(148, 163, 184, 0.12);
+    --color-app-hover: rgba(15, 23, 42, 0.05);
+    --color-app-on-primary: #f8fafc;
+    --color-app-success: #15803d;
+    --color-app-danger: #b91c1c;
+    --color-app-danger-soft: rgba(254, 226, 226, 0.9);
+    --color-app-warning: #b45309;
+    --color-app-warning-soft: rgba(253, 230, 138, 0.28);
+    --color-app-shadow: rgba(15, 23, 42, 0.12);
+    color-scheme: light;
 }
 
 /* Glassmorphism and Professional Utilities */
@@ -1070,3 +1094,120 @@ main.panel {
 
 .bg-app-accent-muted { background-color: var(--color-app-accent-muted) !important; }
 .text-app-accent-muted { color: var(--color-app-accent-muted) !important; }
+
+.scoring-input {
+    background: color-mix(in srgb, var(--color-app-card) 94%, transparent);
+    color: var(--color-app-text);
+    border: 1px solid var(--color-app-border);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+}
+
+.scoring-input::placeholder {
+    color: color-mix(in srgb, var(--color-app-muted) 82%, transparent);
+}
+
+.scoring-input:focus {
+    outline: none;
+    border-color: color-mix(in srgb, var(--color-app-accent) 32%, var(--color-app-border));
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-app-accent) 14%, transparent);
+}
+
+.scoring-panel {
+    background: color-mix(in srgb, var(--color-app-surface-strong) 92%, transparent);
+    border: 1px solid color-mix(in srgb, var(--color-app-border) 92%, transparent);
+    box-shadow: 0 24px 60px var(--color-app-shadow);
+}
+
+.scoring-popover {
+    background: color-mix(in srgb, var(--color-app-surface-strong) 96%, transparent);
+    border: 1px solid color-mix(in srgb, var(--color-app-border) 88%, transparent);
+    box-shadow: 0 20px 50px color-mix(in srgb, var(--color-app-shadow) 85%, transparent);
+    backdrop-filter: blur(20px);
+}
+
+.scoring-popover-option {
+    color: var(--color-app-text);
+    transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+}
+
+.scoring-popover-option:hover {
+    background: color-mix(in srgb, var(--color-app-accent) 12%, var(--color-app-card));
+    color: var(--color-app-text);
+}
+
+.scoring-popover-option:hover .scoring-popover-secondary,
+.scoring-popover-option:hover .scoring-popover-icon {
+    color: var(--color-app-text);
+}
+
+.scoring-btn-primary {
+    background: var(--color-app-text);
+    color: var(--color-app-bg);
+    border: 1px solid color-mix(in srgb, var(--color-app-text) 14%, transparent);
+    box-shadow: 0 18px 30px color-mix(in srgb, var(--color-app-text) 12%, transparent);
+    transition: transform 0.2s ease, filter 0.2s ease, box-shadow 0.2s ease;
+}
+
+.scoring-btn-primary:hover {
+    transform: translateY(-1px);
+    filter: brightness(0.94);
+}
+
+.theme-scoring-dark .scoring-btn-primary:hover {
+    filter: brightness(0.88);
+}
+
+.scoring-btn-secondary {
+    background: color-mix(in srgb, var(--color-app-card) 82%, transparent);
+    color: var(--color-app-muted);
+    border: 1px solid var(--color-app-border);
+    transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+.scoring-btn-secondary:hover {
+    background: color-mix(in srgb, var(--color-app-hover) 100%, var(--color-app-card));
+    color: var(--color-app-text);
+    border-color: color-mix(in srgb, var(--color-app-accent) 18%, var(--color-app-border));
+}
+
+.scoring-btn-danger {
+    background: var(--color-app-danger);
+    color: #ffffff;
+    border: 1px solid color-mix(in srgb, var(--color-app-danger) 65%, transparent);
+    transition: filter 0.2s ease, transform 0.2s ease;
+}
+
+.scoring-btn-danger:hover {
+    transform: translateY(-1px);
+    filter: brightness(0.94);
+}
+
+.scoring-btn-icon {
+    background: color-mix(in srgb, var(--color-app-card) 82%, transparent);
+    color: var(--color-app-muted);
+    border: 1px solid var(--color-app-border);
+    transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+.scoring-btn-icon:hover {
+    background: color-mix(in srgb, var(--color-app-hover) 100%, var(--color-app-card));
+    color: var(--color-app-text);
+    border-color: color-mix(in srgb, var(--color-app-accent) 18%, var(--color-app-border));
+}
+
+.scoring-badge {
+    background: color-mix(in srgb, var(--color-app-text) 8%, transparent);
+    color: var(--color-app-text);
+}
+
+.scoring-badge-active {
+    background: var(--color-app-text);
+    color: var(--color-app-bg);
+}
+
+.scoring-winner-stage {
+    background:
+        radial-gradient(circle at top, color-mix(in srgb, var(--color-app-warning) 20%, transparent), transparent 42%),
+        linear-gradient(180deg, color-mix(in srgb, var(--color-app-card) 96%, transparent), color-mix(in srgb, var(--color-app-bg) 98%, transparent));
+    box-shadow: 0 0 60px color-mix(in srgb, var(--color-app-warning) 10%, transparent);
+}

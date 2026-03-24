@@ -5,10 +5,11 @@ import { doc, getDoc } from 'firebase/firestore';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 import ScoringLanguageToggle from './ScoringLanguageToggle';
 import { getStoredScoringLanguage, normalizeScoringLanguage, persistScoringLanguage, scoringCopy } from './scoringI18n';
+import { getScoringThemeStyleVars, getStoredScoringAccent, getStoredScoringTheme } from './scoringTheme';
 
 export default function JoinSession() {
-  const [theme] = useState(localStorage.getItem('faces-scoring-theme') || 'dark');
-  const [accentColor] = useState(localStorage.getItem('faces-scoring-accent') || '#ffffff');
+  const [theme] = useState(getStoredScoringTheme());
+  const [accentColor] = useState(getStoredScoringAccent());
   const navigate = useNavigate();
   const [judgeName, setJudgeName] = useState('');
   const [sessionCode, setSessionCode] = useState('');
@@ -19,7 +20,8 @@ export default function JoinSession() {
 
   useEffect(() => {
     persistScoringLanguage(language);
-  }, [language]);
+    document.title = t.appTitle;
+  }, [language, t]);
 
   const handleJoin = async (e) => {
     e.preventDefault();
@@ -52,43 +54,43 @@ export default function JoinSession() {
   return (
     <div 
       className={`theme-scoring-${theme} min-h-screen bg-app-bg text-app-text font-sans flex items-center justify-center p-4`}
-      style={{ '--color-app-accent': accentColor, '--color-app-accent-muted': `${accentColor}22` }}
+      style={getScoringThemeStyleVars(accentColor)}
     >
       <div className="w-full max-w-sm">
-        <Link to="/session" className="inline-flex items-center gap-2 text-xs text-app-muted/70 hover:text-white transition-colors mb-6 no-underline uppercase tracking-widest">
+        <Link to="/session" className="inline-flex items-center gap-2 text-xs text-app-muted/80 hover:text-app-text transition-colors mb-6 no-underline uppercase tracking-widest">
           <ArrowLeft className="w-4 h-4" /> {t.backToStart}
         </Link>
 
-        <div className="bg-app-border/30/50 backdrop-blur-xl border border-app-border rounded-2xl p-8 shadow-2xl">
+        <div className="scoring-panel rounded-2xl p-6 md:p-8">
           <div className="mb-6 flex justify-end">
             <ScoringLanguageToggle language={language} label={t.languageLabel} onChange={setLanguage} />
           </div>
-          <div className="min-h-[100px] mb-4">
-            <h1 className="text-2xl font-bold text-white mb-2 text-center tracking-tight">{t.join.title}</h1>
-            <p className="text-sm text-app-muted/70 text-center leading-relaxed">{t.join.subtitle}</p>
+          <div className="mb-6">
+            <h1 className="text-2xl font-bold text-app-text mb-2 text-center tracking-tight">{t.join.title}</h1>
+            <p className="text-sm text-app-muted/80 text-center leading-relaxed">{t.join.subtitle}</p>
           </div>
           
           <form onSubmit={handleJoin} className="space-y-5">
             <div>
-              <label className="block text-xs font-bold tracking-widest text-app-muted/70 uppercase mb-2">{t.join.judgeNameLabel}</label>
+              <label className="block text-xs font-bold tracking-widest text-app-muted/80 uppercase mb-2">{t.join.judgeNameLabel}</label>
               <input 
                 type="text" 
                 required
                 value={judgeName}
                 onChange={e => { setJudgeName(e.target.value); setError(''); }}
-                className="w-full bg-app-card border border-app-border rounded-lg h-12 px-4 text-sm text-white focus:outline-none focus:border-zinc-500 transition-colors"
+                className="scoring-input w-full rounded-lg h-12 px-4 text-sm"
                 placeholder={t.join.judgeNamePlaceholder}
               />
             </div>
             
             <div>
-              <label className="block text-xs font-bold tracking-widest text-app-muted/70 uppercase mb-2">{t.join.sessionCodeLabel}</label>
+              <label className="block text-xs font-bold tracking-widest text-app-muted/80 uppercase mb-2">{t.join.sessionCodeLabel}</label>
               <input 
                 type="text" 
                 required
                 value={sessionCode}
                 onChange={e => { setSessionCode(e.target.value); setError(''); }}
-                className="w-full bg-app-card border border-app-border rounded-lg h-12 px-4 text-sm text-white focus:outline-none focus:border-zinc-500 transition-colors uppercase font-mono tracking-widest"
+                className="scoring-input w-full rounded-lg h-12 px-4 text-sm uppercase font-mono tracking-widest"
                 placeholder={t.join.sessionCodePlaceholder}
               />
             </div>
@@ -102,7 +104,7 @@ export default function JoinSession() {
             <button 
               type="submit" 
               disabled={submitting}
-              className="w-full h-12 mt-6 bg-white text-black font-bold uppercase tracking-widest text-xs rounded-lg hover:bg-zinc-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="scoring-btn-primary w-full h-12 mt-6 font-bold uppercase tracking-widest text-xs rounded-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               {submitting ? <><Loader2 className="w-4 h-4 animate-spin" /> {t.join.submitBusy}</> : t.join.submitIdle}
             </button>
