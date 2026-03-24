@@ -1,26 +1,28 @@
 # Gemini Handover — Faces Scoring Module
 
-Updated: 2026-03-23
+Updated: 2026-03-24
 Repo path: `/Users/tbnalfaro/Desktop/Apps Gerald/Faces`
 Live site: `https://ealfaro29.github.io/Faces/`
 Primary area: scoring flow under `/session/*`
 
 ## Current Git State
 
-- Local worktree is clean.
-- `main` HEAD: `30914be` — `Add scoring language support and winner reveal`
-- Previous related commits:
-  - `b61dde6` — `Preserve phase scoring order`
-  - `7cb2028` — `Improve scoring board voting flow`
-  - `f2c2cdd` — workflow-based scoring redesign
-- `gh-pages` currently points to: `3444bee51657fd56b7a839132719a1e33352fdf1`
+- Local worktree was clean before this handover update.
+- Latest deployed feature baseline on `main`: `355171e` — `Add scoring session settings`
+- `gh-pages` currently points to: `a86eece5f0398bc917ee6f2955df0517bfed109a`
+- Most recent scoring-related commits before this doc update:
+  - `355171e` — `Add scoring session settings`
+  - `b961bfd` — `Fix report image export sizing`
+  - `16e5920` — `Add cumulative scoring results report`
+  - `2827a42` — `Add scoring phase rollback`
+  - `4e6eed1` — `Polish scoring i18n and theme consistency`
 
 ## User Working Agreement
 
 The user explicitly wants this workflow on every substantial change:
 
 1. edit code
-2. verify (`npm run build`)
+2. verify with `npm run build`
 3. commit
 4. sync `main`
 5. deploy GitHub Pages
@@ -39,31 +41,43 @@ Defined in `src/App.jsx` and must stay above the wildcard route:
 ## Important Files
 
 - `src/pages/scoring/ScoringLanding.jsx`
-  - Landing page for scoring.
-  - Now includes ES/EN language selection.
+  - Entry page for scoring.
+  - Handles theme, accent and ES/EN selection.
 
 - `src/pages/scoring/CreateSession.jsx`
-  - Creates sessions.
-  - Stores `language` in the Firestore session document.
-  - First phase name is localized via `getDefaultPhaseName()`.
+  - Creates the Firestore session document.
+  - Persists `language` into the session.
 
 - `src/pages/scoring/JoinSession.jsx`
-  - Judge join form.
-  - Reads session doc before navigation and persists the session language locally.
+  - Judge join flow.
+  - Reads session language before navigation.
+  - Blocks re-entry for judges listed in `removedJudges`.
 
 - `src/pages/scoring/SessionBoard.jsx`
-  - Main workflow engine.
-  - Handles scoring, cutoff progression, final winner reveal, stable phase ordering, bilingual UI, and country localization.
+  - Main scoring engine.
+  - Handles scoring, progression, rollback, winner reveal, stable ordering, host settings and live results.
+
+- `src/pages/scoring/SessionSettingsModal.jsx`
+  - Host-only settings modal.
+  - Supports renaming the contest and expelling judges.
+
+- `src/pages/scoring/PhaseReportModal.jsx`
+  - Export/report UI.
+  - Has per-phase reports, cumulative totals and winner summary.
+  - Export logic now expands scrollable content before generating images.
 
 - `src/pages/scoring/scoringI18n.js`
-  - Scoring-only translation source.
-  - Also contains language persistence helpers and country-name localization helpers.
+  - Scoring-only translations.
+  - Also contains language normalization helpers and country-name localization helpers.
+
+- `src/pages/scoring/scoringTheme.js`
+  - Shared scoring theme helpers for light/dark and accent persistence.
 
 - `src/pages/scoring/ScoringLanguageToggle.jsx`
-  - Reusable ES/EN toggle used on landing/create/join.
+  - Reusable ES/EN toggle.
 
 - `src/pages/scoring/ParticipantSetup.jsx`
-  - Legacy. Still present, not used in the active route flow.
+  - Legacy. Still present, not used in the active routed scoring flow.
 
 ## Current Behavior
 
@@ -75,54 +89,89 @@ The scoring table no longer re-sorts live while judges are voting.
 - Later phases use a frozen `participantIds` list saved into each phase when advancing.
 - Global results still re-order live.
 
-Implementation details:
-
-- `phases[].participantIds` is now used to preserve the display order of each phase.
-- On phase advance, qualified participants are ranked by the completed phase scores, then written into the next phase in that sorted order.
-
 ### 2. Slider-based scoring
 
 Each contestant row uses a `0.0 -> 10.0` slider with `0.1` step.
 
-- Save is near-live via short debounce plus flush on blur/release.
+- Save is near-live via debounce plus blur/release flush.
 - Each judge writes only their own score.
 - The clear button removes only that judge's score.
 
 ### 3. Final round / winner reveal
 
-If the host sets `Clasifican = 1`, that phase is treated as the final.
+If the host sets the cutoff to `1`, that phase is treated as the final.
 
 - The host CTA changes from advance to winner reveal.
 - On reveal, the session is completed instead of creating a new phase.
-- Winner data is written to the session document.
-- Everyone connected sees a winner celebration card in the left panel.
+- Winner info is stored in the session document.
+- Connected users see a persistent winner celebration card.
 
-Firestore fields now used for this:
+Session fields used for that:
 
 - `status: 'completed'`
 - `winnerId`
 - `winnerPhaseIndex`
 - `completedAt`
 
-### 4. Bilingual UI (ES / EN)
+### 4. Undo / rollback after advancing
 
-Scoring now supports Spanish and English.
+The host can now go back after advancing.
 
-- The language is selected from the scoring entry flow and persisted in localStorage.
+- `Volver una fase` appears once the session is past phase 0.
+- If the current phase already has saved scores, the rollback requires confirmation.
+- Rolling back clears scores from discarded future phases to avoid stale data.
+- If the final was already revealed, the host can use `Reabrir final`.
+
+### 5. Cumulative reports
+
+The reports modal now includes an accumulated-results tab.
+
+- `Acumulado Total` / `Overall Totals` shows every participant.
+- It includes one column per visible phase.
+- It shows accumulated total and global average.
+- It is sorted by accumulated total so the winner's full path is obvious.
+
+### 6. Report image export
+
+Report export was fixed so wide tables are fully included in the PNG.
+
+- Before export, scrollable containers are temporarily expanded.
+- Export uses the real `scrollWidth` / `scrollHeight`.
+- This is especially relevant for cumulative reports and wide phase tables.
+
+### 7. Host settings
+
+The host now has an `Ajustes` / `Settings` button in the board header.
+
+Current settings supported:
+
+- rename the contest after the session has started
+- expel judges from the session
+
+Judge expulsion is enforced:
+
+- expelled judge is removed from `judges`
+- judge name is appended to `removedJudges`
+- `JoinSession` blocks re-entry with the same name
+- if that judge is currently connected, `SessionBoard` revokes access and sends them back to join
+
+### 8. Bilingual UI and localized countries
+
+Scoring supports Spanish and English.
+
+- Language is selected from the scoring flow and persisted in localStorage.
 - New sessions store `language`.
-- The board uses `session.language` when present, otherwise it falls back to the stored local scoring language.
+- The board prefers `session.language`, then falls back to local scoring language.
 
-### 5. Country names localized by selected language
-
-The scoring module now loads countries from:
+Countries are loaded from:
 
 - `https://restcountries.com/v3.1/all?fields=name,translations,cca3,flag`
 
 Behavior:
 
-- English UI uses `name.common`
-- Spanish UI uses `translations.spa.common` with fallback to `name.common`
-- Country entries also keep `apiName` in English so the city API still works for national sessions
+- English uses `name.common`
+- Spanish uses `translations.spa.common` with fallback to `name.common`
+- `apiName` is kept in English for the city API
 
 ## Firestore Shape
 
@@ -136,6 +185,7 @@ Session documents now effectively expect:
   language: "es" | "en",
   host: "Admin",
   judges: ["Admin", "Judge 2"],
+  removedJudges: ["Judge 3"],
   currentPhaseIndex: 0,
   phases: [
     {
@@ -168,33 +218,38 @@ Scores document remains in the same collection using `${sessionId}_scores`:
 
 ## Legacy Compatibility Already Added
 
-`SessionBoard.jsx` now normalizes old `phases` structures in memory.
+`SessionBoard.jsx` normalizes old `phases` structures in memory.
 
 - Old sessions that stored `phases` as an object should no longer crash.
-- Missing `participantIds` are derived on the fly from previous completed phase rankings.
+- Missing `participantIds` are derived on the fly from previous completed rankings.
 
 ## Known Risks / Caveats
 
 These are real, not hypothetical:
 
-- Judge identity is still keyed by `judgeName` inside the scores map.
-  - If two judges join with the exact same name, they will overwrite each other.
-  - A safer future refactor would introduce judge IDs separate from display names.
+- Judge identity is still keyed by plain `judgeName`.
+  - If two judges join with the exact same name, they will overwrite each other in scores.
+  - Expulsion also works by name, so identical names are still a weak point.
+  - A safer future refactor would add stable judge IDs separate from display names.
 
-- Global results are not cumulative across all phases in a strict statistical sense.
-  - The current `totalAvg` logic effectively reflects the most recent active/completed phase average encountered for that contestant, not a cross-phase weighted rollup.
-  - If the user later asks for a real "overall" summary, revisit `globalResults` in `SessionBoard.jsx`.
+- Expelled judges are blocked by exact normalized name match only.
+  - They can still re-enter using a different display name.
+  - If stronger moderation is needed, add judge tokens or auth.
 
-- `ParticipantSetup.jsx` still exists and uses its own country-loading logic, but it is legacy and not part of the routed scoring flow.
+- `globalResults` in `SessionBoard.jsx` is still not a strict cross-phase statistical rollup.
+  - The new accumulated report in `PhaseReportModal.jsx` is the proper totalized view.
+  - If the right-side live panel should also become cumulative, that logic still needs to be refactored.
 
-- The scoring board text is bilingual now, but old sessions may still contain user-entered phase names in Spanish because phase names are stored data, not runtime-only labels.
+- `ParticipantSetup.jsx` is still legacy and not part of the active scoring route flow.
+
+- User-entered phase names are persisted data, so old sessions may contain phase labels in Spanish even if viewed later in English.
 
 ## Verification Status
 
-Last verified locally before this handover:
+Latest verified locally before this handover update:
 
 - `npm run build` passed
-- changes were committed, pushed to `main`, and deployed to `gh-pages`
+- scoring changes were committed, pushed to `main`, and deployed to `gh-pages`
 
 ## Operational Notes For Future Sync/Deploy
 
@@ -204,9 +259,10 @@ In this environment, SSH push may fail with:
 
 If that happens again:
 
-- temporarily switch `origin` to the HTTPS push flow already used in prior work
-- push/deploy
-- restore `origin` back to SSH afterwards
+1. temporarily switch `origin` to the HTTPS remote
+2. push `main`
+3. run deploy
+4. restore `origin` back to SSH
 
 Do not leave the HTTPS remote configured persistently.
 
@@ -214,9 +270,8 @@ Do not leave the HTTPS remote configured persistently.
 
 If the user wants more scoring work next, the most likely follow-ups are:
 
-1. add a post-final summary/export screen
-2. make the final celebration more theatrical (confetti/audio/animation)
-3. fix judge identity collisions by introducing stable judge IDs
-4. improve mobile layout for the scoring board
-5. revisit global-results math if the user wants cumulative totals rather than current-phase ranking
-
+1. introduce stable judge IDs instead of using names as primary keys
+2. let the host rename or edit judge display names without corrupting historical scores
+3. add stronger expelled-judge enforcement beyond name matching
+4. improve mobile density in `SessionBoard.jsx` for long judge lists and many phases
+5. add a dedicated post-final summary screen separate from the live board
