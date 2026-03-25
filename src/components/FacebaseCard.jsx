@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Copy, Check, RefreshCw, Layers, Smile } from 'lucide-react';
+import { Copy, Check, RefreshCw, Layers, Smile, Pencil, Save, X } from 'lucide-react';
 import { reloadRobloxImage } from '../utils/image-reload';
 import { getFlagEmoji } from '../utils/iso-utils.js';
 import { updateItemImageUrl } from '../utils/data-hooks';
@@ -14,9 +14,29 @@ export default function FacebaseCard({ group, isFavorite, onToggleFavorite }) {
     const [activeVariant, setActiveVariant] = useState(group.defaultItem);
     const [reloading, setReloading] = useState(false);
     const [overrideSrc, setOverrideSrc] = useState(null);
+    const [isEditing, setIsEditing] = useState(false);
+    const [editName, setEditName] = useState(group.baseDisplayName);
+    const [editCountry, setEditCountry] = useState(group.group);
+    const [saving, setSaving] = useState(false);
 
     const variantsList = Object.values(group.variants).filter(Boolean);
     const hasVariants = variantsList.length > 1;
+
+    const handleSaveEdit = async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (!editName.trim() || !editCountry.trim() || saving) return;
+        setSaving(true);
+        try {
+            await updateFacebaseGroup(variantsList, editName.trim(), editCountry.trim().toUpperCase());
+            setIsEditing(false);
+            // In a real app, you might want to trigger a data refresh here, 
+            // but the optimistic UI or a page reload later will suffice for now.
+            // For now, let's just alert success or rely on the console log in data-hooks.
+        } finally {
+            setSaving(false);
+        }
+    };
 
     const handleReloadImage = async (e) => {
         e.stopPropagation();
@@ -109,6 +129,16 @@ export default function FacebaseCard({ group, isFavorite, onToggleFavorite }) {
                             {isFavorite(activeVariant.id) ? '❤️' : '🖤'}
                         </button>
                     </div>
+                    {/* Admin Edit Button */}
+                    <div className="favorite-container !relative !top-0 !right-0 !bg-black/40 !w-7 !h-7 !backdrop-blur-sm">
+                        <button
+                            className="favorite-btn flex items-center justify-center p-0"
+                            onClick={(e) => { e.stopPropagation(); setIsEditing(!isEditing); }}
+                            title="Edit Name/Country"
+                        >
+                            <Pencil className="w-3.5 h-3.5 text-zinc-300" />
+                        </button>
+                    </div>
                 </div>
 
                 <div className="variant-display-container">
@@ -154,6 +184,56 @@ export default function FacebaseCard({ group, isFavorite, onToggleFavorite }) {
                         </button>
                     </div>
                 </div>
+
+                {/* Edit Overlay */}
+                <AnimatePresence>
+                    {isEditing && (
+                        <motion.div 
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: 10 }}
+                            className="absolute inset-0 z-30 bg-[#1a1c24]/95 backdrop-blur-md flex flex-col p-4 space-y-3"
+                            onClick={e => e.stopPropagation()}
+                        >
+                            <div className="flex items-center justify-between border-b border-white/10 pb-2">
+                                <span className="text-xs font-bold text-[var(--gold2)] uppercase tracking-widest">Edit Face</span>
+                                <button onClick={() => setIsEditing(false)} className="text-zinc-500 hover:text-white">
+                                    <X className="w-4 h-4" />
+                                </button>
+                            </div>
+                            <div className="space-y-4 pt-2">
+                                <div>
+                                    <label className="text-[10px] text-zinc-500 font-bold uppercase mb-1 block">Base Name</label>
+                                    <input 
+                                        type="text" 
+                                        value={editName}
+                                        onChange={e => setEditName(e.target.value)}
+                                        className="w-full bg-black/40 border border-white/10 rounded-md h-9 px-3 text-sm text-white focus:outline-none focus:border-[var(--gold2)]"
+                                        placeholder="Natural..."
+                                    />
+                                </div>
+                                <div>
+                                    <label className="text-[10px] text-zinc-500 font-bold uppercase mb-1 block">Country / Category</label>
+                                    <input 
+                                        type="text" 
+                                        value={editCountry}
+                                        onChange={e => setEditCountry(e.target.value)}
+                                        className="w-full bg-black/40 border border-white/10 rounded-md h-9 px-3 text-sm text-white focus:outline-none focus:border-[var(--gold2)]"
+                                        placeholder="BRAZIL..."
+                                    />
+                                </div>
+                                <button 
+                                    disabled={saving}
+                                    onClick={handleSaveEdit}
+                                    className="w-full h-10 bg-[var(--gold2)] text-black font-bold text-xs uppercase tracking-widest rounded-lg hover:brightness-110 transition disabled:opacity-50 flex items-center justify-center gap-2 mt-4"
+                                >
+                                    {saving ? <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin"></div> : <Save className="w-4 h-4" />}
+                                    {saving ? 'Saving...' : 'Save Changes'}
+                                </button>
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
 
                 {/* Footer with Code Input and Copy Action */}
                 <div className="flex items-center gap-1.5 p-1 card-footer">

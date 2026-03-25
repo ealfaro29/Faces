@@ -3,11 +3,43 @@
 
 import { getRobloxThumbnailUrl } from './roblox-legacy.js';
 import { db } from '../core/firebase-config.js'; 
-import { collection, getDocs, updateDoc, doc } from "firebase/firestore";
+import { collection, getDocs, updateDoc, doc, writeBatch } from "firebase/firestore";
 import { getIsoCode } from './iso-utils.js';
 
 /**
- * Persistently updates an item's remoteUrl in Firestore.
+ * Updates a Facebase group (multiple variants) in Firestore.
+ * @param {Array} variantItems - Array of variant objects { id, displayName }
+ * @param {string} newBaseName - New name for the face (e.g. "Natural")
+ * @param {string} newCountry - New country code (e.g. "BRAZIL")
+ */
+export async function updateFacebaseGroup(variantItems, newBaseName, newCountry) {
+    if (!variantItems || !newBaseName || !newCountry) return;
+
+    const batch = writeBatch(db);
+    
+    variantItems.forEach(item => {
+        const itemRef = doc(db, 'facebases', item.id);
+        
+        // Determine the new display name: "BaseName", "BaseName S", or "BaseName X"
+        let finalDisplayName = newBaseName;
+        if (item.displayName.toUpperCase().endsWith(' S')) finalDisplayName += ' S';
+        else if (item.displayName.toUpperCase().endsWith(' X')) finalDisplayName += ' X';
+
+        batch.update(itemRef, {
+            displayName: finalDisplayName,
+            group: newCountry.toUpperCase(),
+            lastEdited: new Date().toISOString()
+        });
+    });
+
+    try {
+        await batch.commit();
+        console.log(`DB_BATCH: Successfully updated ${variantItems.length} facebase variants.`);
+    } catch (error) {
+        console.error("DB_BATCH: Error updating facebase group:", error);
+    }
+}
+/**
  * Used for "healing" broken image links.
  * @param {string} type - 'textures', 'facebases', 'avatar'
  * @param {string} docId - The Firestore document ID
