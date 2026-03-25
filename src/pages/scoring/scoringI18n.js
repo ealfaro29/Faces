@@ -1,5 +1,5 @@
 export const DEFAULT_SCORING_LANGUAGE = 'es';
-const STORAGE_KEY = 'faces-scoring-language';
+const STORAGE_KEY = 'pageants-scoring-language';
 
 export function normalizeScoringLanguage(value) {
   return value === 'en' ? 'en' : DEFAULT_SCORING_LANGUAGE;
@@ -36,7 +36,7 @@ export function getCountryDisplayName(country, language) {
 
 export const scoringCopy = {
   es: {
-    appTitle: `Sistema de Puntuacion v${typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : ''}`,
+    appTitle: `Pageants System v${typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : ''}`,
     languageLabel: 'Idioma',
     themeToggleLabel: 'Cambiar tema',
     accentLabel: 'Acento',

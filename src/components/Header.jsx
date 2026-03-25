@@ -57,7 +57,7 @@ export default function Header({ activeTab, setActiveTab }) {
 
     return (
         <header className="panel flex flex-col md:flex-row items-center justify-between p-4 gap-4" role="banner">
-            <a href="https://ealfaro29.github.io/Faces/index.html" target="_blank" rel="noreferrer" className="text-3xl lg:text-4xl title-fancy gold-title no-underline hover:brightness-110" aria-label="Fashion Muse Collection home">
+            <a href="https://pageants.app" target="_blank" rel="noreferrer" className="text-3xl lg:text-4xl title-fancy gold-title no-underline hover:brightness-110" aria-label="Pageants App home">
                 <h1>Fashion Muse Collection</h1>
             </a>
             <nav className="flex items-center justify-center flex-wrap gap-2" role="navigation" aria-label="Main navigation">

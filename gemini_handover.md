@@ -1,8 +1,8 @@
-# Gemini Handover — Faces Scoring Module
+# Pageants Handover — Pageants Scoring Module
 
 Updated: 2026-03-24
-Repo path: `/Users/tbnalfaro/Desktop/Apps Gerald/Faces`
-Live site: `https://ealfaro29.github.io/Faces/`
+Repo path: `/Users/tbnalfaro/Desktop/Apps Gerald/Pageants`
+Live site: `https://ealfaro29.github.io/Pageants/`
 Primary area: scoring flow under `/session/*`
 
 ## Current Git State
@@ -105,6 +105,7 @@ If the host sets the cutoff to `1`, that phase is treated as the final.
 - On reveal, the session is completed instead of creating a new phase.
 - Winner info is stored in the session document.
 - Connected users see a persistent winner celebration card.
+- Operational details for `pageants.app` domain.
 
 Session fields used for that:
 
@@ -255,7 +256,7 @@ Latest verified locally before this handover update:
 
 In this environment, SSH push may fail with:
 
-- `Permission to ealfaro29/Faces.git denied to deploy key`
+- `Permission to ealfaro29/Pageants.git denied to deploy key`
 
 If that happens again:
 

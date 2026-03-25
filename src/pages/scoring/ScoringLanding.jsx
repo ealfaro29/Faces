@@ -100,7 +100,7 @@ export default function ScoringLanding() {
         </div>
 
         <p className="text-[11px] text-app-muted/50 mt-10">
-          &copy; {new Date().getFullYear()} Faces · {t.footerByLabel}{' '}
+          &copy; {new Date().getFullYear()} Pageants · {t.footerByLabel}{' '}
           <a href="https://discord.com/users/angelmuse_87856" target="_blank" rel="noopener noreferrer" className="text-app-text/80 hover:text-app-text transition-colors underline decoration-app-border underline-offset-2">Angel Muse Doll</a>
         </p>
       </div>

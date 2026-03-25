@@ -1,5 +1,5 @@
 {
-  "name": "faces",
+  "name": "pageants",
   "version": "1.0.0",
   "description": "",
   "main": "app.js",
@@ -12,16 +12,16 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/ealfaro29/faces.git"
+    "url": "git+https://github.com/ealfaro29/pageants.git"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
   "bugs": {
-    "url": "https://github.com/ealfaro29/faces/issues"
+    "url": "https://github.com/ealfaro29/pageants/issues"
   },
-  "homepage": "https://github.com/ealfaro29/faces#readme",
+  "homepage": "https://github.com/ealfaro29/pageants#readme",
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.18",
     "@vitejs/plugin-react": "^5.1.4",

@@ -38,7 +38,7 @@ export default function Login() {
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             className="w-full mt-1 bg-zinc-950 border border-zinc-800 rounded-lg h-12 px-4 text-sm text-white focus:outline-none focus:border-[var(--gold2)] transition-colors"
-                            placeholder="admin@faces.com"
+                            placeholder="admin@pageants.app"
                         />
                     </div>
                     <div>

@@ -460,7 +460,7 @@ export default function PhaseReportModal({
             
             <div className="mt-6 text-center">
               <p className="text-[10px] text-app-muted/50 uppercase tracking-widest font-mono">
-                © {new Date().getFullYear()} Faces
+                © {new Date().getFullYear()} Pageants
               </p>
             </div>
           </div>

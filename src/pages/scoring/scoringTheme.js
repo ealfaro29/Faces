@@ -1,8 +1,8 @@
 export const DEFAULT_SCORING_THEME = 'dark';
 export const DEFAULT_SCORING_ACCENT = '#ffffff';
 
-const THEME_KEY = 'faces-scoring-theme';
-const ACCENT_KEY = 'faces-scoring-accent';
+const THEME_KEY = 'pageants-scoring-theme';
+const ACCENT_KEY = 'pageants-scoring-accent';
 
 export function normalizeScoringTheme(value) {
   return value === 'light' ? 'light' : DEFAULT_SCORING_THEME;

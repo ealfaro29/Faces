@@ -281,7 +281,7 @@ function Dashboard() {
                 </main>
             </div>
             <footer className="text-center py-4 text-zinc-500 text-sm">
-                <p>&copy; 2024 Fashion Muse. Migrating to React ⚛️.</p>
+                <p>&copy; 2026 Pageants. All rights reserved.</p>
             </footer>
         </>
     );
