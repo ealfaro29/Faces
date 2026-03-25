@@ -18,12 +18,23 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@700&family=Cinzel:wght@600&family=Quicksand:wght@500;700&family=Fira+Code:wght@400;600&display=swap"
         rel="stylesheet" />
-  <script type="module" crossorigin src="./assets/index-Mpc8ssBk.js"></script>
-  <link rel="stylesheet" crossorigin href="./assets/index-C09H1ZKs.css">
+  <script type="module" crossorigin src="/assets/index-DO5BYqG_.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-Cm4XWWWV.css">
 </head>
 
 <body>
     <div id="root"></div>
+    <!-- GitHub Pages SPA redirect recovery -->
+    <script>
+        (function(l) {
+            if (l.search[1] === '/') {
+                var decoded = l.search.slice(1).split('&').map(function(s) {
+                    return s.replace(/~and~/g, '&')
+                }).join('?');
+                window.history.replaceState(null, null, l.pathname.slice(0, -1) + decoded + l.hash);
+            }
+        }(window.location))
+    </script>
 </body>
 
 </html>
