@@ -259,11 +259,11 @@ function Dashboard({ user }) {
                 const matchesSearchCategory = item.category ? item.category.toLowerCase().includes(searchQuery.toLowerCase()) : false;
                 const matchesArtist = item.artist ? item.artist.toLowerCase().includes(searchQuery.toLowerCase()) : false;
                 const matchesSearchParam = matchesTitle || matchesSearchCategory || matchesArtist;
-
                 const matchesCategoryFilter = selectedCategory === 'all' || item.category === selectedCategory;
                 const isGrouped = groupedItemIds.has(item.id);
+                const isVisible = showHidden || !item.hidden;
 
-                return matchesSearchParam && matchesCategoryFilter && !isGrouped;
+                return matchesSearchParam && matchesCategoryFilter && !isGrouped && isVisible;
             });
             return (
                 <div className="pr-2 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
@@ -276,6 +276,8 @@ function Dashboard({ user }) {
                                 code={item}
                                 isFavorite={isFavorite}
                                 onToggleFavorite={toggleFavorite}
+                                isAdmin={!!user}
+                                onRefresh={reloadData}
                             />
                         </SelectionWrap>
                     ))}

@@ -16,8 +16,19 @@ export const getMusicIconPath = (category) => {
     return categoryMap[category] || defaultIcon;
 };
 
-export default function MusicCard({ code, isFavorite, onToggleFavorite }) {
+export default function MusicCard({ code, isFavorite, onToggleFavorite, isAdmin, onRefresh }) {
     const [copied, setCopied] = useState(false);
+    const isHidden = code.hidden;
+
+    const handleContextMenu = async (e) => {
+        if (!isAdmin) return;
+        e.preventDefault();
+        const action = isHidden ? 'unhide' : 'hide';
+        if (window.confirm(`Are you sure you want to ${action} this music code?`)) {
+            await toggleItemVisibility('music', code.id, !isHidden);
+            if (onRefresh) onRefresh();
+        }
+    };
 
     const handleCopy = () => {
         navigator.clipboard.writeText(code.id || '');
@@ -28,7 +39,10 @@ export default function MusicCard({ code, isFavorite, onToggleFavorite }) {
     const iconSrc = getMusicIconPath(code.category);
 
     return (
-        <div className="music-card facebase-card bg-[var(--card-light)] rounded-xl shadow-xl ring-1 ring-[var(--border)] overflow-hidden flex flex-col p-1.5 space-y-1.5 !w-full relative hover:ring-[var(--gold2)]/30 transition-all duration-200 hover:shadow-2xl hover:-translate-y-0.5">
+        <div 
+            onContextMenu={handleContextMenu}
+            className={`music-card facebase-card bg-[var(--card-light)] rounded-xl shadow-xl ring-1 ring-[var(--border)] overflow-hidden flex flex-col p-1.5 space-y-1.5 !w-full relative hover:ring-[var(--gold2)]/30 transition-all duration-200 hover:shadow-2xl hover:-translate-y-0.5 ${isHidden ? 'opacity-40 grayscale' : ''}`}
+        >
             <div className="favorite-container">
                 <button
                     className="favorite-btn"

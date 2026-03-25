@@ -131,7 +131,10 @@ export async function initializeAllData() {
         hidden: !!item.hidden
     }));
 
-    const allMusicCodes = sourceData.music || [];
+    const allMusicCodes = (sourceData.music || []).map(item => ({
+        ...item,
+        hidden: !!item.hidden
+    }));
     const facebaseCategories = generateFacebaseCategories(allFacebaseItems);
     const allTextureBasenames = allTextureItems.map(t => t.baseName);
 
