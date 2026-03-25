@@ -25,7 +25,7 @@ export default function Login() {
     return (
         <div className="min-h-screen flex items-center justify-center bg-[#0a0a0a] p-4 font-sans text-white">
             <div className="w-full max-w-sm bg-zinc-900 border border-zinc-800 rounded-2xl p-8 shadow-2xl flex flex-col items-center">
-                <img src="photos/app/logo.svg" alt="Fashion Muse" className="w-32 mb-6 drop-shadow-[0_0_15px_rgba(212,175,55,0.3)]" />
+                <img src="photos/app/logo.svg" alt="Pageants" className="w-32 mb-6 drop-shadow-[0_0_15px_rgba(212,175,55,0.3)]" />
                 <h1 className="text-2xl font-['Playfair_Display'] text-[var(--gold)] mb-2 text-center">Acceso Privado</h1>
                 <p className="text-zinc-500 text-sm text-center tracking-wide mb-8">Por favor, inicia sesión para acceder a la colección.</p>
 
