@@ -5,9 +5,7 @@ export const ISO_MAP = {
     'SPAIN': 'ES',
     'BRAZIL': 'BR',
     'UK': 'GB',
-    'UNITED KINGDOM': 'GB',
     'USA': 'US',
-    'UNITED STATES': 'US',
     'ZAMBIA': 'ZM',
     'IRELAND': 'IE',
     'ITALY': 'IT',
@@ -18,7 +16,6 @@ export const ISO_MAP = {
     'COSTA RICA': 'CR',
     'THAILAND': 'TH',
     'KOREA': 'KR',
-    'SOUTH KOREA': 'KR',
     'JAPAN': 'JP',
     'MEXICO': 'MX',
     'ARGENTINA': 'AR',
@@ -39,9 +36,17 @@ export const ISO_MAP = {
     'PHILIPPINES': 'PH'
 };
 
+export const ALIAS_MAP = {
+    'UNITED KINGDOM': 'UK',
+    'UNITED STATES': 'USA',
+    'SOUTH KOREA': 'KOREA'
+};
+
 export const getIsoCode = (countryName) => {
     if (!countryName) return null;
-    const cleanName = countryName.toUpperCase().trim();
+    let cleanName = countryName.toUpperCase().trim();
+    // Resolve alias if exists
+    if (ALIAS_MAP[cleanName]) cleanName = ALIAS_MAP[cleanName];
     return ISO_MAP[cleanName] || null;
 };
 
