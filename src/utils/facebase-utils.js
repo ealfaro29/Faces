@@ -1,6 +1,3 @@
-// src/utils/facebase-utils.js
-// Extracted from legacy core/search.js
-
 export function groupFacebaseVariants(items) {
     const grouped = {};
     const variantRegex = /^(.*?)( S| X)$/i;
@@ -9,13 +6,10 @@ export function groupFacebaseVariants(items) {
         if (!item) continue;
         
         let baseDisplayName = item.displayName;
-        let variant = 'default';
-
         const match = item.displayName.match(variantRegex);
 
         if (match) {
             baseDisplayName = match[1].trim();
-            variant = match[2].trim().toUpperCase();
         }
 
         const key = `${item.group}-${baseDisplayName}`;
@@ -24,17 +18,34 @@ export function groupFacebaseVariants(items) {
             grouped[key] = {
                 group: item.group,
                 baseDisplayName: baseDisplayName,
-                defaultItem: null,
-                variants: {}
+                items: []
             };
         }
 
-        grouped[key].variants[variant] = item;
-        if (variant === 'default') {
-            grouped[key].defaultItem = item;
-        }
+        grouped[key].items.push(item);
     }
 
-    // Ensure we have a default item for each group
-    return Object.values(grouped).filter(g => g.defaultItem);
+    return Object.values(grouped).map(g => {
+        const variants = {};
+        const itemsList = g.items;
+        
+        itemsList.forEach(item => {
+            const match = item.displayName.match(variantRegex);
+            const variant = match ? match[2].trim().toUpperCase() : 'default';
+            
+            // If this variant slot is already occupied, use a unique key to prevent disappearance
+            if (variants[variant]) {
+                variants[`${variant}_${item.id}`] = item;
+            } else {
+                variants[variant] = item;
+            }
+        });
+
+        return {
+            group: g.group,
+            baseDisplayName: g.baseDisplayName,
+            variants,
+            defaultItem: variants['default'] || itemsList[0]
+        };
+    });
 }
