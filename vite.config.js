@@ -6,7 +6,7 @@ export default defineConfig({
         __APP_VERSION__: JSON.stringify(new Date().toLocaleString('en-US', { month: 'short', day: '2-digit', hour: '2-digit', minute: '2-digit' }))
     },
     plugins: [react()],
-    base: './', // CRUCIAL: Usa rutas relativas para que funcione en GitHub Pages/subcarpetas
+    base: '/', // Absolute paths for BrowserRouter on custom domain
     server: {
         proxy: {
             '/api/roblox': {

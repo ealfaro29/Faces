@@ -7,10 +7,11 @@ import Card from './components/Card';
 import TextureCard from './components/TextureCard';
 import FacebaseCard from './components/FacebaseCard';
 import MusicCard from './components/MusicCard';
-import { Search } from 'lucide-react';
+import { Search, Layers, CheckSquare, Square, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { initializeAllData } from '../data-loader.js';
 import { useFavorites } from './hooks/useFavorites.js';
+import { useGroups } from './hooks/useGroups.js';
 import { groupTextureVariants } from '../tabs/textures.js';
 import { groupFacebaseVariants } from '../core/search.js';
 import CreateSession from './pages/scoring/CreateSession';
@@ -18,6 +19,7 @@ import JoinSession from './pages/scoring/JoinSession';
 import SessionBoard from './pages/scoring/SessionBoard';
 import ScoringLanding from './pages/scoring/ScoringLanding';
 import Login from './pages/Login';
+import GroupCard from './components/GroupCard';
 
 // Friendly names for texture category codes
 const TEXTURE_TYPE_MAP = { 'M': 'Mesh', 'T': 'Translucid', 'S': 'Solid' };
@@ -31,6 +33,44 @@ function Dashboard() {
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
     const { isFavorite, toggleFavorite } = useFavorites();
+    const { groups, createGroup, deleteGroup } = useGroups();
+
+    // Selection mode for grouping
+    const [selectionMode, setSelectionMode] = useState(false);
+    const [selectedItems, setSelectedItems] = useState(new Set());
+    const [showGroupDialog, setShowGroupDialog] = useState(false);
+    const [groupName, setGroupName] = useState('');
+
+    const toggleSelection = (itemId) => {
+        setSelectedItems(prev => {
+            const next = new Set(prev);
+            if (next.has(itemId)) next.delete(itemId); else next.add(itemId);
+            return next;
+        });
+    };
+
+    const handleCreateGroup = () => {
+        if (!groupName.trim() || selectedItems.size < 2) return;
+        createGroup(groupName.trim(), Array.from(selectedItems), Array.from(selectedItems)[0]);
+        setGroupName('');
+        setSelectedItems(new Set());
+        setSelectionMode(false);
+        setShowGroupDialog(false);
+    };
+
+    const cancelSelection = () => {
+        setSelectionMode(false);
+        setSelectedItems(new Set());
+        setShowGroupDialog(false);
+    };
+
+    // Build a flat list of all items for GroupCard lookups
+    const allFlatItems = data ? [
+        ...(data.allAvatarItems || []),
+        ...(data.allTextureItems || []),
+        ...(data.allFacebaseItems || []),
+        ...(data.allMusicCodes || []).map(m => ({ ...m, displayName: m.title }))
+    ] : [];
 
     // Per-tab search & filter state — preserved across tab switches
     const [tabState, setTabState] = useState({});
@@ -233,6 +273,16 @@ function Dashboard() {
         )
     };
 
+    // Filter groups relevant to the current tab
+    const tabGroups = groups.filter(g => {
+        if (!data) return false;
+        const tabItemIds = activeTab === 'avatar' ? data.allAvatarItems.map(i => i.id) :
+            activeTab === 'textures' ? data.allTextureItems.map(i => i.id) :
+            activeTab === 'facebases' ? data.allFacebaseItems.map(i => i.id) :
+            activeTab === 'music' ? (data.allMusicCodes || []).map(i => i.id) : [];
+        return g.itemIds.some(id => tabItemIds.includes(id));
+    });
+
     return (
         <>
             <div id="custom-toast"></div>
@@ -253,6 +303,22 @@ function Dashboard() {
                                 <Search className="w-5 h-5 text-zinc-400" />
                             </div>
                         </div>
+
+                        {/* Group toggle button */}
+                        {activeTab !== 'favorites' && (
+                            <button
+                                onClick={() => selectionMode ? cancelSelection() : setSelectionMode(true)}
+                                className={`flex-shrink-0 h-12 px-3 flex items-center gap-2 rounded-md border transition-all text-sm font-medium ${
+                                    selectionMode
+                                        ? 'bg-[var(--gold2)]/10 text-[var(--gold2)] border-[var(--gold2)]/40'
+                                        : 'bg-[var(--card-light)] text-zinc-400 border-[var(--border)] hover:text-[var(--gold2)] hover:border-[var(--gold2)]/30'
+                                }`}
+                                title={selectionMode ? 'Cancel selection' : 'Select items to group'}
+                            >
+                                <Layers className="w-4 h-4" />
+                                {selectionMode ? 'Cancel' : 'Group'}
+                            </button>
+                        )}
 
                         {/* Rendering Filter Dropdown if applicable */}
                         {activeTab !== 'favorites' && (
