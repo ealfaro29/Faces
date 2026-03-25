@@ -231,6 +231,7 @@ function Dashboard({ user }) {
                                 isAdmin={!!user}
                                 showHidden={showHidden}
                                 onRefresh={reloadData}
+                                onContextMenu={handleContextMenu}
                             />
                         </SelectionWrap>
                     ))}
@@ -266,6 +267,7 @@ function Dashboard({ user }) {
                                 isAdmin={!!user}
                                 showHidden={showHidden}
                                 onRefresh={reloadData}
+                                onContextMenu={handleContextMenu}
                             />
                         </SelectionWrap>
                     ))}
