@@ -65,5 +65,6 @@ export const getFlagEmoji = (isoCodeOrCountry) => {
 };
 
 export const getCountryList = () => {
-    return Object.keys(ISO_MAP).sort();
+    const list = new Set([...Object.keys(ISO_MAP), ...Object.keys(ALIAS_MAP)]);
+    return Array.from(list).sort();
 };
