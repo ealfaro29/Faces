@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { db } from '../../../core/firebase.js';
+import { db } from '../../core/firebase-config.js';
 import { doc, updateDoc } from 'firebase/firestore';
 import { Search, Plus, X, Globe, MapPin, Loader2 } from 'lucide-react';
 import { getCountryDisplayName, normalizeScoringLanguage, scoringCopy } from './scoringI18n';

@@ -1,24 +1,17 @@
-// data-loader.js
-import { getRobloxThumbnailUrl } from './utils/roblox.js';
-import { db } from './core/firebase.js'; // Import Firestore instance
+// src/utils/data-hooks.js
+// Extracted from legacy data-loader.js
+
+import { getRobloxThumbnailUrl } from './roblox-legacy.js';
+import { db } from '../core/firebase-config.js'; 
 import { collection, getDocs } from "firebase/firestore";
+import { getIsoCode } from './iso-utils.js';
 
-// Rutas de archivos JSON generados (FALLBACK)
-const DB_PATH = 'database.json';
-
-/**
- * Carga todos los datos JSON de la aplicación.
- * AHORA: Conecta a Firebase, fallback a JSON si falla.
- */
 export async function initializeAllData() {
     console.log("DATA_LOADER: ☁️ Starting Cloud Data Load (Firebase ONLY)...");
 
     let sourceData = { textures: [], facebases: [], avatar: [], music: [] };
-    let source = "FIREBASE";
 
     try {
-        console.log("DATA_LOADER: Fetching from Firestore...");
-
         const queries = [
             getDocs(collection(db, 'textures')).catch(e => { console.warn("Failed textures", e); return { empty: true, forEach: () => {} }; }),
             getDocs(collection(db, 'facebases')).catch(e => { console.warn("Failed facebases", e); return { empty: true, forEach: () => {} }; }),
@@ -28,10 +21,6 @@ export async function initializeAllData() {
 
         const [texSnap, faceSnap, avSnap, musicSnap] = await Promise.all(queries);
 
-        if (texSnap.empty && faceSnap.empty && avSnap.empty) {
-            console.warn("DATA_LOADER: Firestore queries returned empty or blocked by rules!");
-        }
-
         texSnap.forEach(doc => sourceData.textures.push({ ...doc.data(), id: doc.id }));
         faceSnap.forEach(doc => sourceData.facebases.push(doc.data()));
         avSnap.forEach(doc => sourceData.avatar.push(doc.data()));
@@ -39,54 +28,42 @@ export async function initializeAllData() {
 
     } catch (error) {
         console.error("DATA_LOADER: CRITICAL ERROR - Could not load from Firebase.", error);
-        // We no longer throw error since we catch individual collections above
     }
 
-    console.log(`DATA_LOADER: Cloud load complete. Items: T:${sourceData.textures.length} F:${sourceData.facebases.length} A:${sourceData.avatar.length} M:${sourceData.music.length}`);
-
-    // 2. Mapear y Normalizar datos (sourceData ya tiene la estructura correcta)
-    // TEXTURAS
+    // Normalizar texturas
     const allTextureItems = (sourceData.textures || []).map(item => ({
-        id: item.id || item.robloxId, // Fallback ID
-        group: item.type || item.category, // 'ST', 'M', etc. -> Check consistency
+        id: item.id || item.robloxId,
+        group: item.type || item.category,
         displayName: item.fullName || item.name,
         codeId: item.robloxId,
         src: item.remoteUrl || getRobloxThumbnailUrl(item.robloxId),
         type: 'texture',
-        baseName: item.baseName || item.name // "Peacock"
+        baseName: item.baseName || item.name
     }));
 
-    // FACEBASES
+    // Normalizar facebases
     const allFacebaseItems = (sourceData.facebases || []).map(item => ({
         id: item.id || item.robloxId,
-        group: (item.category || item.group || 'General').toUpperCase(), // "BRAZIL"
-        displayName: item.variant || item.name, // "Natural"
+        group: (item.category || item.group || 'General').toUpperCase(),
+        displayName: item.variant || item.name,
         codeId: item.robloxId,
         src: item.remoteUrl || getRobloxThumbnailUrl(item.robloxId),
         type: 'facebase'
     }));
 
-    // AVATAR ITEMS
+    // Normalizar avatar items
     const allAvatarItems = (sourceData.avatar || []).map(item => ({
         id: item.id || item.robloxId,
-        group: (item.category || 'General').toUpperCase(), // "HAIR"
+        group: (item.category || 'General').toUpperCase(),
         displayName: item.name,
         codeId: item.robloxId,
         src: item.remoteUrl || getRobloxThumbnailUrl(item.robloxId),
         type: 'avatar'
     }));
 
-    // MUSIC
-    // MUSIC
     const allMusicCodes = sourceData.music || [];
-
-    // CATEGORIAS (Regeneradas dinámicamente)
     const facebaseCategories = generateFacebaseCategories(allFacebaseItems);
-
-    // Texture Basenames (Compatibility)
     const allTextureBasenames = allTextureItems.map(t => t.baseName);
-
-    console.log(`DATA_LOADER: Procesamiento completo. ${allTextureItems.length} texturas, ${allFacebaseItems.length} facebases.`);
 
     return {
         allFacebaseItems,
@@ -99,12 +76,9 @@ export async function initializeAllData() {
     };
 }
 
-// Helper para regenerar categorías de facebases al vuelo (Sin cambios)
 function generateFacebaseCategories(items) {
     const countries = new Set();
     const others = new Set();
-
-    // Lista básica de ISOs conocidos
     const knownCountries = ['BRAZIL', 'UK', 'USA', 'ZAMBIA', 'IRELAND', 'ITALY', 'INDIA', 'BELGIUM', 'EGYPT', 'SPAIN', 'FRANCE', 'COSTA RICA', 'THAILAND', 'KOREA', 'JAPAN'];
 
     items.forEach(item => {
@@ -118,7 +92,7 @@ function generateFacebaseCategories(items) {
 
     return {
         countries: Array.from(countries).map(name => ({
-            name: name.charAt(0) + name.slice(1).toLowerCase(), // Capitalize "Brazil"
+            name: name.charAt(0) + name.slice(1).toLowerCase(),
             iso: getIsoCode(name)
         })),
         others: Array.from(others).map(name => ({
@@ -127,8 +101,3 @@ function generateFacebaseCategories(items) {
         }))
     };
 }
-
-import { getIsoCode } from './utils/countries.js';
-
-
-export const parseItemName = () => { };

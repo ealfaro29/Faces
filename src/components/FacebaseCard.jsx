@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Copy, Check, RefreshCw, Layers, Smile } from 'lucide-react';
 import { reloadRobloxImage } from '../utils/image-reload';
-import { getFlagEmoji } from '../../utils/countries.js';
+import { getFlagEmoji } from '../utils/iso-utils.js';
 
 /**
  * FacebaseCard — Displays a facebase variant group.

@@ -1,4 +1,6 @@
-// core/firebase.js
+// src/core/firebase-config.js
+// Extracted from legacy core/firebase.js
+
 import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";

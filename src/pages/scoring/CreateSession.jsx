@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { db } from '../../../core/firebase.js';
+import { db } from '../../core/firebase-config.js';
 import { doc, setDoc } from 'firebase/firestore';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 import ScoringLanguageToggle from './ScoringLanguageToggle';
