@@ -130,7 +130,14 @@ function Dashboard() {
         const renderTabGroups = () => {
             if (tabGroups.length === 0) return null;
             return tabGroups.map(g => (
-                <GroupCard key={g.id} group={g} allItems={allFlatItems} onDelete={deleteGroup} />
+                <GroupCard 
+                    key={g.id} 
+                    group={g} 
+                    allItems={allFlatItems} 
+                    onDelete={deleteGroup}
+                    isFavorite={isFavorite}
+                    onToggleFavorite={toggleFavorite}
+                />
             ));
         };
 
