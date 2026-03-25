@@ -42,6 +42,29 @@ function Dashboard({ user }) {
     const [showGroupDialog, setShowGroupDialog] = useState(false);
     const [groupName, setGroupName] = useState('');
 
+    // Context Menu State
+    const [contextMenu, setContextMenu] = useState({ visible: false, x: 0, y: 0, item: null });
+
+    const handleContextMenu = (e, item) => {
+        if (!user) return;
+        e.preventDefault();
+        setContextMenu({
+            visible: true,
+            x: e.clientX,
+            y: e.clientY,
+            item
+        });
+    };
+
+    const closeContextMenu = () => setContextMenu({ ...contextMenu, visible: false });
+
+    // Close menu on click outside
+    useEffect(() => {
+        const handleGlobalClick = () => closeContextMenu();
+        window.addEventListener('click', handleGlobalClick);
+        return () => window.removeEventListener('click', handleGlobalClick);
+    }, [contextMenu]);
+
     const toggleSelection = (itemId) => {
         setSelectedItems(prev => {
             const next = new Set(prev);
@@ -174,8 +197,8 @@ function Dashboard({ user }) {
                                 onToggleFavorite={toggleFavorite}
                                 type="avatar"
                                 isAdmin={!!user}
-                                isHidden={item.hidden}
                                 onRefresh={reloadData}
+                                onContextMenu={handleContextMenu}
                             />
                         </SelectionWrap>
                     ))}
@@ -278,6 +301,7 @@ function Dashboard({ user }) {
                                 onToggleFavorite={toggleFavorite}
                                 isAdmin={!!user}
                                 onRefresh={reloadData}
+                                onContextMenu={handleContextMenu}
                             />
                         </SelectionWrap>
                     ))}
@@ -441,6 +465,42 @@ function Dashboard({ user }) {
                             </motion.div>
                         </AnimatePresence>
                     </div>
+
+                    {/* Custom Context Menu */}
+                    <AnimatePresence>
+                        {contextMenu.visible && (
+                            <motion.div
+                                initial={{ opacity: 0, scale: 0.95 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                exit={{ opacity: 0, scale: 0.95 }}
+                                transition={{ duration: 0.1 }}
+                                style={{ top: contextMenu.y, left: contextMenu.x }}
+                                className="fixed z-[9999] min-w-[160px] bg-[#1a1c24] border border-zinc-800 rounded-lg shadow-2xl p-1 overflow-hidden backdrop-blur-xl"
+                                onClick={e => e.stopPropagation()}
+                            >
+                                <button
+                                    onClick={async () => {
+                                        const { type, id, isHidden } = contextMenu.item;
+                                        await toggleItemVisibility(type, id, !isHidden);
+                                        closeContextMenu();
+                                        reloadData();
+                                    }}
+                                    className="flex items-center gap-3 w-full px-3 py-2.5 text-sm text-zinc-300 hover:bg-white/5 hover:text-white rounded-md transition-colors"
+                                >
+                                    {contextMenu.item.isHidden ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                                    <span>{contextMenu.item.isHidden ? 'Show Item' : 'Hide Item'}</span>
+                                </button>
+                                <div className="h-[1px] bg-zinc-800 my-1 mx-2" />
+                                <button
+                                    onClick={closeContextMenu}
+                                    className="flex items-center gap-3 w-full px-3 py-2.5 text-sm text-zinc-500 hover:bg-white/5 hover:text-zinc-300 rounded-md transition-colors"
+                                >
+                                    <X className="w-4 h-4" />
+                                    <span>Cancel</span>
+                                </button>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
                 </main>
             </div>
             <footer className="text-center py-4 text-zinc-500 text-sm">

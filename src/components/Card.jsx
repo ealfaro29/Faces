@@ -3,19 +3,14 @@ import { Copy, Check, RefreshCw } from 'lucide-react';
 import { reloadRobloxImage } from '../utils/image-reload';
 import { updateItemImageUrl, toggleItemVisibility } from '../utils/data-hooks';
 
-export default function Card({ id, displayName, group, imageSrc, codeId, isFavorite, onToggleFavorite, type = 'avatar', isAdmin, isHidden, onRefresh }) {
+export default function Card({ id, displayName, group, imageSrc, codeId, isFavorite, onToggleFavorite, type = 'avatar', isAdmin, isHidden, onRefresh, onContextMenu }) {
     const [copied, setCopied] = useState(false);
     const [reloading, setReloading] = useState(false);
     const [overrideSrc, setOverrideSrc] = useState(null);
 
-    const handleContextMenu = async (e) => {
-        if (!isAdmin) return;
-        e.preventDefault();
-        const action = isHidden ? 'unhide' : 'hide';
-        if (window.confirm(`Are you sure you want to ${action} this item?`)) {
-            await toggleItemVisibility(type, id, !isHidden);
-            if (onRefresh) onRefresh();
-        }
+    const handleContextMenu = (e) => {
+        if (!isAdmin || !onContextMenu) return;
+        onContextMenu(e, { id, type, isHidden });
     };
 
     const handleCopy = () => {

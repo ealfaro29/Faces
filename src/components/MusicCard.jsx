@@ -16,18 +16,13 @@ export const getMusicIconPath = (category) => {
     return categoryMap[category] || defaultIcon;
 };
 
-export default function MusicCard({ code, isFavorite, onToggleFavorite, isAdmin, onRefresh }) {
+export default function MusicCard({ code, isFavorite, onToggleFavorite, isAdmin, onRefresh, onContextMenu }) {
     const [copied, setCopied] = useState(false);
     const isHidden = code.hidden;
 
-    const handleContextMenu = async (e) => {
-        if (!isAdmin) return;
-        e.preventDefault();
-        const action = isHidden ? 'unhide' : 'hide';
-        if (window.confirm(`Are you sure you want to ${action} this music code?`)) {
-            await toggleItemVisibility('music', code.id, !isHidden);
-            if (onRefresh) onRefresh();
-        }
+    const handleContextMenu = (e) => {
+        if (!isAdmin || !onContextMenu) return;
+        onContextMenu(e, { id: code.id, type: 'music', isHidden });
     };
 
     const handleCopy = () => {

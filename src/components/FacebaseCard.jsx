@@ -9,7 +9,7 @@ import { updateItemImageUrl, updateFacebaseGroup, toggleItemVisibility } from '.
  * FacebaseCard — Displays a facebase variant group.
  * Features a single "Cycle" button to toggle between expressions (Main, Closed, Side).
  */
-const FacebaseCard = ({ group, isFavorite, onToggleFavorite, isAdmin, showHidden, onRefresh }) => {
+const FacebaseCard = ({ group, isFavorite, onToggleFavorite, isAdmin, showHidden, onRefresh, onContextMenu }) => {
     const variantsList = Object.values(group.variants).filter(Boolean);
     const [activeVariant, setActiveVariant] = useState(group.defaultItem);
     const [reloading, setReloading] = useState(false);
@@ -22,14 +22,9 @@ const FacebaseCard = ({ group, isFavorite, onToggleFavorite, isAdmin, showHidden
 
     const isHidden = activeVariant.hidden;
 
-    const handleContextMenu = async (e) => {
-        if (!isAdmin) return;
-        e.preventDefault();
-        const action = isHidden ? 'unhide' : 'hide';
-        if (window.confirm(`Are you sure you want to ${action} this face expression?`)) {
-            await toggleItemVisibility('facebase', activeVariant.id, !isHidden);
-            if (onRefresh) onRefresh();
-        }
+    const handleContextMenu = (e) => {
+        if (!isAdmin || !onContextMenu) return;
+        onContextMenu(e, { id: activeVariant.id, type: 'facebase', isHidden });
     };
 
     const hasVariants = variantsList.length > 1;

@@ -8,7 +8,7 @@ import { updateItemImageUrl, toggleItemVisibility } from '../utils/data-hooks';
  * TextureCard — Displays a texture variant group.
  * Unified with the GroupCard style.
  */
-export default function TextureCard({ group, isFavorite, onToggleFavorite, isAdmin, showHidden, onRefresh }) {
+export default function TextureCard({ group, isFavorite, onToggleFavorite, isAdmin, showHidden, onRefresh, onContextMenu }) {
     const [copied, setCopied] = useState(false);
     const [showVariants, setShowVariants] = useState(false);
     const [activeVariant, setActiveVariant] = useState(group.mainVariant);
@@ -19,14 +19,9 @@ export default function TextureCard({ group, isFavorite, onToggleFavorite, isAdm
     const otherVariantsCount = group.variants.length - 1;
     const isHidden = activeVariant.hidden;
 
-    const handleContextMenu = async (e) => {
-        if (!isAdmin) return;
-        e.preventDefault();
-        const action = isHidden ? 'unhide' : 'hide';
-        if (window.confirm(`Are you sure you want to ${action} this texture variant?`)) {
-            await toggleItemVisibility('texture', activeVariant.id, !isHidden);
-            if (onRefresh) onRefresh();
-        }
+    const handleContextMenu = (e) => {
+        if (!isAdmin || !onContextMenu) return;
+        onContextMenu(e, { id: activeVariant.id, type: 'texture', isHidden });
     };
 
     const handleReloadImage = async (e) => {
