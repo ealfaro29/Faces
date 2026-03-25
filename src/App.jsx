@@ -159,8 +159,8 @@ function Dashboard() {
                     {renderTabGroups()}
                     {items.length === 0 ? (
                         <p className="col-span-full text-center text-zinc-500 py-10">No results found.</p>
-                    ) : items.map(item => (
-                        <SelectionWrap key={item.id} itemId={item.id}>
+                    ) : items.map((item, index) => (
+                        <SelectionWrap key={item.id || `avatar_${index}`} itemId={item.id}>
                             <Card
                                 id={item.id}
                                 displayName={item.displayName}
@@ -169,6 +169,7 @@ function Dashboard() {
                                 codeId={item.codeId}
                                 isFavorite={isFavorite(item.id)}
                                 onToggleFavorite={toggleFavorite}
+                                type="avatar"
                             />
                         </SelectionWrap>
                     ))}
@@ -297,7 +298,7 @@ function Dashboard() {
                 <div className="pr-2 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                     {favoriteItems.map(item => {
                         if (item._type === 'avatar') {
-                            return <Card key={item.id} id={item.id} displayName={item.displayName} group={item.group} imageSrc={item.src} codeId={item.codeId} isFavorite={isFavorite(item.id)} onToggleFavorite={toggleFavorite} />
+                            return <Card key={item.id} id={item.id} displayName={item.displayName} group={item.group} imageSrc={item.src} codeId={item.codeId} isFavorite={isFavorite(item.id)} onToggleFavorite={toggleFavorite} type="avatar" />
                         }
                         if (item._type === 'music') {
                             return <MusicCard key={item.id} code={item} isFavorite={isFavorite} onToggleFavorite={toggleFavorite} />
