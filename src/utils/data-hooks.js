@@ -268,7 +268,7 @@ export async function decoupleFacebaseNames() {
     console.log("DECAPPING: 💥 Starting Facebase decoupling...");
     try {
         const snap = await getDocs(collection(db, 'facebases'));
-        const allItems = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        const allItems = snap.docs.map(d => ({ ...d.data(), id: d.id }));
         const batch = writeBatch(db);
         let updateCount = 0;
 
