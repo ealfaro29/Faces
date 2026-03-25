@@ -110,6 +110,30 @@ function Dashboard() {
 
         if (!data) return <p className="text-red-500 text-center p-10">Error loading data.</p>;
 
+        // Helper: wraps a card with selection checkbox when in selection mode
+        const SelectionWrap = ({ itemId, children }) => {
+            if (!selectionMode) return children;
+            const isSelected = selectedItems.has(itemId);
+            return (
+                <div className="relative" onClick={() => toggleSelection(itemId)}>
+                    <div className={`absolute top-1 left-1 z-20 w-6 h-6 flex items-center justify-center rounded-md transition-all cursor-pointer ${isSelected ? 'bg-[var(--gold2)] text-black' : 'bg-black/60 text-zinc-300'}`}>
+                        {isSelected ? <CheckSquare className="w-4 h-4" /> : <Square className="w-4 h-4" />}
+                    </div>
+                    <div className={`transition-all ${isSelected ? 'ring-2 ring-[var(--gold2)] rounded-xl' : ''}`}>
+                        {children}
+                    </div>
+                </div>
+            );
+        };
+
+        // Render groups for the current tab
+        const renderTabGroups = () => {
+            if (tabGroups.length === 0) return null;
+            return tabGroups.map(g => (
+                <GroupCard key={g.id} group={g} allItems={allFlatItems} onDelete={deleteGroup} />
+            ));
+        };
+
         if (activeTab === 'avatar') {
             const avatarCategories = ['all', ...new Set(data.allAvatarItems.map(item => item.group).filter(Boolean))].sort();
 
@@ -121,19 +145,21 @@ function Dashboard() {
             });
             return (
                 <div className="pr-2 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                    {renderTabGroups()}
                     {items.length === 0 ? (
                         <p className="col-span-full text-center text-zinc-500 py-10">No results found.</p>
                     ) : items.map(item => (
-                        <Card
-                            key={item.id}
-                            id={item.id}
-                            displayName={item.displayName}
-                            group={item.group}
-                            imageSrc={item.src}
-                            codeId={item.codeId}
-                            isFavorite={isFavorite(item.id)}
-                            onToggleFavorite={toggleFavorite}
-                        />
+                        <SelectionWrap key={item.id} itemId={item.id}>
+                            <Card
+                                id={item.id}
+                                displayName={item.displayName}
+                                group={item.group}
+                                imageSrc={item.src}
+                                codeId={item.codeId}
+                                isFavorite={isFavorite(item.id)}
+                                onToggleFavorite={toggleFavorite}
+                            />
+                        </SelectionWrap>
                     ))}
                 </div>
             );
@@ -150,15 +176,17 @@ function Dashboard() {
             });
             return (
                 <div className="pr-2 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                    {renderTabGroups()}
                     {groups.length === 0 ? (
                         <p className="col-span-full text-center text-zinc-500 py-10">No results found.</p>
                     ) : groups.map(group => (
-                        <TextureCard
-                            key={group.baseName}
-                            group={group}
-                            isFavorite={isFavorite}
-                            onToggleFavorite={toggleFavorite}
-                        />
+                        <SelectionWrap key={group.baseName} itemId={group.mainVariant.id}>
+                            <TextureCard
+                                group={group}
+                                isFavorite={isFavorite}
+                                onToggleFavorite={toggleFavorite}
+                            />
+                        </SelectionWrap>
                     ))}
                 </div>
             );
@@ -178,15 +206,17 @@ function Dashboard() {
             });
             return (
                 <div className="pr-2 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                    {renderTabGroups()}
                     {groups.length === 0 ? (
                         <p className="col-span-full text-center text-zinc-500 py-10">No results found.</p>
                     ) : groups.map(group => (
-                        <FacebaseCard
-                            key={group.baseDisplayName + group.group}
-                            group={group}
-                            isFavorite={isFavorite}
-                            onToggleFavorite={toggleFavorite}
-                        />
+                        <SelectionWrap key={group.baseDisplayName + group.group} itemId={group.defaultItem.id}>
+                            <FacebaseCard
+                                group={group}
+                                isFavorite={isFavorite}
+                                onToggleFavorite={toggleFavorite}
+                            />
+                        </SelectionWrap>
                     ))}
                 </div>
             );
@@ -208,15 +238,17 @@ function Dashboard() {
             });
             return (
                 <div className="pr-2 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                    {renderTabGroups()}
                     {items.length === 0 ? (
                         <p className="col-span-full text-center text-zinc-500 py-10">No results found.</p>
                     ) : items.map((item, index) => (
-                        <MusicCard
-                            key={item.id || `music_${index}`}
-                            code={item}
-                            isFavorite={isFavorite}
-                            onToggleFavorite={toggleFavorite}
-                        />
+                        <SelectionWrap key={item.id || `music_${index}`} itemId={item.id}>
+                            <MusicCard
+                                code={item}
+                                isFavorite={isFavorite}
+                                onToggleFavorite={toggleFavorite}
+                            />
+                        </SelectionWrap>
                     ))}
                 </div>
             );
@@ -368,6 +400,59 @@ function Dashboard() {
             <footer className="text-center py-4 text-zinc-500 text-sm">
                 <p>&copy; 2026 Pageants. All rights reserved.</p>
             </footer>
+
+            {/* Floating selection toolbar */}
+            <AnimatePresence>
+                {selectionMode && (
+                    <motion.div
+                        initial={{ y: 100, opacity: 0 }}
+                        animate={{ y: 0, opacity: 1 }}
+                        exit={{ y: 100, opacity: 0 }}
+                        className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-[#1a1c24] border border-[var(--border)] rounded-2xl shadow-2xl px-5 py-3 flex items-center gap-4"
+                    >
+                        <span className="text-sm text-zinc-300">
+                            <span className="font-bold text-[var(--gold2)]">{selectedItems.size}</span> selected
+                        </span>
+
+                        {showGroupDialog ? (
+                            <div className="flex items-center gap-2">
+                                <input
+                                    type="text"
+                                    placeholder="Group name..."
+                                    value={groupName}
+                                    onChange={(e) => setGroupName(e.target.value)}
+                                    onKeyDown={(e) => e.key === 'Enter' && handleCreateGroup()}
+                                    className="h-9 px-3 text-sm dark-input rounded-lg w-40"
+                                    autoFocus
+                                />
+                                <button
+                                    onClick={handleCreateGroup}
+                                    disabled={!groupName.trim() || selectedItems.size < 2}
+                                    className="h-9 px-4 bg-[var(--gold2)] text-black text-sm font-semibold rounded-lg hover:brightness-110 transition disabled:opacity-40 disabled:cursor-not-allowed"
+                                >
+                                    Create
+                                </button>
+                                <button onClick={() => setShowGroupDialog(false)} className="text-zinc-400 hover:text-white">
+                                    <X className="w-4 h-4" />
+                                </button>
+                            </div>
+                        ) : (
+                            <button
+                                onClick={() => setShowGroupDialog(true)}
+                                disabled={selectedItems.size < 2}
+                                className="h-9 px-4 bg-[var(--gold2)] text-black text-sm font-semibold rounded-lg hover:brightness-110 transition flex items-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed"
+                            >
+                                <Layers className="w-4 h-4" />
+                                Create Group
+                            </button>
+                        )}
+
+                        <button onClick={cancelSelection} className="text-zinc-400 hover:text-white transition">
+                            <X className="w-5 h-5" />
+                        </button>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </>
     );
 }
