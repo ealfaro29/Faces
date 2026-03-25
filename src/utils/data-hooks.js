@@ -27,7 +27,10 @@ export async function updateFacebaseGroup(variantItems, newBaseName, newCountry)
 
         batch.update(itemRef, {
             displayName: finalDisplayName,
+            name: finalDisplayName,
+            variant: finalDisplayName,
             group: newCountry.toUpperCase(),
+            category: newCountry.toUpperCase(),
             lastEdited: new Date().toISOString()
         });
     });
@@ -97,32 +100,35 @@ export async function initializeAllData() {
     // Normalizar texturas
     const allTextureItems = (sourceData.textures || []).map(item => ({
         id: item.id || item.robloxId,
-        group: item.type || item.category,
-        displayName: item.fullName || item.name,
+        group: item.category || item.group || item.type,
+        displayName: item.displayName || item.fullName || item.name,
         codeId: item.robloxId,
         src: item.remoteUrl || getRobloxThumbnailUrl(item.robloxId),
         type: 'texture',
-        baseName: item.baseName || item.name
+        baseName: item.baseName || item.name,
+        hidden: !!item.hidden
     }));
 
     // Normalizar facebases
     const allFacebaseItems = (sourceData.facebases || []).map(item => ({
         id: item.id || item.robloxId,
-        group: (item.category || item.group || 'General').toUpperCase(),
-        displayName: item.variant || item.name,
+        group: (item.group || item.category || 'General').toUpperCase(),
+        displayName: item.displayName || item.name || item.variant,
         codeId: item.robloxId,
         src: item.remoteUrl || getRobloxThumbnailUrl(item.robloxId),
-        type: 'facebase'
+        type: 'facebase',
+        hidden: !!item.hidden
     }));
 
     // Normalizar avatar items
     const allAvatarItems = (sourceData.avatar || []).map(item => ({
         id: item.id || item.robloxId,
-        group: (item.category || 'General').toUpperCase(),
-        displayName: item.name,
+        group: (item.category || item.group || 'General').toUpperCase(),
+        displayName: item.displayName || item.name,
         codeId: item.robloxId,
         src: item.remoteUrl || getRobloxThumbnailUrl(item.robloxId),
-        type: 'avatar'
+        type: 'avatar',
+        hidden: !!item.hidden
     }));
 
     const allMusicCodes = sourceData.music || [];
