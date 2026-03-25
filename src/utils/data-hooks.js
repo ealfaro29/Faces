@@ -88,10 +88,10 @@ export async function initializeAllData() {
 
         const [texSnap, faceSnap, avSnap, musicSnap] = await Promise.all(queries);
 
-        texSnap.forEach(doc => sourceData.textures.push({ ...doc.data(), id: doc.id }));
-        faceSnap.forEach(doc => sourceData.facebases.push({ ...doc.data(), id: doc.id }));
-        avSnap.forEach(doc => sourceData.avatar.push({ ...doc.data(), id: doc.id }));
-        musicSnap.forEach(doc => sourceData.music.push({ ...doc.data(), id: doc.id }));
+        texSnap.forEach(doc => sourceData.textures.push({ ...doc.data(), docId: doc.id }));
+        faceSnap.forEach(doc => sourceData.facebases.push({ ...doc.data(), docId: doc.id }));
+        avSnap.forEach(doc => sourceData.avatar.push({ ...doc.data(), docId: doc.id }));
+        musicSnap.forEach(doc => sourceData.music.push({ ...doc.data(), docId: doc.id }));
 
     } catch (error) {
         console.error("DATA_LOADER: CRITICAL ERROR - Could not load from Firebase.", error);
@@ -99,7 +99,7 @@ export async function initializeAllData() {
 
     // Normalizar texturas
     const allTextureItems = (sourceData.textures || []).map(item => ({
-        id: item.id || item.robloxId,
+        id: item.docId,
         group: item.category || item.group || item.type,
         displayName: item.displayName || item.fullName || item.name,
         codeId: item.robloxId,
@@ -111,7 +111,7 @@ export async function initializeAllData() {
 
     // Normalizar facebases
     const allFacebaseItems = (sourceData.facebases || []).map(item => ({
-        id: item.id || item.robloxId,
+        id: item.docId, // Use the real Firestore Document ID
         group: (item.group || item.category || 'General').toUpperCase(),
         displayName: item.displayName || item.name || item.variant,
         codeId: item.robloxId,
@@ -122,7 +122,7 @@ export async function initializeAllData() {
 
     // Normalizar avatar items
     const allAvatarItems = (sourceData.avatar || []).map(item => ({
-        id: item.id || item.robloxId,
+        id: item.docId,
         group: (item.category || item.group || 'General').toUpperCase(),
         displayName: item.displayName || item.name,
         codeId: item.robloxId,
