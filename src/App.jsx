@@ -126,6 +126,9 @@ function Dashboard() {
             );
         };
 
+        // Collect all item IDs that are already in custom groups for this tab
+        const groupedItemIds = new Set(tabGroups.flatMap(g => g.itemIds));
+
         // Render groups for the current tab
         const renderTabGroups = () => {
             if (tabGroups.length === 0) return null;
@@ -148,7 +151,8 @@ function Dashboard() {
                 const matchesSearch = item.displayName.toLowerCase().includes(searchQuery.toLowerCase()) ||
                     item.group?.toLowerCase().includes(searchQuery.toLowerCase());
                 const matchesCategory = selectedCategory === 'all' || item.group === selectedCategory;
-                return matchesSearch && matchesCategory;
+                const isGrouped = groupedItemIds.has(item.id);
+                return matchesSearch && matchesCategory && !isGrouped;
             });
             return (
                 <div className="pr-2 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
@@ -179,7 +183,8 @@ function Dashboard() {
             const groups = rawTextureGroups.filter(group => {
                 const matchesSearch = group.baseName.toLowerCase().includes(searchQuery.toLowerCase());
                 const matchesCategory = selectedCategory === 'all' || group.variants.some(v => v.group === selectedCategory);
-                return matchesSearch && matchesCategory;
+                const isGrouped = groupedItemIds.has(group.mainVariant.id);
+                return matchesSearch && matchesCategory && !isGrouped;
             });
             return (
                 <div className="pr-2 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
@@ -208,8 +213,9 @@ function Dashboard() {
                     group.baseDisplayName.toLowerCase().includes(searchQuery.toLowerCase()) ||
                     group.group.toLowerCase().includes(searchQuery.toLowerCase());
                 const matchesCategory = selectedCategory === 'all' || group.group === selectedCategory.toUpperCase();
+                const isGrouped = groupedItemIds.has(group.defaultItem.id);
 
-                return matchesSearch && matchesCategory;
+                return matchesSearch && matchesCategory && !isGrouped;
             });
             return (
                 <div className="pr-2 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
@@ -240,8 +246,9 @@ function Dashboard() {
                 const matchesSearchParam = matchesTitle || matchesSearchCategory || matchesArtist;
 
                 const matchesCategoryFilter = selectedCategory === 'all' || item.category === selectedCategory;
+                const isGrouped = groupedItemIds.has(item.id);
 
-                return matchesSearchParam && matchesCategoryFilter;
+                return matchesSearchParam && matchesCategoryFilter && !isGrouped;
             });
             return (
                 <div className="pr-2 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
