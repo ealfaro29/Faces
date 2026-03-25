@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Camera, Clock, UploadCloud, Ticket, Sun, Moon, Crown, Heart, Zap, Diamond } from 'lucide-react';
+import { Camera, Clock, UploadCloud, Ticket, Sun, Moon, Crown, Heart, Zap, Diamond, Trophy } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import AdminModal from './AdminModal';
 import PhotosModal from './PhotosModal';
@@ -95,6 +95,9 @@ export default function Header({ activeTab, setActiveTab }) {
                 <button onClick={() => setIsTicketOpen(true)} className="w-10 h-10 flex items-center justify-center bg-[var(--card-lighter)] text-[var(--gold2)] rounded-full border border-transparent hover:border-[var(--border)] hover:scale-110 transition-all text-xl" aria-label="Copy ticket names" title="Ticket Names">
                     <Ticket className="w-5 h-5" />
                 </button>
+                <Link to="/session" className="w-10 h-10 flex items-center justify-center bg-[var(--card-lighter)] text-[var(--gold2)] rounded-full border border-transparent hover:border-[var(--border)] hover:scale-110 transition-all text-xl" aria-label="Open Scoring Sessions" title="Scoring Sessions">
+                    <Trophy className="w-5 h-5" />
+                </Link>
                 <a href="https://gemini.google.com/gem/45de6cb382e1" target="_blank" rel="noreferrer" className="w-10 h-10 flex items-center justify-center bg-[var(--card-lighter)] text-[var(--gold2)] rounded-full border border-transparent hover:border-[var(--border)] hover:scale-110 transition-all" aria-label="Open Gemini Gem" title="AI Assistant">
                     <Diamond className="w-5 h-5" />
                 </a>
