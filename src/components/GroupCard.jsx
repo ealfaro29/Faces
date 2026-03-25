@@ -1,13 +1,11 @@
-import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Copy, Check, RefreshCw, Layers, Trash2, X } from 'lucide-react';
+import { Copy, Check, RefreshCw, Layers, Trash2, X, Smile } from 'lucide-react';
 import { reloadRobloxImage } from '../utils/image-reload';
 
 /**
  * GroupCard — Displays a user-created group.
  * Features a stacked visual to indicate multiple items.
  */
-export default function GroupCard({ group, allItems, onDelete, isFavorite, onToggleFavorite }) {
+export default function GroupCard({ group, allItems, onDelete, isFavorite, onToggleFavorite, isFacebaseTab, isAdmin, onContextMenu }) {
     const [copied, setCopied] = useState(false);
     const [showVariants, setShowVariants] = useState(false);
     const [reloading, setReloading] = useState(false);
@@ -25,8 +23,23 @@ export default function GroupCard({ group, allItems, onDelete, isFavorite, onTog
 
     if (items.length === 0) return null;
 
+    const isHidden = activeVariant.hidden;
     const hasVariants = items.length > 1;
     const otherVariantsCount = items.length - 1;
+
+    const handleContextMenu = (e) => {
+        if (!isAdmin || !onContextMenu) return;
+        onContextMenu(e, { id: activeVariant.id, type: activeVariant.type, isHidden });
+    };
+
+    const handleCycle = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const currentIndex = items.findIndex(i => i.id === activeVariant.id);
+        const nextIndex = (currentIndex + 1) % items.length;
+        setActiveVariant(items[nextIndex]);
+        setOverrideSrc(null);
+    };
 
     const handleReloadImage = async (e) => {
         e.stopPropagation();
@@ -64,7 +77,10 @@ export default function GroupCard({ group, allItems, onDelete, isFavorite, onTog
             )}
 
             {/* Main Card Container */}
-            <div className={`relative z-10 music-card facebase-card bg-[var(--card-light)] rounded-xl shadow-xl ring-1 ring-[var(--border)] overflow-hidden flex flex-col p-1.5 space-y-1.5 !w-full group/card hover:ring-[var(--gold2)]/30 transition-all duration-200 hover:shadow-2xl hover:-translate-y-0.5 ${showVariants ? 'show-variants' : ''}`}>
+            <div 
+                onContextMenu={handleContextMenu}
+                className={`relative z-10 music-card facebase-card bg-[var(--card-light)] rounded-xl shadow-xl ring-1 ring-[var(--border)] overflow-hidden flex flex-col p-1.5 space-y-1.5 !w-full group/card hover:ring-[var(--gold2)]/30 transition-all duration-200 hover:shadow-2xl hover:-translate-y-0.5 ${isHidden ? 'opacity-40 grayscale' : ''} ${showVariants ? 'show-variants' : ''}`}
+            >
                 
                 {/* Header: Favorites and Delete */}
                 <div className="absolute top-1.5 right-1.5 z-20 flex items-center gap-1.5">
@@ -115,19 +131,29 @@ export default function GroupCard({ group, allItems, onDelete, isFavorite, onTog
                             <RefreshCw className="w-3.5 h-3.5" />
                         </button>
 
-                        {/* Variant Gallery Toggle (Standard +N button) */}
+                        {/* Cycle button for Facebases, otherwise Variant Gallery button */}
                         {hasVariants && (
-                            <button
-                                className="variant-indicator-btn"
-                                title={`Show all ${items.length} items`}
-                                onClick={(e) => {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    setShowVariants(true);
-                                }}
-                            >
-                                {otherVariantsCount}+
-                            </button>
+                            isFacebaseTab ? (
+                                <button 
+                                    className={`variant-toggle-btn absolute bottom-2 right-2 w-9 h-9 rounded-full flex items-center justify-center transition-all backdrop-blur-md shadow-lg border border-white/20 bg-black/60 text-white hover:bg-black/80`}
+                                    onClick={handleCycle}
+                                    title="Cycle Faces"
+                                >
+                                    <Smile className="w-5 h-5" />
+                                </button>
+                            ) : (
+                                <button
+                                    className="variant-indicator-btn"
+                                    title={`Show all ${items.length} items`}
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        setShowVariants(true);
+                                    }}
+                                >
+                                    {otherVariantsCount}+
+                                </button>
+                            )
                         )}
                     </div>
                 </div>

@@ -165,6 +165,9 @@ function Dashboard({ user }) {
                     onDelete={deleteGroup}
                     isFavorite={isFavorite}
                     onToggleFavorite={toggleFavorite}
+                    isFacebaseTab={activeTab === 'facebases'}
+                    isAdmin={!!user}
+                    onContextMenu={handleContextMenu}
                 />
             ));
         };
