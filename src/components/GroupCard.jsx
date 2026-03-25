@@ -1,5 +1,6 @@
 import { Copy, Check, RefreshCw, Layers, Trash2, X, Smile } from 'lucide-react';
 import { reloadRobloxImage } from '../utils/image-reload';
+import { getFlagEmoji } from '../utils/iso-utils.js';
 
 /**
  * GroupCard — Displays a user-created group.
@@ -105,6 +106,11 @@ export default function GroupCard({ group, allItems, onDelete, isFavorite, onTog
                     {/* Standardized Header Icon & Title */}
                     <div className="text-xs text-[var(--ink)] font-medium px-1 h-8 flex items-center justify-start gap-1.5">
                         <Layers className="w-3.5 h-3.5 text-[var(--gold2)] flex-shrink-0" />
+                        {isFacebaseTab && getFlagEmoji(activeVariant.group) && (
+                            <span className="text-xl flag-emoji flex-shrink-0" title={activeVariant.group}>
+                                {getFlagEmoji(activeVariant.group)}
+                            </span>
+                        )}
                         <span className="truncate main-display-name">{group.name}</span>
                         {hasVariants && (
                             <span className="text-[10px] font-bold text-zinc-500 uppercase flex-shrink-0">
