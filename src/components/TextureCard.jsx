@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Copy, Check, RefreshCw } from 'lucide-react';
+import { reloadRobloxImage } from '../utils/image-reload';
 
 export default function TextureCard({ group, isFavorite, onToggleFavorite }) {
     const [copied, setCopied] = useState(false);
@@ -18,22 +19,8 @@ export default function TextureCard({ group, isFavorite, onToggleFavorite }) {
         if (!assetId || reloading) return;
         setReloading(true);
         try {
-            const proxies = [
-                `https://api.allorigins.win/raw?url=${encodeURIComponent(`https://thumbnails.roblox.com/v1/assets?assetIds=${assetId}&size=420x420&format=Png&isCircular=false`)}`,
-                `https://corsproxy.io/?${encodeURIComponent(`https://thumbnails.roblox.com/v1/assets?assetIds=${assetId}&size=420x420&format=Png&isCircular=false`)}`
-            ];
-            for (const url of proxies) {
-                try {
-                    const res = await fetch(url);
-                    if (res.ok) {
-                        const data = await res.json();
-                        if (data.data?.[0]?.state === 'Completed') {
-                            setOverrideSrc(data.data[0].imageUrl);
-                            break;
-                        }
-                    }
-                } catch {}
-            }
+            const newSrc = await reloadRobloxImage(assetId);
+            if (newSrc) setOverrideSrc(newSrc);
         } finally {
             setReloading(false);
         }

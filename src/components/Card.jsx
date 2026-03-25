@@ -1,5 +1,6 @@
 import React from 'react';
 import { Copy, Check, Heart, RefreshCw } from 'lucide-react';
+import { reloadRobloxImage } from '../utils/image-reload';
 
 export default function Card({ id, displayName, group, imageSrc, codeId, isFavorite, onToggleFavorite }) {
     const [copied, setCopied] = React.useState(false);
@@ -17,22 +18,8 @@ export default function Card({ id, displayName, group, imageSrc, codeId, isFavor
         if (!codeId || reloading) return;
         setReloading(true);
         try {
-            const proxies = [
-                `https://api.allorigins.win/raw?url=${encodeURIComponent(`https://thumbnails.roblox.com/v1/assets?assetIds=${codeId}&size=420x420&format=Png&isCircular=false`)}`,
-                `https://corsproxy.io/?${encodeURIComponent(`https://thumbnails.roblox.com/v1/assets?assetIds=${codeId}&size=420x420&format=Png&isCircular=false`)}`
-            ];
-            for (const url of proxies) {
-                try {
-                    const res = await fetch(url);
-                    if (res.ok) {
-                        const data = await res.json();
-                        if (data.data?.[0]?.state === 'Completed') {
-                            setCurrentSrc(data.data[0].imageUrl);
-                            break;
-                        }
-                    }
-                } catch {} // try next proxy
-            }
+            const newSrc = await reloadRobloxImage(codeId);
+            if (newSrc) setCurrentSrc(newSrc);
         } finally {
             setReloading(false);
         }
