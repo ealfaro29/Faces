@@ -24,6 +24,12 @@ export default function GroupCard({ group, allItems, onDelete, isFavorite, onTog
         items.find(i => i.id === group.coverItemId) || items[0]
     );
 
+    // Sync state when data reloads
+    React.useEffect(() => {
+        const next = items.find(i => i.id === group.coverItemId) || items[0];
+        setActiveVariant(next);
+    }, [group.id, group.coverItemId, items.length]);
+
     if (items.length === 0) return null;
 
     const isHidden = activeVariant.hidden;

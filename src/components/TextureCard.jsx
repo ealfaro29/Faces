@@ -15,6 +15,11 @@ export default function TextureCard({ group, isFavorite, onToggleFavorite, isAdm
     const [reloading, setReloading] = useState(false);
     const [overrideSrc, setOverrideSrc] = useState(null);
 
+    // Sync state when data reloads
+    React.useEffect(() => {
+        setActiveVariant(group.mainVariant);
+    }, [group.mainVariant.id]);
+
     const hasVariants = group.variants.length > 1;
     const otherVariantsCount = group.variants.length - 1;
     const isHidden = activeVariant.hidden;

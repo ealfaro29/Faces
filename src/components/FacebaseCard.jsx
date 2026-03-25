@@ -14,6 +14,11 @@ const FacebaseCard = ({ group, isFavorite, onToggleFavorite, isAdmin, showHidden
     const [activeVariant, setActiveVariant] = useState(group.defaultItem);
     const [reloading, setReloading] = useState(false);
     const [overrideSrc, setOverrideSrc] = useState(null);
+
+    // Sync activeVariant when group/variants change
+    React.useEffect(() => {
+        setActiveVariant(group.defaultItem);
+    }, [group.defaultItem.id]);
     const [isEditing, setIsEditing] = useState(false);
     const [editName, setEditName] = useState(group.baseDisplayName);
     const [editCountry, setEditCountry] = useState(group.group);
