@@ -4,7 +4,7 @@ import { auth, db } from '../core/firebase-config.js';
 import { signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "firebase/auth";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 
-import { migrateFacebaseCountries } from '../utils/data-hooks.js';
+import { migrateFacebaseCountries, decoupleFacebaseNames } from '../utils/data-hooks.js';
 import { getCountryList } from '../utils/iso-utils.js';
 
 const CATEGORIES = {
@@ -24,6 +24,7 @@ export default function AdminModal({ isOpen, onClose }) {
     const [msg, setMsg] = useState({ text: '', type: '' });
     const [isSaving, setIsSaving] = useState(false);
     const [isMigrating, setIsMigrating] = useState(false);
+    const [isDecoupling, setIsDecoupling] = useState(false);
 
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -144,6 +145,21 @@ export default function AdminModal({ isOpen, onClose }) {
         }
     };
 
+    const handleDecouple = async () => {
+        if (!confirm("This will ensure all Facebases have unique names by adding suffixes (1, 2...) to duplicates. Proceed?")) return;
+        setIsDecoupling(true);
+        setMsg({ text: 'Decoupling assets...', type: '' });
+        try {
+            const count = await decoupleFacebaseNames();
+            setMsg({ text: `✅ Success! Adjusted ${count} items to be unique.`, type: 'success' });
+            // The parent might need to refresh, but usually the real-time sync or next reload handles it.
+        } catch (error) {
+            setMsg({ text: '❌ ' + error.message, type: 'error' });
+        } finally {
+            setIsDecoupling(false);
+        }
+    };
+
     if (!isOpen) return null;
 
     return ReactDOM.createPortal(
@@ -175,6 +191,9 @@ export default function AdminModal({ isOpen, onClose }) {
                                 <span className="text-sm text-zinc-100 font-bold">{user.email}</span>
                                 <button onClick={handleMigrate} disabled={isMigrating} className="text-[10px] text-[var(--gold2)] uppercase font-bold tracking-widest hover:underline mt-1 text-left">
                                     {isMigrating ? 'Running Migration...' : '⚡ Standardize Data'}
+                                </button>
+                                <button onClick={handleDecouple} disabled={isDecoupling} className="text-[10px] text-orange-400 uppercase font-bold tracking-widest hover:underline mt-1 text-left">
+                                    {isDecoupling ? 'Exploding Groups...' : '💥 Decouple Assets'}
                                 </button>
                             </div>
                             <button onClick={handleLogout} className="text-red-400 hover:text-red-300 text-sm underline">Logout</button>

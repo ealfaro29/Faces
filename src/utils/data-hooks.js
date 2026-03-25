@@ -252,3 +252,57 @@ export async function toggleItemVisibility(type, docId, hidden) {
         console.error("DB_UPDATE: Error toggling visibility:", error);
     }
 }
+/**
+ * Decouples Facebases by ensuring every document has a unique name+country combination.
+ * If duplicates are found, they are suffixed with (1), (2), etc.
+ * This effectively "breaks" unintended groups.
+ */
+export async function decoupleFacebaseNames() {
+    console.log("DECAPPING: 💥 Starting Facebase decoupling...");
+    try {
+        const snap = await getDocs(collection(db, 'facebases'));
+        const allItems = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        const batch = writeBatch(db);
+        let updateCount = 0;
+
+        // Group by EXACT Country + DisplayName
+        const collisionMap = {};
+        allItems.forEach(item => {
+            const name = (item.displayName || item.name || '').trim();
+            const group = (item.group || item.category || 'General').toUpperCase().trim();
+            const key = `${group}|${name}`;
+            if (!collisionMap[key]) collisionMap[key] = [];
+            collisionMap[key].push(item);
+        });
+
+        // Resolve collisions
+        Object.entries(collisionMap).forEach(([key, items]) => {
+            if (items.length > 1) {
+                // We have multiple items with the exact same name and country
+                items.forEach((item, index) => {
+                    const originalName = (item.displayName || item.name || '').trim();
+                    const newName = `${originalName} (${index + 1})`;
+                    
+                    batch.update(doc(db, 'facebases', item.id), {
+                        displayName: newName,
+                        name: newName, // Sync both fields just in case
+                        lastDecoupled: new Date().toISOString()
+                    });
+                    updateCount++;
+                });
+            }
+        });
+
+        if (updateCount > 0) {
+            await batch.commit();
+            console.log(`DECAPPING: ✅ Decoupled ${updateCount} records with unique names.`);
+            return updateCount;
+        } else {
+            console.log("DECAPPING: ⏭️ No naming collisions found.");
+            return 0;
+        }
+    } catch (error) {
+        console.error("DECAPPING: ❌ Error during decoupling:", error);
+        throw error;
+    }
+}
