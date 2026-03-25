@@ -1,12 +1,22 @@
-import React from 'react';
-import { Copy, Check, Heart, RefreshCw } from 'lucide-react';
+import React, { useState } from 'react';
+import { Copy, Check, RefreshCw } from 'lucide-react';
 import { reloadRobloxImage } from '../utils/image-reload';
-import { updateItemImageUrl } from '../utils/data-hooks';
+import { updateItemImageUrl, toggleItemVisibility } from '../utils/data-hooks';
 
-export default function Card({ id, displayName, group, imageSrc, codeId, isFavorite, onToggleFavorite, type = 'avatar' }) {
-    const [copied, setCopied] = React.useState(false);
-    const [currentSrc, setCurrentSrc] = React.useState(imageSrc);
-    const [reloading, setReloading] = React.useState(false);
+export default function Card({ id, displayName, group, imageSrc, codeId, isFavorite, onToggleFavorite, type = 'avatar', isAdmin, isHidden, onRefresh }) {
+    const [copied, setCopied] = useState(false);
+    const [reloading, setReloading] = useState(false);
+    const [overrideSrc, setOverrideSrc] = useState(null);
+
+    const handleContextMenu = async (e) => {
+        if (!isAdmin) return;
+        e.preventDefault();
+        const action = isHidden ? 'unhide' : 'hide';
+        if (window.confirm(`Are you sure you want to ${action} this item?`)) {
+            await toggleItemVisibility(type, id, !isHidden);
+            if (onRefresh) onRefresh();
+        }
+    };
 
     const handleCopy = () => {
         navigator.clipboard.writeText(codeId || '');
@@ -21,7 +31,7 @@ export default function Card({ id, displayName, group, imageSrc, codeId, isFavor
         try {
             const newSrc = await reloadRobloxImage(codeId);
             if (newSrc) {
-                setCurrentSrc(newSrc);
+                setOverrideSrc(newSrc);
                 // Persist the new verified URL to Firestore
                 await updateItemImageUrl(type, id, newSrc);
             }
@@ -31,7 +41,10 @@ export default function Card({ id, displayName, group, imageSrc, codeId, isFavor
     };
 
     return (
-        <div className="music-card facebase-card bg-[var(--card-light)] rounded-xl shadow-xl ring-1 ring-[var(--border)] overflow-hidden flex flex-col p-1.5 space-y-1.5 !w-full relative group/card hover:ring-[var(--gold2)]/30 transition-all duration-200 hover:shadow-2xl hover:-translate-y-0.5">
+        <div
+            onContextMenu={handleContextMenu}
+            className={`music-card facebase-card bg-[var(--card-light)] rounded-xl shadow-xl ring-1 ring-[var(--border)] overflow-hidden flex flex-col p-1.5 space-y-1.5 !w-full relative group/card hover:ring-[var(--gold2)]/30 transition-all duration-200 hover:shadow-2xl hover:-translate-y-0.5 ${isHidden ? 'opacity-40 grayscale' : ''}`}>
+            
             <div className="favorite-container">
                 <button
                     className="favorite-btn"
@@ -47,7 +60,7 @@ export default function Card({ id, displayName, group, imageSrc, codeId, isFavor
 
             <div className="relative">
                 <img
-                    src={currentSrc}
+                    src={overrideSrc || imageSrc}
                     alt={displayName}
                     loading="lazy"
                     className="w-full h-auto object-cover aspect-square rounded-md"

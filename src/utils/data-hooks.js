@@ -215,3 +215,31 @@ export async function migrateFacebaseCountries() {
         throw error;
     }
 }
+
+/**
+ * Toggles an item's visibility (hidden state) in Firestore.
+ * @param {string} type - 'textures', 'facebases', 'avatar'
+ * @param {string} docId - The Firestore document ID
+ * @param {boolean} hidden - The new hidden state
+ */
+export async function toggleItemVisibility(type, docId, hidden) {
+    if (!type || !docId) return;
+
+    const collectionMap = {
+        'texture': 'textures',
+        'facebase': 'facebases',
+        'avatar': 'avatar'
+    };
+    const collectionName = collectionMap[type] || type;
+
+    try {
+        const itemRef = doc(db, collectionName, docId);
+        await updateDoc(itemRef, {
+            hidden: hidden,
+            lastHiddenUpdate: new Date().toISOString()
+        });
+        console.log(`DB_UPDATE: Set ${collectionName}/${docId} hidden to ${hidden}.`);
+    } catch (error) {
+        console.error("DB_UPDATE: Error toggling visibility:", error);
+    }
+}

@@ -7,7 +7,7 @@ import Card from './components/Card';
 import TextureCard from './components/TextureCard';
 import FacebaseCard from './components/FacebaseCard';
 import MusicCard from './components/MusicCard';
-import { Search, Layers, CheckSquare, Square, X } from 'lucide-react';
+import { Search, Layers, CheckSquare, Square, X, Eye, EyeOff } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { initializeAllData } from './utils/data-hooks.js';
 import { useFavorites } from './hooks/useFavorites.js';
@@ -28,10 +28,11 @@ const getFilterLabel = (tab, cat) => {
     return cat;
 };
 
-function Dashboard() {
+function Dashboard({ user }) {
     const [activeTab, setActiveTab] = useState('favorites');
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [showHidden, setShowHidden] = useState(false);
     const { isFavorite, toggleFavorite } = useFavorites();
     const { groups, createGroup, deleteGroup } = useGroups();
 
@@ -84,18 +85,19 @@ function Dashboard() {
         ...prev, [activeTab]: { ...prev[activeTab], category: c, query: prev[activeTab]?.query || '' }
     }));
 
-    useEffect(() => {
-        async function fetchData() {
-            try {
-                const result = await initializeAllData();
-                setData(result);
-            } catch (error) {
-                console.error("React Migration Error:", error);
-            } finally {
-                setLoading(false);
-            }
+    const reloadData = async () => {
+        try {
+            const result = await initializeAllData();
+            setData(result);
+        } catch (error) {
+            console.error("React Migration Error:", error);
+        } finally {
+            setLoading(false);
         }
-        fetchData();
+    };
+
+    useEffect(() => {
+        reloadData();
     }, []);
 
     const renderContent = () => {
@@ -152,7 +154,8 @@ function Dashboard() {
                     item.group?.toLowerCase().includes(searchQuery.toLowerCase());
                 const matchesCategory = selectedCategory === 'all' || item.group === selectedCategory;
                 const isGrouped = groupedItemIds.has(item.id);
-                return matchesSearch && matchesCategory && !isGrouped;
+                const isVisible = showHidden || !item.hidden;
+                return matchesSearch && matchesCategory && !isGrouped && isVisible;
             });
             return (
                 <div className="pr-2 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
@@ -170,6 +173,9 @@ function Dashboard() {
                                 isFavorite={isFavorite(item.id)}
                                 onToggleFavorite={toggleFavorite}
                                 type="avatar"
+                                isAdmin={!!user}
+                                isHidden={item.hidden}
+                                onRefresh={reloadData}
                             />
                         </SelectionWrap>
                     ))}
@@ -185,7 +191,8 @@ function Dashboard() {
                 const matchesSearch = group.baseName.toLowerCase().includes(searchQuery.toLowerCase());
                 const matchesCategory = selectedCategory === 'all' || group.variants.some(v => v.group === selectedCategory);
                 const isGrouped = groupedItemIds.has(group.mainVariant.id);
-                return matchesSearch && matchesCategory && !isGrouped;
+                const isVisible = showHidden || !group.mainVariant.hidden;
+                return matchesSearch && matchesCategory && !isGrouped && isVisible;
             });
             return (
                 <div className="pr-2 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
@@ -198,6 +205,9 @@ function Dashboard() {
                                 group={group}
                                 isFavorite={isFavorite}
                                 onToggleFavorite={toggleFavorite}
+                                isAdmin={!!user}
+                                showHidden={showHidden}
+                                onRefresh={reloadData}
                             />
                         </SelectionWrap>
                     ))}
@@ -215,8 +225,9 @@ function Dashboard() {
                     group.group.toLowerCase().includes(searchQuery.toLowerCase());
                 const matchesCategory = selectedCategory === 'all' || group.group === selectedCategory.toUpperCase();
                 const isGrouped = groupedItemIds.has(group.defaultItem.id);
+                const isVisible = showHidden || !group.defaultItem.hidden;
 
-                return matchesSearch && matchesCategory && !isGrouped;
+                return matchesSearch && matchesCategory && !isGrouped && isVisible;
             });
             return (
                 <div className="pr-2 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
@@ -229,6 +240,9 @@ function Dashboard() {
                                 group={group}
                                 isFavorite={isFavorite}
                                 onToggleFavorite={toggleFavorite}
+                                isAdmin={!!user}
+                                showHidden={showHidden}
+                                onRefresh={reloadData}
                             />
                         </SelectionWrap>
                     ))}
@@ -367,6 +381,21 @@ function Dashboard() {
                             </button>
                         )}
 
+                        {/* Admin Show Hidden Toggle */}
+                        {user && activeTab !== 'favorites' && (
+                            <button
+                                onClick={() => setShowHidden(!showHidden)}
+                                className={`flex-shrink-0 h-12 w-12 flex items-center justify-center rounded-md border transition-all ${
+                                    showHidden
+                                        ? 'bg-red-500/10 text-red-500 border-red-500/40'
+                                        : 'bg-[var(--card-light)] text-zinc-400 border-[var(--border)] hover:text-white hover:border-zinc-700'
+                                }`}
+                                title={showHidden ? 'Hide hidden items' : 'Show hidden items'}
+                            >
+                                {showHidden ? <Eye className="w-5 h-5" /> : <EyeOff className="w-5 h-5" />}
+                            </button>
+                        )}
+
                         {/* Rendering Filter Dropdown if applicable */}
                         {activeTab !== 'favorites' && (
                             <div className="relative w-full sm:w-48">
@@ -499,7 +528,7 @@ function App() {
             <Route path="/session/:sessionId" element={<SessionBoard />} />
             
             {/* Rutas Privadas (El app original) — wildcard al final */}
-            <Route path="/*" element={user ? <Dashboard /> : <Login />} />
+            <Route path="/*" element={user ? <Dashboard user={user} /> : <Login />} />
         </Routes>
     );
 }
