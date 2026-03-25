@@ -29,7 +29,12 @@ const FacebaseCard = ({ group, isFavorite, onToggleFavorite, isAdmin, showHidden
 
     const handleContextMenu = (e) => {
         if (!isAdmin || !onContextMenu) return;
-        onContextMenu(e, { id: activeVariant.id, type: 'facebase', isHidden });
+        onContextMenu(e, { 
+            id: activeVariant.id, 
+            type: 'facebase', 
+            isHidden,
+            onEdit: () => setIsEditing(true)
+        });
     };
 
     const hasVariants = variantsList.length > 1;

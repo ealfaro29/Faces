@@ -7,7 +7,7 @@ import Card from './components/Card';
 import TextureCard from './components/TextureCard';
 import FacebaseCard from './components/FacebaseCard';
 import MusicCard from './components/MusicCard';
-import { Search, Layers, CheckSquare, Square, X, Eye, EyeOff } from 'lucide-react';
+import { Search, Layers, CheckSquare, Square, X, Eye, EyeOff, Pencil } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { initializeAllData } from './utils/data-hooks.js';
 import { useFavorites } from './hooks/useFavorites.js';
@@ -483,6 +483,21 @@ function Dashboard({ user }) {
                                 className="fixed z-[9999] min-w-[160px] bg-[#1a1c24] border border-zinc-800 rounded-lg shadow-2xl p-1 overflow-hidden backdrop-blur-xl"
                                 onClick={e => e.stopPropagation()}
                             >
+                                {contextMenu.item.onEdit && (
+                                    <>
+                                        <button
+                                            onClick={() => {
+                                                contextMenu.item.onEdit();
+                                                closeContextMenu();
+                                            }}
+                                            className="flex items-center gap-3 w-full px-3 py-2.5 text-sm text-zinc-300 hover:bg-white/5 hover:text-white rounded-md transition-colors"
+                                        >
+                                            <Pencil className="w-4 h-4" />
+                                            <span>Edit Details</span>
+                                        </button>
+                                        <div className="h-[1px] bg-zinc-800 my-1 mx-2" />
+                                    </>
+                                )}
                                 <button
                                     onClick={async () => {
                                         const { type, id, isHidden } = contextMenu.item;
