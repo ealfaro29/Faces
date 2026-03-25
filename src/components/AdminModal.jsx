@@ -4,9 +4,12 @@ import { auth, db } from '../core/firebase-config.js';
 import { signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "firebase/auth";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 
+import { migrateFacebaseCountries } from '../utils/data-hooks.js';
+import { getCountryList } from '../utils/iso-utils.js';
+
 const CATEGORIES = {
     texture: ["Mesh", "Solid", "Translucid", "Mixed", "Makeup", "Tattoos", "Skin Details", "Fantasy"],
-    facebase: ["Global", "Brazil", "UK", "USA", "Italy", "Spain", "France", "Japan", "Korea", "China", "Thailand"],
+    facebase: ["GLOBAL", ...getCountryList()],
     avatar: ["Hair", "Mesh", "Accessory", "Clothing", "Hats", "Face"]
 };
 
@@ -20,6 +23,7 @@ export default function AdminModal({ isOpen, onClose }) {
     const [previewState, setPreviewState] = useState('idle'); // 'idle', 'loading', 'valid', 'failed', 'force'
     const [msg, setMsg] = useState({ text: '', type: '' });
     const [isSaving, setIsSaving] = useState(false);
+    const [isMigrating, setIsMigrating] = useState(false);
 
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -126,6 +130,20 @@ export default function AdminModal({ isOpen, onClose }) {
         }
     };
 
+    const handleMigrate = async () => {
+        if (!confirm("Are you sure you want to standardize all existing Facebase countries? This will overwrite metadata in Firestore.")) return;
+        setIsMigrating(true);
+        setMsg({ text: 'Migrating...', type: '' });
+        try {
+            const count = await migrateFacebaseCountries();
+            setMsg({ text: `✅ Success! Normalized ${count} items.`, type: 'success' });
+        } catch (error) {
+            setMsg({ text: '❌ ' + error.message, type: 'error' });
+        } finally {
+            setIsMigrating(false);
+        }
+    };
+
     if (!isOpen) return null;
 
     return ReactDOM.createPortal(
@@ -153,7 +171,12 @@ export default function AdminModal({ isOpen, onClose }) {
                     <div>
                         <h2 className="text-2xl font-semibold title-fancy gold-title mb-4">Admin Dashboard</h2>
                         <div className="flex justify-between items-center mb-6 pb-2 border-b border-zinc-800">
-                            <span className="text-sm text-zinc-400">{user.email}</span>
+                            <div className="flex flex-col">
+                                <span className="text-sm text-zinc-100 font-bold">{user.email}</span>
+                                <button onClick={handleMigrate} disabled={isMigrating} className="text-[10px] text-[var(--gold2)] uppercase font-bold tracking-widest hover:underline mt-1 text-left">
+                                    {isMigrating ? 'Running Migration...' : '⚡ Standardize Data'}
+                                </button>
+                            </div>
                             <button onClick={handleLogout} className="text-red-400 hover:text-red-300 text-sm underline">Logout</button>
                         </div>
 

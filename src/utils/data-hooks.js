@@ -4,7 +4,7 @@
 import { getRobloxThumbnailUrl } from './roblox-legacy.js';
 import { db } from '../core/firebase-config.js'; 
 import { collection, getDocs, updateDoc, doc, writeBatch } from "firebase/firestore";
-import { getIsoCode } from './iso-utils.js';
+import { getIsoCode, ISO_MAP } from './iso-utils.js';
 
 /**
  * Updates a Facebase group (multiple variants) in Firestore.
@@ -164,4 +164,54 @@ function generateFacebaseCategories(items) {
             flag: `photos/app/${name.charAt(0) + name.slice(1).toLowerCase()}.webp`
         }))
     };
+}
+
+/**
+ * Migration Script: Normalizes all existing Facebases to the standard country list.
+ */
+export async function migrateFacebaseCountries() {
+    console.log("MIGRATION: 🌏 Starting Facebase country normalization...");
+    try {
+        const snap = await getDocs(collection(db, 'facebases'));
+        const batch = writeBatch(db);
+        let count = 0;
+
+        snap.forEach(d => {
+            const data = d.data();
+            const currentGroup = (data.category || data.group || '').toUpperCase().trim();
+            
+            // Look for a match in ISO_MAP keys
+            let standardMatch = Object.keys(ISO_MAP).find(std => 
+                std === currentGroup || 
+                std.replace(/\s+/g, '') === currentGroup.replace(/\s+/g, '')
+            );
+
+            // Extra heuristics: If it's already an ISO code, it might need to be converted to the full name
+            if (!standardMatch) {
+                const results = Object.entries(ISO_MAP).find(([name, iso]) => iso === currentGroup);
+                if (results) standardMatch = results[0];
+            }
+
+            if (standardMatch && currentGroup !== standardMatch) {
+                batch.update(doc(db, 'facebases', d.id), {
+                    group: standardMatch,
+                    category: standardMatch,
+                    lastMigrated: new Date().toISOString()
+                });
+                count++;
+            }
+        });
+
+        if (count > 0) {
+            await batch.commit();
+            console.log(`MIGRATION: ✅ Standardized ${count} records.`);
+            return count;
+        } else {
+            console.log("MIGRATION: ⏭️ No records needed standardizing.");
+            return 0;
+        }
+    } catch (error) {
+        console.error("MIGRATION: ❌ Error during normalization:", error);
+        throw error;
+    }
 }
