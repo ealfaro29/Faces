@@ -1,8 +1,9 @@
 import React from 'react';
 import { Copy, Check, Heart, RefreshCw } from 'lucide-react';
 import { reloadRobloxImage } from '../utils/image-reload';
+import { updateItemImageUrl } from '../utils/data-hooks';
 
-export default function Card({ id, displayName, group, imageSrc, codeId, isFavorite, onToggleFavorite }) {
+export default function Card({ id, displayName, group, imageSrc, codeId, isFavorite, onToggleFavorite, type = 'avatar' }) {
     const [copied, setCopied] = React.useState(false);
     const [currentSrc, setCurrentSrc] = React.useState(imageSrc);
     const [reloading, setReloading] = React.useState(false);
@@ -19,7 +20,11 @@ export default function Card({ id, displayName, group, imageSrc, codeId, isFavor
         setReloading(true);
         try {
             const newSrc = await reloadRobloxImage(codeId);
-            if (newSrc) setCurrentSrc(newSrc);
+            if (newSrc) {
+                setCurrentSrc(newSrc);
+                // Persist the new verified URL to Firestore
+                await updateItemImageUrl(type, id, newSrc);
+            }
         } finally {
             setReloading(false);
         }

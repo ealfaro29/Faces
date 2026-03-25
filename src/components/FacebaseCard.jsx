@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Copy, Check, RefreshCw, Layers, Smile } from 'lucide-react';
 import { reloadRobloxImage } from '../utils/image-reload';
 import { getFlagEmoji } from '../utils/iso-utils.js';
+import { updateItemImageUrl } from '../utils/data-hooks';
 
 /**
  * FacebaseCard — Displays a facebase variant group.
@@ -20,11 +21,18 @@ export default function FacebaseCard({ group, isFavorite, onToggleFavorite }) {
     const handleReloadImage = async (e) => {
         e.stopPropagation();
         const assetId = activeVariant.codeId;
+        const variantId = activeVariant.id;
+        const variantType = activeVariant.type || 'facebase';
+
         if (!assetId || reloading) return;
         setReloading(true);
         try {
             const newSrc = await reloadRobloxImage(assetId);
-            if (newSrc) setOverrideSrc(newSrc);
+            if (newSrc) {
+                setOverrideSrc(newSrc);
+                // Persist the heal
+                await updateItemImageUrl(variantType, variantId, newSrc);
+            }
         } finally {
             setReloading(false);
         }

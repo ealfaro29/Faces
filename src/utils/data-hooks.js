@@ -3,8 +3,40 @@
 
 import { getRobloxThumbnailUrl } from './roblox-legacy.js';
 import { db } from '../core/firebase-config.js'; 
-import { collection, getDocs } from "firebase/firestore";
+import { collection, getDocs, updateDoc, doc } from "firebase/firestore";
 import { getIsoCode } from './iso-utils.js';
+
+/**
+ * Persistently updates an item's remoteUrl in Firestore.
+ * Used for "healing" broken image links.
+ * @param {string} type - 'textures', 'facebases', 'avatar'
+ * @param {string} docId - The Firestore document ID
+ * @param {string} newUrl - The verified Roblox thumbnail URL
+ */
+export async function updateItemImageUrl(type, docId, newUrl) {
+    if (!type || !docId || !newUrl) return;
+    
+    // Convert friendly type to collection name if needed
+    const collectionMap = {
+        'texture': 'textures',
+        'facebase': 'facebases',
+        'avatar': 'avatar'
+    };
+    const collectionName = collectionMap[type] || type;
+
+    try {
+        const itemRef = doc(db, collectionName, docId);
+        await updateDoc(itemRef, {
+            remoteUrl: newUrl,
+            lastHealed: new Date().toISOString()
+        });
+        console.log(`DB_UPDATE: Successfully updated ${collectionName}/${docId} with new URL.`);
+    } catch (error) {
+        console.error("DB_UPDATE: Error persisting healer URL:", error);
+    }
+}
+
+export const parseItemName = () => { };
 
 export async function initializeAllData() {
     console.log("DATA_LOADER: ☁️ Starting Cloud Data Load (Firebase ONLY)...");
@@ -22,9 +54,9 @@ export async function initializeAllData() {
         const [texSnap, faceSnap, avSnap, musicSnap] = await Promise.all(queries);
 
         texSnap.forEach(doc => sourceData.textures.push({ ...doc.data(), id: doc.id }));
-        faceSnap.forEach(doc => sourceData.facebases.push(doc.data()));
-        avSnap.forEach(doc => sourceData.avatar.push(doc.data()));
-        musicSnap.forEach(doc => sourceData.music.push(doc.data()));
+        faceSnap.forEach(doc => sourceData.facebases.push({ ...doc.data(), id: doc.id }));
+        avSnap.forEach(doc => sourceData.avatar.push({ ...doc.data(), id: doc.id }));
+        musicSnap.forEach(doc => sourceData.music.push({ ...doc.data(), id: doc.id }));
 
     } catch (error) {
         console.error("DATA_LOADER: CRITICAL ERROR - Could not load from Firebase.", error);

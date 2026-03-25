@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Copy, Check, RefreshCw, Layers, X } from 'lucide-react';
 import { reloadRobloxImage } from '../utils/image-reload';
+import { updateItemImageUrl } from '../utils/data-hooks';
 
 /**
  * TextureCard — Displays a texture variant group.
@@ -20,11 +21,18 @@ export default function TextureCard({ group, isFavorite, onToggleFavorite }) {
     const handleReloadImage = async (e) => {
         e.stopPropagation();
         const assetId = activeVariant.codeId;
+        const variantId = activeVariant.id;
+        const variantType = activeVariant.type || 'texture';
+
         if (!assetId || reloading) return;
         setReloading(true);
         try {
             const newSrc = await reloadRobloxImage(assetId);
-            if (newSrc) setOverrideSrc(newSrc);
+            if (newSrc) {
+                setOverrideSrc(newSrc);
+                // Persist the heal
+                await updateItemImageUrl(variantType, variantId, newSrc);
+            }
         } finally {
             setReloading(false);
         }
