@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Copy, Check, RefreshCw, Layers, Trash2 } from 'lucide-react';
+import { Copy, Check, RefreshCw, Layers, Trash2, X } from 'lucide-react';
 import { reloadRobloxImage } from '../utils/image-reload';
 
 /**
