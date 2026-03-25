@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Copy, Check, RefreshCw, Layers } from 'lucide-react';
+import { Copy, Check, RefreshCw, Layers, Smile } from 'lucide-react';
 import { reloadRobloxImage } from '../utils/image-reload';
 import { getFlagEmoji } from '../../utils/countries.js';
 
 /**
  * FacebaseCard — Displays a facebase variant group.
- * Restored the X/S toggle buttons as requested, while keeping the Stacked visual.
+ * Features a single "Cycle" button to toggle between expressions (Main, Closed, Side).
  */
 export default function FacebaseCard({ group, isFavorite, onToggleFavorite }) {
     const [copied, setCopied] = useState(false);
@@ -34,6 +34,31 @@ export default function FacebaseCard({ group, isFavorite, onToggleFavorite }) {
         navigator.clipboard.writeText(activeVariant.codeId || '');
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
+    };
+
+    /**
+     * Cycles through: Main -> Closed (X) -> Side (S) -> Main
+     */
+    const handleCycle = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const currentId = activeVariant.id;
+        const main = group.defaultItem;
+        const x = group.variants.X;
+        const s = group.variants.S;
+
+        let next = main;
+        if (currentId === main.id) {
+            next = x || s || main;
+        } else if (x && currentId === x.id) {
+            next = s || main;
+        } else if (s && currentId === s.id) {
+            next = main;
+        }
+
+        setActiveVariant(next);
+        setOverrideSrc(null);
     };
 
     // Collect all variant IDs for toggling favorites on the group
@@ -100,37 +125,16 @@ export default function FacebaseCard({ group, isFavorite, onToggleFavorite }) {
                             className="w-full h-auto object-cover aspect-square rounded-md main-image"
                         />
                         
-                        {/* Eyes Variant Toggles (X and S) */}
-                        <div className="variant-buttons absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-2 z-10 transition-all">
-                            {group.variants.X && (
-                                <button 
-                                    className={`variant-toggle-btn w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all backdrop-blur-md ${activeVariant.id === group.variants.X.id ? 'bg-[var(--gold2)] text-black' : 'bg-black/40 text-white hover:bg-[var(--gold2)] hover:text-black'}`}
-                                    onClick={(e) => {
-                                        e.preventDefault();
-                                        e.stopPropagation();
-                                        setActiveVariant(group.variants.X);
-                                        setOverrideSrc(null);
-                                    }}
-                                    title="Closed Eyes"
-                                >
-                                    X
-                                </button>
-                            )}
-                            {group.variants.S && (
-                                <button 
-                                    className={`variant-toggle-btn w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all backdrop-blur-md ${activeVariant.id === group.variants.S.id ? 'bg-[var(--gold2)] text-black' : 'bg-black/40 text-white hover:bg-[var(--gold2)] hover:text-black'}`}
-                                    onClick={(e) => {
-                                        e.preventDefault();
-                                        e.stopPropagation();
-                                        setActiveVariant(group.variants.S);
-                                        setOverrideSrc(null);
-                                    }}
-                                    title="Side Eyes"
-                                >
-                                    S
-                                </button>
-                            )}
-                        </div>
+                        {/* Single Cycle Button */}
+                        {hasVariants && (
+                            <button 
+                                className={`variant-toggle-btn absolute bottom-2 right-2 w-9 h-9 rounded-full flex items-center justify-center transition-all backdrop-blur-md shadow-lg border border-white/20 ${activeVariant.id !== group.defaultItem.id ? 'bg-[var(--gold2)] text-black' : 'bg-black/60 text-white hover:bg-black/80'}`}
+                                onClick={handleCycle}
+                                title="Cycle Expressions"
+                            >
+                                <Smile className="w-5 h-5" />
+                            </button>
+                        )}
 
                         {/* Reload Action */}
                         <button
