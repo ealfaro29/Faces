@@ -1,3 +1,5 @@
+import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Copy, Check, RefreshCw, Layers, Trash2, X, Smile } from 'lucide-react';
 import { reloadRobloxImage } from '../utils/image-reload';
 import { getFlagEmoji } from '../utils/iso-utils.js';
