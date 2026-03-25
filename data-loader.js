@@ -128,13 +128,7 @@ function generateFacebaseCategories(items) {
     };
 }
 
-function getIsoCode(name) {
-    const map = {
-        'BRAZIL': 'BR', 'UK': 'GB', 'USA': 'US', 'ZAMBIA': 'ZM', 'IRELAND': 'IE',
-        'ITALY': 'IT', 'INDIA': 'IN', 'BELGIUM': 'BE', 'EGYPT': 'EG', 'SPAIN': 'ES',
-        'FRANCE': 'FR', 'COSTA RICA': 'CR', 'THAILAND': 'TH', 'JAPAN': 'JP', 'KOREA': 'KR'
-    };
-    return map[name.toUpperCase()] || 'XX';
-}
+import { getIsoCode } from './utils/countries.js';
+
 
 export const parseItemName = () => { };

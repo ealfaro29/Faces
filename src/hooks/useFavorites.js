@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 
-const FAVORITES_KEY = 'fashion_muse_favorites';
+const FAVORITES_KEY = 'pageants_favorites';
 
 export function useFavorites() {
     const [favorites, setFavorites] = useState(() => {

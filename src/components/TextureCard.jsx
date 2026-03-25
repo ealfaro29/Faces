@@ -1,14 +1,43 @@
 import React, { useState } from 'react';
-import { Copy, Check } from 'lucide-react';
+import { Copy, Check, RefreshCw } from 'lucide-react';
 
 export default function TextureCard({ group, isFavorite, onToggleFavorite }) {
     const [copied, setCopied] = useState(false);
     const [showVariants, setShowVariants] = useState(false);
     const [activeVariant, setActiveVariant] = useState(group.mainVariant);
+    const [reloading, setReloading] = useState(false);
+    const [overrideSrc, setOverrideSrc] = useState(null);
 
     const hasVariants = group.variants.length > 1;
     const variantName = activeVariant.displayName.split(' ').pop();
     const otherVariantsCount = group.variants.length - 1;
+
+    const handleReloadImage = async (e) => {
+        e.stopPropagation();
+        const assetId = activeVariant.codeId;
+        if (!assetId || reloading) return;
+        setReloading(true);
+        try {
+            const proxies = [
+                `https://api.allorigins.win/raw?url=${encodeURIComponent(`https://thumbnails.roblox.com/v1/assets?assetIds=${assetId}&size=420x420&format=Png&isCircular=false`)}`,
+                `https://corsproxy.io/?${encodeURIComponent(`https://thumbnails.roblox.com/v1/assets?assetIds=${assetId}&size=420x420&format=Png&isCircular=false`)}`
+            ];
+            for (const url of proxies) {
+                try {
+                    const res = await fetch(url);
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (data.data?.[0]?.state === 'Completed') {
+                            setOverrideSrc(data.data[0].imageUrl);
+                            break;
+                        }
+                    }
+                } catch {}
+            }
+        } finally {
+            setReloading(false);
+        }
+    };
 
     const handleCopy = () => {
         navigator.clipboard.writeText(activeVariant.codeId || '');
@@ -17,7 +46,7 @@ export default function TextureCard({ group, isFavorite, onToggleFavorite }) {
     };
 
     return (
-        <div className="music-card facebase-card bg-[var(--card-light)] rounded-xl shadow-xl ring-1 ring-[var(--border)] overflow-hidden flex flex-col p-1.5 space-y-1.5 !w-full relative texture-group-card">
+        <div className="music-card facebase-card bg-[var(--card-light)] rounded-xl shadow-xl ring-1 ring-[var(--border)] overflow-hidden flex flex-col p-1.5 space-y-1.5 !w-full relative texture-group-card group/card hover:ring-[var(--gold2)]/30 transition-all duration-200 hover:shadow-2xl hover:-translate-y-0.5">
             <div className="absolute top-1.5 right-1.5 z-10 favorite-container !bg-transparent !backdrop-filter-none !w-auto !h-auto">
                 <button
                     className="favorite-btn"
@@ -33,11 +62,18 @@ export default function TextureCard({ group, isFavorite, onToggleFavorite }) {
                     {hasVariants && <span className="text-xs font-medium text-zinc-400 main-variant-name">({variantName})</span>}
                 </div>
                 <img
-                    src={activeVariant.src}
+                    src={overrideSrc || activeVariant.src}
                     alt={activeVariant.displayName}
                     loading="lazy"
                     className="w-full h-auto object-cover aspect-square rounded-md main-image"
                 />
+                <button
+                    onClick={handleReloadImage}
+                    title="Reload image from Roblox"
+                    className={`absolute top-1.5 left-1.5 w-7 h-7 flex items-center justify-center rounded-md bg-black/60 text-zinc-300 opacity-0 group-hover/card:opacity-100 transition-opacity hover:text-white hover:bg-black/80 z-10 ${reloading ? 'animate-spin' : ''}`}
+                >
+                    <RefreshCw className="w-3.5 h-3.5" />
+                </button>
                 {hasVariants && (
                     <button
                         className="variant-indicator-btn"

@@ -1,22 +1,39 @@
 import React, { useState } from 'react';
-import { Copy, Check } from 'lucide-react';
-
-const ISO_MAP = {
-    'BRAZIL': 'BR', 'UK': 'GB', 'USA': 'US', 'ZAMBIA': 'ZM', 'IRELAND': 'IE',
-    'ITALY': 'IT', 'INDIA': 'IN', 'BELGIUM': 'BE', 'EGYPT': 'EG', 'SPAIN': 'ES',
-    'FRANCE': 'FR', 'COSTA RICA': 'CR', 'THAILAND': 'TH', 'JAPAN': 'JP', 'KOREA': 'KR'
-};
-
-function getFlagEmoji(countryName) {
-    const iso = ISO_MAP[countryName?.toUpperCase()];
-    if (!iso) return null;
-    return String.fromCodePoint(...iso.split('').map(c => 127397 + c.charCodeAt()));
-}
+import { Copy, Check, RefreshCw } from 'lucide-react';
+import { getFlagEmoji } from '../../utils/countries.js';
 
 export default function FacebaseCard({ group, isFavorite, onToggleFavorite }) {
     const [copied, setCopied] = useState(false);
     const [activeVariant, setActiveVariant] = useState(group.defaultItem);
+    const [reloading, setReloading] = useState(false);
+    const [overrideSrc, setOverrideSrc] = useState(null);
 
+    const handleReloadImage = async (e) => {
+        e.stopPropagation();
+        const assetId = activeVariant.codeId;
+        if (!assetId || reloading) return;
+        setReloading(true);
+        try {
+            const proxies = [
+                `https://api.allorigins.win/raw?url=${encodeURIComponent(`https://thumbnails.roblox.com/v1/assets?assetIds=${assetId}&size=420x420&format=Png&isCircular=false`)}`,
+                `https://corsproxy.io/?${encodeURIComponent(`https://thumbnails.roblox.com/v1/assets?assetIds=${assetId}&size=420x420&format=Png&isCircular=false`)}`
+            ];
+            for (const url of proxies) {
+                try {
+                    const res = await fetch(url);
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (data.data?.[0]?.state === 'Completed') {
+                            setOverrideSrc(data.data[0].imageUrl);
+                            break;
+                        }
+                    }
+                } catch {}
+            }
+        } finally {
+            setReloading(false);
+        }
+    };
     const handleCopy = () => {
         navigator.clipboard.writeText(activeVariant.codeId || '');
         setCopied(true);
@@ -43,7 +60,7 @@ export default function FacebaseCard({ group, isFavorite, onToggleFavorite }) {
 
     return (
         <div
-            className="music-card facebase-card bg-[var(--card-light)] rounded-xl shadow-xl ring-1 ring-[var(--border)] overflow-hidden flex flex-col p-1.5 space-y-1.5 !w-full relative"
+            className="music-card facebase-card bg-[var(--card-light)] rounded-xl shadow-xl ring-1 ring-[var(--border)] overflow-hidden flex flex-col p-1.5 space-y-1.5 !w-full relative group/card hover:ring-[var(--gold2)]/30 transition-all duration-200 hover:shadow-2xl hover:-translate-y-0.5"
             data-default-src={group.defaultItem.src}
             data-default-id={group.defaultItem.id}
         >
@@ -63,11 +80,18 @@ export default function FacebaseCard({ group, isFavorite, onToggleFavorite }) {
 
             <div className="relative">
                 <img
-                    src={activeVariant.src}
+                    src={overrideSrc || activeVariant.src}
                     alt={group.baseDisplayName}
                     loading="lazy"
                     className="w-full h-auto object-cover aspect-square rounded-md facebase-main-img"
                 />
+                <button
+                    onClick={handleReloadImage}
+                    title="Reload image from Roblox"
+                    className={`absolute top-1.5 left-1.5 w-7 h-7 flex items-center justify-center rounded-md bg-black/60 text-zinc-300 opacity-0 group-hover/card:opacity-100 transition-opacity hover:text-white hover:bg-black/80 ${reloading ? 'animate-spin' : ''}`}
+                >
+                    <RefreshCw className="w-3.5 h-3.5" />
+                </button>
                 {(variantX || variantS) && (
                     <div className="variant-buttons">
                         {variantX && (

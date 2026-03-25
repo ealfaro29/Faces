@@ -19,19 +19,30 @@ import SessionBoard from './pages/scoring/SessionBoard';
 import ScoringLanding from './pages/scoring/ScoringLanding';
 import Login from './pages/Login';
 
+// Friendly names for texture category codes
+const TEXTURE_TYPE_MAP = { 'M': 'Mesh', 'T': 'Translucid', 'S': 'Solid' };
+const getFilterLabel = (tab, cat) => {
+    if (tab === 'textures' && TEXTURE_TYPE_MAP[cat]) return TEXTURE_TYPE_MAP[cat];
+    return cat;
+};
+
 function Dashboard() {
     const [activeTab, setActiveTab] = useState('favorites');
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [searchQuery, setSearchQuery] = useState('');
-    const [selectedCategory, setSelectedCategory] = useState('all');
     const { isFavorite, toggleFavorite } = useFavorites();
 
-    // Reset category when tab changes
-    useEffect(() => {
-        setSelectedCategory('all');
-        setSearchQuery('');
-    }, [activeTab]);
+    // Per-tab search & filter state — preserved across tab switches
+    const [tabState, setTabState] = useState({});
+    const searchQuery = tabState[activeTab]?.query || '';
+    const selectedCategory = tabState[activeTab]?.category || 'all';
+
+    const setSearchQuery = (q) => setTabState(prev => ({
+        ...prev, [activeTab]: { ...prev[activeTab], query: q, category: prev[activeTab]?.category || 'all' }
+    }));
+    const setSelectedCategory = (c) => setTabState(prev => ({
+        ...prev, [activeTab]: { ...prev[activeTab], category: c, query: prev[activeTab]?.query || '' }
+    }));
 
     useEffect(() => {
         async function fetchData() {
@@ -70,7 +81,9 @@ function Dashboard() {
             });
             return (
                 <div className="pr-2 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-                    {items.map(item => (
+                    {items.length === 0 ? (
+                        <p className="col-span-full text-center text-zinc-500 py-10">No results found.</p>
+                    ) : items.map(item => (
                         <Card
                             key={item.id}
                             id={item.id}
@@ -97,7 +110,9 @@ function Dashboard() {
             });
             return (
                 <div className="pr-2 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-                    {groups.map(group => (
+                    {groups.length === 0 ? (
+                        <p className="col-span-full text-center text-zinc-500 py-10">No results found.</p>
+                    ) : groups.map(group => (
                         <TextureCard
                             key={group.baseName}
                             group={group}
@@ -123,7 +138,9 @@ function Dashboard() {
             });
             return (
                 <div className="pr-2 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-                    {groups.map(group => (
+                    {groups.length === 0 ? (
+                        <p className="col-span-full text-center text-zinc-500 py-10">No results found.</p>
+                    ) : groups.map(group => (
                         <FacebaseCard
                             key={group.baseDisplayName + group.group}
                             group={group}
@@ -151,7 +168,9 @@ function Dashboard() {
             });
             return (
                 <div className="pr-2 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-                    {items.map((item, index) => (
+                    {items.length === 0 ? (
+                        <p className="col-span-full text-center text-zinc-500 py-10">No results found.</p>
+                    ) : items.map((item, index) => (
                         <MusicCard
                             key={item.id || `music_${index}`}
                             code={item}
@@ -183,7 +202,7 @@ function Dashboard() {
             if (favoriteItems.length === 0) {
                 return (
                     <div className="text-center text-zinc-500 pt-10">
-                        <p>Marca un artículo como favorito (❤️) para verlo aquí.</p>
+                        <p>Mark an item as favorite (❤️) to see it here.</p>
                     </div>
                 );
             }
@@ -244,18 +263,18 @@ function Dashboard() {
                                     onChange={(e) => setSelectedCategory(e.target.value)}
                                     aria-label={`Filter ${activeTab} by category`}
                                 >
-                                    <option value="all">Todas las Categorías</option>
+                                    <option value="all">All Categories</option>
                                     {activeTab === 'facebases' && [...new Set(data?.allFacebaseItems?.map(i => i.group).filter(Boolean))].sort().map(cat => (
-                                        <option key={cat} value={cat}>{cat}</option>
+                                        <option key={cat} value={cat}>{getFilterLabel(activeTab, cat)}</option>
                                     ))}
                                     {activeTab === 'avatar' && [...new Set(data?.allAvatarItems?.map(i => i.group).filter(Boolean))].sort().map(cat => (
-                                        <option key={cat} value={cat}>{cat}</option>
+                                        <option key={cat} value={cat}>{getFilterLabel(activeTab, cat)}</option>
                                     ))}
                                     {activeTab === 'textures' && [...new Set(data?.allTextureItems?.map(i => i.group).filter(Boolean))].sort().map(cat => (
-                                        <option key={cat} value={cat}>{cat}</option>
+                                        <option key={cat} value={cat}>{getFilterLabel(activeTab, cat)}</option>
                                     ))}
                                     {activeTab === 'music' && [...new Set(data?.allMusicCodes?.map(i => i.category).filter(Boolean))].sort().map(cat => (
-                                        <option key={cat} value={cat}>{cat}</option>
+                                        <option key={cat} value={cat}>{getFilterLabel(activeTab, cat)}</option>
                                     ))}
                                 </select>
                                 <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">

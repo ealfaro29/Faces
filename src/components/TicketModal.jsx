@@ -13,12 +13,12 @@ export default function TicketModal({ isOpen, onClose }) {
     };
 
     const tickets = [
-        { flag: '🇪🇸', text: 'SPAIN - FashionMuseDoll' },
-        { flag: '🇧🇷', text: 'BRAZIL - FashionMuseDoll' },
-        { flag: '🇬🇧', text: 'UNITED KINGDOM - FashionMuseDoll' },
-        { flag: '🇨🇷', text: 'COSTA RICA - FashionMuseDoll' },
-        { flag: '🇮🇹', text: 'ITALY - FashionMuseDoll' },
-        { flag: '🇹🇭', text: 'THAILAND - FashionMuseDoll' },
+        { flag: '🇪🇸', text: 'SPAIN - Pageants' },
+        { flag: '🇧🇷', text: 'BRAZIL - Pageants' },
+        { flag: '🇬🇧', text: 'UNITED KINGDOM - Pageants' },
+        { flag: '🇨🇷', text: 'COSTA RICA - Pageants' },
+        { flag: '🇮🇹', text: 'ITALY - Pageants' },
+        { flag: '🇹🇭', text: 'THAILAND - Pageants' },
     ];
 
     return ReactDOM.createPortal(

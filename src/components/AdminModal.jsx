@@ -135,7 +135,7 @@ export default function AdminModal({ isOpen, onClose }) {
 
                 {!user ? (
                     <div>
-                        <img src="photos/app/logo.svg" alt="Fashion Muse Logo" className="w-32 h-auto mx-auto mb-8 opacity-90 drop-shadow-[0_0_15px_rgba(255,215,0,0.3)]" />
+                        <img src="photos/app/logo.svg" alt="Pageants Logo" className="w-32 h-auto mx-auto mb-8 opacity-90 drop-shadow-[0_0_15px_rgba(255,215,0,0.3)]" />
                         <h2 className="text-xl font-bold text-white tracking-widest mb-1 font-serif">PRIVATE ACCESS</h2>
                         <p className="text-[10px] text-zinc-400 uppercase tracking-widest mb-8">Administrators Only</p>
                         <button onClick={handleLogin} className="w-full h-12 bg-white text-zinc-900 font-medium rounded hover:bg-zinc-200 transition-all flex items-center justify-center gap-3 shadow-lg hover:scale-[1.02]">

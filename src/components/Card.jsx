@@ -1,8 +1,10 @@
 import React from 'react';
-import { Copy, Check, Heart } from 'lucide-react';
+import { Copy, Check, Heart, RefreshCw } from 'lucide-react';
 
 export default function Card({ id, displayName, group, imageSrc, codeId, isFavorite, onToggleFavorite }) {
     const [copied, setCopied] = React.useState(false);
+    const [currentSrc, setCurrentSrc] = React.useState(imageSrc);
+    const [reloading, setReloading] = React.useState(false);
 
     const handleCopy = () => {
         navigator.clipboard.writeText(codeId || '');
@@ -10,8 +12,34 @@ export default function Card({ id, displayName, group, imageSrc, codeId, isFavor
         setTimeout(() => setCopied(false), 2000);
     };
 
+    const handleReloadImage = async (e) => {
+        e.stopPropagation();
+        if (!codeId || reloading) return;
+        setReloading(true);
+        try {
+            const proxies = [
+                `https://api.allorigins.win/raw?url=${encodeURIComponent(`https://thumbnails.roblox.com/v1/assets?assetIds=${codeId}&size=420x420&format=Png&isCircular=false`)}`,
+                `https://corsproxy.io/?${encodeURIComponent(`https://thumbnails.roblox.com/v1/assets?assetIds=${codeId}&size=420x420&format=Png&isCircular=false`)}`
+            ];
+            for (const url of proxies) {
+                try {
+                    const res = await fetch(url);
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (data.data?.[0]?.state === 'Completed') {
+                            setCurrentSrc(data.data[0].imageUrl);
+                            break;
+                        }
+                    }
+                } catch {} // try next proxy
+            }
+        } finally {
+            setReloading(false);
+        }
+    };
+
     return (
-        <div className="music-card facebase-card bg-[var(--card-light)] rounded-xl shadow-xl ring-1 ring-[var(--border)] overflow-hidden flex flex-col p-1.5 space-y-1.5 !w-full relative">
+        <div className="music-card facebase-card bg-[var(--card-light)] rounded-xl shadow-xl ring-1 ring-[var(--border)] overflow-hidden flex flex-col p-1.5 space-y-1.5 !w-full relative group/card hover:ring-[var(--gold2)]/30 transition-all duration-200 hover:shadow-2xl hover:-translate-y-0.5">
             <div className="favorite-container">
                 <button
                     className="favorite-btn"
@@ -25,12 +53,21 @@ export default function Card({ id, displayName, group, imageSrc, codeId, isFavor
                 <span className="truncate">{displayName} ({group})</span>
             </div>
 
-            <img
-                src={imageSrc}
-                alt={displayName}
-                loading="lazy"
-                className="w-full h-auto object-cover aspect-square rounded-md"
-            />
+            <div className="relative">
+                <img
+                    src={currentSrc}
+                    alt={displayName}
+                    loading="lazy"
+                    className="w-full h-auto object-cover aspect-square rounded-md"
+                />
+                <button
+                    onClick={handleReloadImage}
+                    title="Reload image from Roblox"
+                    className={`absolute top-1.5 left-1.5 w-7 h-7 flex items-center justify-center rounded-md bg-black/60 text-zinc-300 opacity-0 group-hover/card:opacity-100 transition-opacity hover:text-white hover:bg-black/80 ${reloading ? 'animate-spin' : ''}`}
+                >
+                    <RefreshCw className="w-3.5 h-3.5" />
+                </button>
+            </div>
 
             <div className="flex items-center gap-1.5 p-1">
                 <input
