@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Copy, Check, RefreshCw, Layers, Smile, Pencil, Save, X } from 'lucide-react';
 import { reloadRobloxImage } from '../utils/image-reload';
-import { getFlagEmoji } from '../utils/iso-utils.js';
-import { updateItemImageUrl } from '../utils/data-hooks';
+import { getFlagEmoji, getCountryList, getIsoCode } from '../utils/iso-utils.js';
+import { updateItemImageUrl, updateFacebaseGroup } from '../utils/data-hooks';
 
 /**
  * FacebaseCard — Displays a facebase variant group.
@@ -212,16 +212,28 @@ export default function FacebaseCard({ group, isFavorite, onToggleFavorite }) {
                                         placeholder="Natural..."
                                     />
                                 </div>
-                                <div>
-                                    <label className="text-[10px] text-zinc-500 font-bold uppercase mb-1 block">Country / Category</label>
-                                    <input 
-                                        type="text" 
-                                        value={editCountry}
-                                        onChange={e => setEditCountry(e.target.value)}
-                                        className="w-full bg-black/40 border border-white/10 rounded-md h-9 px-3 text-sm text-white focus:outline-none focus:border-[var(--gold2)]"
-                                        placeholder="BRAZIL..."
-                                    />
-                                </div>
+                                    <div>
+                                        <label className="text-[10px] text-zinc-500 font-bold uppercase mb-1 block">Country / Category</label>
+                                        <div className="relative">
+                                            <select 
+                                                value={editCountry}
+                                                onChange={e => setEditCountry(e.target.value)}
+                                                className="w-full bg-black/40 border border-white/10 rounded-md h-9 px-3 text-sm text-white focus:outline-none focus:border-[var(--gold2)] appearance-none cursor-pointer"
+                                            >
+                                                <option value="" disabled>Select a country...</option>
+                                                {getCountryList().map(c => (
+                                                    <option key={c} value={c}>{c}</option>
+                                                ))}
+                                                {/* Allow "other" categories if it's already one and not in list */}
+                                                {!getCountryList().includes(editCountry) && editCountry && (
+                                                    <option value={editCountry}>{editCountry} (Existing)</option>
+                                                )}
+                                            </select>
+                                            <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+                                                <svg className="w-4 h-4 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                                            </div>
+                                        </div>
+                                    </div>
                                 <button 
                                     disabled={saving}
                                     onClick={handleSaveEdit}
