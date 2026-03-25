@@ -36,10 +36,12 @@ export async function updateFacebaseGroup(variantItems, newBaseName, newCountry)
     });
 
     try {
+        console.log(`DB_BATCH: Committing batch for ${variantItems.length} items...`);
         await batch.commit();
-        console.log(`DB_BATCH: Successfully updated ${variantItems.length} facebase variants.`);
+        console.log(`DB_BATCH: ✅ Successfully updated ${variantItems.length} facebase variants.`);
     } catch (error) {
-        console.error("DB_BATCH: Error updating facebase group:", error);
+        console.error("DB_BATCH: ❌ Error updating facebase group. ID mismatch?", error);
+        throw error;
     }
 }
 /**
@@ -61,13 +63,15 @@ export async function updateItemImageUrl(type, docId, newUrl) {
 
     try {
         const itemRef = doc(db, collectionName, docId);
+        console.log(`DB_UPDATE: Updating ${collectionName}/${docId}...`);
         await updateDoc(itemRef, {
             remoteUrl: newUrl,
             lastHealed: new Date().toISOString()
         });
-        console.log(`DB_UPDATE: Successfully updated ${collectionName}/${docId} with new URL.`);
+        console.log(`DB_UPDATE: ✅ Successfully updated ${collectionName}/${docId}.`);
     } catch (error) {
-        console.error("DB_UPDATE: Error persisting healer URL:", error);
+        console.error(`DB_UPDATE: ❌ Error updating ${collectionName}/${docId}:`, error);
+        throw error;
     }
 }
 
@@ -133,6 +137,7 @@ export async function initializeAllData() {
 
     const allMusicCodes = (sourceData.music || []).map(item => ({
         ...item,
+        id: item.docId, // Consistency
         hidden: !!item.hidden
     }));
     const facebaseCategories = generateFacebaseCategories(allFacebaseItems);
@@ -243,13 +248,15 @@ export async function toggleItemVisibility(type, docId, hidden) {
 
     try {
         const itemRef = doc(db, collectionName, docId);
+        console.log(`DB_UPDATE: Setting visibility for ${collectionName}/${docId} to ${hidden}...`);
         await updateDoc(itemRef, {
             hidden: hidden,
             lastHiddenUpdate: new Date().toISOString()
         });
-        console.log(`DB_UPDATE: Set ${collectionName}/${docId} hidden to ${hidden}.`);
+        console.log(`DB_UPDATE: ✅ Set ${collectionName}/${docId} hidden to ${hidden}.`);
     } catch (error) {
-        console.error("DB_UPDATE: Error toggling visibility:", error);
+        console.error(`DB_UPDATE: ❌ Error toggling visibility for ${collectionName}/${docId}:`, error);
+        throw error;
     }
 }
 /**
