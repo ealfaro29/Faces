@@ -7,9 +7,9 @@ import Card from './components/Card';
 import TextureCard from './components/TextureCard';
 import FacebaseCard from './components/FacebaseCard';
 import MusicCard from './components/MusicCard';
-import { Search, Layers, CheckSquare, Square, X, Eye, EyeOff, Pencil } from 'lucide-react';
+import { Search, Layers, CheckSquare, Square, X, Eye, EyeOff, Pencil, Filter as LucideFilter } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { initializeAllData } from './utils/data-hooks.js';
+import { initializeAllData, toggleItemVisibility } from './utils/data-hooks.js';
 import { useFavorites } from './hooks/useFavorites.js';
 import { useGroups } from './hooks/useGroups.js';
 import { groupTextureVariants } from './utils/texture-utils.js';
@@ -20,6 +20,7 @@ import SessionBoard from './pages/scoring/SessionBoard';
 import ScoringLanding from './pages/scoring/ScoringLanding';
 import Login from './pages/Login';
 import GroupCard from './components/GroupCard';
+import BottomNav from './components/BottomNav';
 import { useFavicon, FAVICONS } from './hooks/useFavicon';
 
 // Friendly names for texture category codes
@@ -42,6 +43,7 @@ function Dashboard({ user }) {
     const [selectedItems, setSelectedItems] = useState(new Set());
     const [showGroupDialog, setShowGroupDialog] = useState(false);
     const [groupName, setGroupName] = useState('');
+    const [isFilterMenuOpen, setIsFilterMenuOpen] = useState(false);
 
     // Context Menu State
     const [contextMenu, setContextMenu] = useState({ visible: false, x: 0, y: 0, item: null });
@@ -381,81 +383,190 @@ function Dashboard({ user }) {
             <div id="custom-toast"></div>
             <div className={`app-wrapper ${!loading ? 'loaded' : ''}`} id="app-container">
                 <Header activeTab={activeTab} setActiveTab={setActiveTab} />
-                <main className="panel" role="main">
-                    <div id="search-controls" className="flex-shrink-0 flex flex-col sm:flex-row gap-4 mb-4 pb-4 border-b border-[var(--border)]" role="search">
+                <main className="panel flex flex-col min-h-0" role="main">
+                    <div id="search-controls" className="flex-shrink-0 flex items-center gap-2 mb-3 md:mb-4 pb-3 md:pb-4 border-b border-[var(--border)]" role="search">
                         <div className="relative flex-grow">
                             <input
                                 type="search"
                                 id="search-bar"
-                                placeholder={`Search in ${activeTab}...`}
-                                className="w-full h-12 pl-10 pr-4 text-sm dark-input rounded-md"
+                                placeholder={`Search...`}
+                                className="w-full h-10 md:h-12 pl-9 md:pl-10 pr-4 text-xs md:text-sm dark-input rounded-xl md:rounded-md"
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                             />
                             <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none" aria-hidden="true">
-                                <Search className="w-5 h-5 text-zinc-400" />
+                                <Search className="w-4 h-4 md:w-5 md:h-5 text-zinc-500" />
                             </div>
                         </div>
 
-                        {/* Group toggle button */}
-                        {activeTab !== 'favorites' && (
-                            <button
-                                onClick={() => selectionMode ? cancelSelection() : setSelectionMode(true)}
-                                className={`flex-shrink-0 h-12 px-3 flex items-center gap-2 rounded-md border transition-all text-sm font-medium ${
-                                    selectionMode
-                                        ? 'bg-[var(--gold2)]/10 text-[var(--gold2)] border-[var(--gold2)]/40'
-                                        : 'bg-[var(--card-light)] text-zinc-400 border-[var(--border)] hover:text-[var(--gold2)] hover:border-[var(--gold2)]/30'
+                        {/* Mobile Filter Menu Trigger */}
+                        <div className="md:hidden relative">
+                            <button 
+                                onClick={() => setIsFilterMenuOpen(!isFilterMenuOpen)}
+                                className={`w-10 h-10 flex items-center justify-center rounded-xl border transition-all ${
+                                    isFilterMenuOpen || selectionMode || showHidden || selectedCategory !== 'all'
+                                        ? 'bg-[var(--gold2)] text-black border-[var(--gold2)]'
+                                        : 'bg-[var(--card-light)] text-zinc-400 border-[var(--border)]'
                                 }`}
-                                title={selectionMode ? 'Cancel selection' : 'Select items to group'}
                             >
-                                <Layers className="w-4 h-4" />
-                                {selectionMode ? 'Cancel' : 'Group'}
+                                <LucideFilter className="w-4 h-4" />
                             </button>
-                        )}
 
-                        {/* Admin Show Hidden Toggle */}
-                        {user && activeTab !== 'favorites' && (
-                            <button
-                                onClick={() => setShowHidden(!showHidden)}
-                                className={`flex-shrink-0 h-12 w-12 flex items-center justify-center rounded-md border transition-all ${
-                                    showHidden
-                                        ? 'bg-red-500/10 text-red-500 border-red-500/40'
-                                        : 'bg-[var(--card-light)] text-zinc-400 border-[var(--border)] hover:text-white hover:border-zinc-700'
-                                }`}
-                                title={showHidden ? 'Hide hidden items' : 'Show hidden items'}
-                            >
-                                {showHidden ? <Eye className="w-5 h-5" /> : <EyeOff className="w-5 h-5" />}
-                            </button>
-                        )}
+                            <AnimatePresence>
+                                {isFilterMenuOpen && (
+                                    <>
+                                        <motion.div 
+                                            initial={{ opacity: 0 }}
+                                            animate={{ opacity: 1 }}
+                                            exit={{ opacity: 0 }}
+                                            onClick={() => setIsFilterMenuOpen(false)}
+                                            className="fixed inset-0 z-[70] bg-black/40"
+                                        />
+                                        <motion.div 
+                                            initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                                            exit={{ opacity: 0, scale: 0.95, y: 10 }}
+                                            className="absolute right-0 top-12 w-64 bg-[#1a1c24] border border-zinc-800 rounded-2xl shadow-2xl p-4 z-[71] flex flex-col gap-4 overflow-hidden"
+                                        >
+                                            <div className="flex items-center justify-between">
+                                                <h4 className="text-[10px] text-zinc-500 uppercase font-bold tracking-widest">Filters & Tools</h4>
+                                                <button onClick={() => setIsFilterMenuOpen(false)}>
+                                                    <X className="w-4 h-4 text-zinc-500" />
+                                                </button>
+                                            </div>
 
-                        {/* Rendering Filter Dropdown if applicable */}
-                        {activeTab !== 'favorites' && (
-                            <div className="relative w-full sm:w-48">
-                                <select
-                                    className="w-full h-12 px-4 text-sm dark-input rounded-md appearance-none cursor-pointer"
-                                    value={selectedCategory}
-                                    onChange={(e) => setSelectedCategory(e.target.value)}
-                                    aria-label={`Filter ${activeTab} by category`}
+                                            {/* Selection Mode Toggle */}
+                                            {activeTab !== 'favorites' && (
+                                                <button
+                                                    onClick={() => {
+                                                        selectionMode ? cancelSelection() : setSelectionMode(true);
+                                                        setIsFilterMenuOpen(false);
+                                                    }}
+                                                    className={`flex items-center gap-3 w-full p-3 rounded-xl border transition-all text-sm font-medium ${
+                                                        selectionMode
+                                                            ? 'bg-[var(--gold2)]/10 text-[var(--gold2)] border-[var(--gold2)]/40'
+                                                            : 'bg-zinc-800/30 text-zinc-400 border-zinc-800/50'
+                                                    }`}
+                                                >
+                                                    <Layers className="w-4 h-4" />
+                                                    <span>{selectionMode ? 'Cancel Selection' : 'Group Mode'}</span>
+                                                </button>
+                                            )}
+
+                                            {/* Show Hidden Toggle */}
+                                            {user && activeTab !== 'favorites' && (
+                                                <button
+                                                    onClick={() => {
+                                                        setShowHidden(!showHidden);
+                                                        setIsFilterMenuOpen(false);
+                                                    }}
+                                                    className={`flex items-center gap-3 w-full p-3 rounded-xl border transition-all text-sm font-medium ${
+                                                        showHidden
+                                                            ? 'bg-red-500/10 text-red-500 border-red-500/40'
+                                                            : 'bg-zinc-800/30 text-zinc-400 border-zinc-800/50'
+                                                    }`}
+                                                >
+                                                    {showHidden ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                                                    <span>{showHidden ? 'Hide Items' : 'Show Hidden'}</span>
+                                                </button>
+                                            )}
+
+                                            {/* Category Select */}
+                                            {activeTab !== 'favorites' && (
+                                                <div className="space-y-2">
+                                                    <label className="text-[10px] text-zinc-500 uppercase px-1">Category</label>
+                                                    <select
+                                                        className="w-full h-10 px-3 text-sm dark-input rounded-xl appearance-none cursor-pointer border border-zinc-800"
+                                                        value={selectedCategory}
+                                                        onChange={(e) => {
+                                                            setSelectedCategory(e.target.value);
+                                                            setIsFilterMenuOpen(false);
+                                                        }}
+                                                    >
+                                                        <option value="all">All Categories</option>
+                                                        {activeTab === 'facebases' && [...new Set(data?.allFacebaseItems?.map(i => i.group).filter(Boolean))].sort().map(cat => (
+                                                            <option key={cat} value={cat}>{getFilterLabel(activeTab, cat)}</option>
+                                                        ))}
+                                                        {activeTab === 'avatar' && [...new Set(data?.allAvatarItems?.map(i => i.group).filter(Boolean))].sort().map(cat => (
+                                                            <option key={cat} value={cat}>{getFilterLabel(activeTab, cat)}</option>
+                                                        ))}
+                                                        {activeTab === 'textures' && [...new Set(data?.allTextureItems?.map(i => i.group).filter(Boolean))].sort().map(cat => (
+                                                            <option key={cat} value={cat}>{getFilterLabel(activeTab, cat)}</option>
+                                                        ))}
+                                                        {activeTab === 'music' && [...new Set(data?.allMusicCodes?.map(i => i.category).filter(Boolean))].sort().map(cat => (
+                                                            <option key={cat} value={cat}>{getFilterLabel(activeTab, cat)}</option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+                                            )}
+                                        </motion.div>
+                                    </>
+                                )}
+                            </AnimatePresence>
+                        </div>
+
+                        {/* Desktop Controls */}
+                        <div className="hidden md:flex items-center gap-4 flex-shrink-0">
+                            {/* Group toggle button */}
+                            {activeTab !== 'favorites' && (
+                                <button
+                                    onClick={() => selectionMode ? cancelSelection() : setSelectionMode(true)}
+                                    className={`flex-shrink-0 h-12 px-3 flex items-center gap-2 rounded-md border transition-all text-sm font-medium ${
+                                        selectionMode
+                                            ? 'bg-[var(--gold2)]/10 text-[var(--gold2)] border-[var(--gold2)]/40'
+                                            : 'bg-[var(--card-light)] text-zinc-400 border-[var(--border)] hover:text-[var(--gold2)] hover:border-[var(--gold2)]/30'
+                                    }`}
+                                    title={selectionMode ? 'Cancel selection' : 'Select items to group'}
                                 >
-                                    <option value="all">All Categories</option>
-                                    {activeTab === 'facebases' && [...new Set(data?.allFacebaseItems?.map(i => i.group).filter(Boolean))].sort().map(cat => (
-                                        <option key={cat} value={cat}>{getFilterLabel(activeTab, cat)}</option>
-                                    ))}
-                                    {activeTab === 'avatar' && [...new Set(data?.allAvatarItems?.map(i => i.group).filter(Boolean))].sort().map(cat => (
-                                        <option key={cat} value={cat}>{getFilterLabel(activeTab, cat)}</option>
-                                    ))}
-                                    {activeTab === 'textures' && [...new Set(data?.allTextureItems?.map(i => i.group).filter(Boolean))].sort().map(cat => (
-                                        <option key={cat} value={cat}>{getFilterLabel(activeTab, cat)}</option>
-                                    ))}
-                                    {activeTab === 'music' && [...new Set(data?.allMusicCodes?.map(i => i.category).filter(Boolean))].sort().map(cat => (
-                                        <option key={cat} value={cat}>{getFilterLabel(activeTab, cat)}</option>
-                                    ))}
-                                </select>
-                                <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
-                                    <svg className="w-4 h-4 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                                    <Layers className="w-4 h-4" />
+                                    {selectionMode ? 'Cancel' : 'Group'}
+                                </button>
+                            )}
+
+                            {/* Admin Show Hidden Toggle */}
+                            {user && activeTab !== 'favorites' && (
+                                <button
+                                    onClick={() => setShowHidden(!showHidden)}
+                                    className={`flex-shrink-0 h-12 w-12 flex items-center justify-center rounded-md border transition-all ${
+                                        showHidden
+                                            ? 'bg-red-500/10 text-red-500 border-red-500/40'
+                                            : 'bg-[var(--card-light)] text-zinc-400 border-[var(--border)] hover:text-white hover:border-zinc-700'
+                                    }`}
+                                    title={showHidden ? 'Hide hidden items' : 'Show hidden items'}
+                                >
+                                    {showHidden ? <Eye className="w-5 h-5" /> : <EyeOff className="w-5 h-5" />}
+                                </button>
+                            )}
+
+                            {/* Category Dropdown */}
+                            {activeTab !== 'favorites' && (
+                                <div className="relative w-48">
+                                    <select
+                                        className="w-full h-12 px-4 text-sm dark-input rounded-md appearance-none cursor-pointer"
+                                        value={selectedCategory}
+                                        onChange={(e) => setSelectedCategory(e.target.value)}
+                                        aria-label={`Filter ${activeTab} by category`}
+                                    >
+                                        <option value="all">All Categories</option>
+                                        {activeTab === 'facebases' && [...new Set(data?.allFacebaseItems?.map(i => i.group).filter(Boolean))].sort().map(cat => (
+                                            <option key={cat} value={cat}>{getFilterLabel(activeTab, cat)}</option>
+                                        ))}
+                                        {activeTab === 'avatar' && [...new Set(data?.allAvatarItems?.map(i => i.group).filter(Boolean))].sort().map(cat => (
+                                            <option key={cat} value={cat}>{getFilterLabel(activeTab, cat)}</option>
+                                        ))}
+                                        {activeTab === 'textures' && [...new Set(data?.allTextureItems?.map(i => i.group).filter(Boolean))].sort().map(cat => (
+                                            <option key={cat} value={cat}>{getFilterLabel(activeTab, cat)}</option>
+                                        ))}
+                                        {activeTab === 'music' && [...new Set(data?.allMusicCodes?.map(i => i.category).filter(Boolean))].sort().map(cat => (
+                                            <option key={cat} value={cat}>{getFilterLabel(activeTab, cat)}</option>
+                                        ))}
+                                    </select>
+                                    <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+                                        <svg className="w-4 h-4 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                                    </div>
                                 </div>
-                            </div>
-                        )}
+                            )}
+                        </div>
                     </div>
                     <div id="tab-content-wrapper" className="flex-grow relative min-h-0">
                         <AnimatePresence mode="wait">
@@ -523,6 +634,7 @@ function Dashboard({ user }) {
                         )}
                     </AnimatePresence>
                 </main>
+                <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} />
             </div>
             <footer className="text-center py-4 text-zinc-500 text-sm">
                 <p>&copy; 2026 Pageants. All rights reserved.</p>

@@ -53,8 +53,8 @@ export const getIsoCode = (countryName) => {
 export const getFlagEmoji = (isoCodeOrCountry) => {
     if (!isoCodeOrCountry) return '🏳️';
     
-    // Check if it's already an ISO code (2 letters)
-    let iso = isoCodeOrCountry.length === 2 ? isoCodeOrCountry.toUpperCase() : getIsoCode(isoCodeOrCountry);
+    // Always try to resolve the name first (handles aliases like UK -> GB)
+    let iso = getIsoCode(isoCodeOrCountry) || (isoCodeOrCountry.length === 2 ? isoCodeOrCountry.toUpperCase() : null);
     
     if (!iso) return '🏳️';
     
