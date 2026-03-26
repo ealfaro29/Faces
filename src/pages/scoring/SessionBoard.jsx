@@ -680,6 +680,8 @@ export default function SessionBoard() {
       className={`theme-scoring-${theme} min-h-screen bg-app-bg text-app-text font-sans flex flex-col h-screen overflow-hidden`}
       style={getScoringThemeStyleVars(accentColor, theme)}
     >
+      <div className="flex-1 flex flex-col lg:flex-row min-h-0 lg:gap-4 lg:p-4">
+        <div className="flex-1 flex flex-col min-h-0 bg-app-card lg:rounded-2xl lg:shadow-xl border-b lg:border border-app-border overflow-hidden">
       
       {/* HEADER */}
       <header className="min-h-12 border-b border-app-border/60 bg-app-card/80 backdrop-blur-md flex items-center justify-between gap-3 px-3 md:px-5 py-2 flex-shrink-0 z-20 flex-wrap">
@@ -1062,9 +1064,10 @@ export default function SessionBoard() {
             </>
           )}
         </div>
+      </div>
 
-        {/* RIGHT: RESULTADOS GLOBALES */}
-        <div className="w-full lg:w-80 xl:w-96 max-h-[38vh] lg:max-h-none flex flex-col overflow-hidden shrink-0 bg-app-card/80 border-t lg:border-t-0 border-app-border">
+      {/* RIGHT: RESULTADOS GLOBALES */}
+        <div className="w-full lg:w-80 xl:w-96 max-h-[38vh] lg:max-h-none flex flex-col overflow-hidden shrink-0 bg-app-card lg:rounded-2xl lg:shadow-xl border-t lg:border border-app-border">
           <div className="px-5 py-4 border-b border-app-border/50 bg-app-card shrink-0">
             <h3 className="text-[10px] font-bold tracking-widest text-app-muted/70 uppercase">{t.board.globalResults}</h3>
             <p className="text-[9px] text-app-muted/30 mt-0.5">{t.board.phasesCompleted(allParticipants.length, phases.filter(p => p.status === 'completed').length)}</p>
@@ -1126,6 +1129,7 @@ export default function SessionBoard() {
         onRenameSession={renameSession}
         onExpelJudge={expelJudge}
       />
+      </div>
     </div>
   );
 }
