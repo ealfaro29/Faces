@@ -47,7 +47,7 @@ export default function ScoringLanding() {
   return (
     <div 
       className={`theme-scoring-${theme} min-h-screen bg-app-bg text-app-text font-sans flex flex-col items-center relative overflow-hidden`}
-      style={getScoringThemeStyleVars(accentColor)}
+      style={getScoringThemeStyleVars(accentColor, theme)}
     >
       {/* Background Aesthetic Elements */}
       <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-app-accent/5 blur-[120px] rounded-full pointer-events-none" />
@@ -67,18 +67,21 @@ export default function ScoringLanding() {
           <ScoringLanguageToggle language={language} label={t.languageLabel} onChange={setLanguage} />
           
           <div className="hidden sm:flex items-center gap-2 bg-app-card/50 backdrop-blur-md border border-app-border/50 px-3 py-1.5 rounded-full shadow-lg">
-            {accents.map(acc => (
-              <button
-                key={acc.color}
-                onClick={() => {
-                  setAccentColor(acc.color);
-                  persistScoringAccent(acc.color);
-                }}
-                className={`w-3.5 h-3.5 rounded-full border transition-all ${accentColor === acc.color ? 'scale-125 border-app-text ring-2 ring-app-accent/20' : 'border-transparent opacity-40 hover:opacity-100'}`}
-                style={{ backgroundColor: acc.color }}
-                title={`${t.accentLabel}: ${t.accentNames[acc.key]}`}
-              />
-            ))}
+            {accents.map(acc => {
+              const displayColor = (theme === 'light' && acc.key === 'white') ? '#0f172a' : acc.color;
+              return (
+                <button
+                  key={acc.color}
+                  onClick={() => {
+                    setAccentColor(acc.color);
+                    persistScoringAccent(acc.color);
+                  }}
+                  className={`w-3.5 h-3.5 rounded-full border transition-all ${accentColor === acc.color ? 'scale-125 border-app-text ring-2 ring-app-accent/20' : 'border-transparent opacity-40 hover:opacity-100'}`}
+                  style={{ backgroundColor: displayColor }}
+                  title={`${t.accentLabel}: ${t.accentNames[acc.key]}`}
+                />
+              );
+            })}
           </div>
 
           <button onClick={() => {

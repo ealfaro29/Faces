@@ -676,7 +676,7 @@ export default function SessionBoard() {
   return (
     <div 
       className={`theme-scoring-${theme} min-h-screen bg-app-bg text-app-text font-sans flex flex-col h-screen overflow-hidden`}
-      style={getScoringThemeStyleVars(accentColor)}
+      style={getScoringThemeStyleVars(accentColor, theme)}
     >
       
       {/* HEADER */}

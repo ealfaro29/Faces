@@ -28,8 +28,14 @@ export function persistScoringAccent(accent) {
   window.localStorage.setItem(ACCENT_KEY, accent || DEFAULT_SCORING_ACCENT);
 }
 
-export function getScoringThemeStyleVars(accent) {
-  const accentColor = accent || DEFAULT_SCORING_ACCENT;
+export function getScoringThemeStyleVars(accent, theme) {
+  let accentColor = accent || DEFAULT_SCORING_ACCENT;
+  
+  // High contrast override for light theme: if white accent is selected, use a dark color
+  if (normalizeScoringTheme(theme) === 'light' && (accentColor === '#ffffff' || accentColor === 'white')) {
+    accentColor = '#0f172a'; // Navy/Black for light mode white accent
+  }
+  
   return {
     '--color-app-accent': accentColor,
     '--color-app-accent-muted': `${accentColor}22`

@@ -198,7 +198,7 @@ export default function PhaseReportModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" style={getScoringThemeStyleVars(accentColor)}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" style={getScoringThemeStyleVars(accentColor, session?.theme)}>
       <div className="scoring-panel rounded-2xl w-full max-w-5xl max-h-[90vh] flex flex-col overflow-hidden">
         
         {/* Header */}
