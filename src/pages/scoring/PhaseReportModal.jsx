@@ -431,7 +431,7 @@ export default function PhaseReportModal({
                               const val = pScores[judge];
                               return (
                                 <td key={judge} className="px-4 py-4 text-center text-sm font-mono text-app-muted">
-                                  {val !== undefined && val !== null ? val.toFixed(1) : '-'}
+                                  {val !== undefined && val !== null ? val.toFixed(2) : '-'}
                                 </td>
                               );
                             })}

@@ -936,7 +936,7 @@ export default function SessionBoard() {
                                   type="range"
                                   min="0"
                                   max="10"
-                                  step="0.1"
+                                  step="0.01"
                                   value={sliderValue}
                                   onChange={e => queueScoreSave(p.id, e.target.value)}
                                   onMouseUp={e => flushScoreSave(p.id, e.currentTarget.value)}
@@ -944,6 +944,26 @@ export default function SessionBoard() {
                                   onBlur={e => flushScoreSave(p.id, e.target.value)}
                                   className="h-2 flex-1 cursor-pointer appearance-none rounded-full bg-app-border accent-app-accent"
                                   aria-label={`${t.board.yourScoreHeader}: ${p.name}`}
+                                />
+                                <input
+                                  type="number"
+                                  min="0"
+                                  max="10"
+                                  step="0.01"
+                                  value={sliderValue}
+                                  onChange={e => queueScoreSave(p.id, e.target.value)}
+                                  onBlur={e => {
+                                    const val = parseFloat(e.target.value);
+                                    if (!isNaN(val)) {
+                                      const clamped = Math.min(Math.max(val, 0), 10).toFixed(2);
+                                      queueScoreSave(p.id, clamped);
+                                      flushScoreSave(p.id, clamped);
+                                    } else {
+                                      flushScoreSave(p.id, e.target.value);
+                                    }
+                                  }}
+                                  className="w-14 h-8 bg-app-card border border-app-border rounded-lg text-center font-mono text-xs focus:outline-none focus:border-app-accent transition-colors"
+                                  placeholder="0.00"
                                 />
                                 <button
                                   type="button"
@@ -967,13 +987,13 @@ export default function SessionBoard() {
                                 </button>
                               </div>
                               <div className="mt-1 flex items-center justify-between text-[10px] font-mono">
-                                <span className="text-app-muted/50">0.0</span>
+                                <span className="text-app-muted/50">0.00</span>
                                 <span className={hasScore ? 'text-app-accent' : 'text-app-muted'}>
                                   {hasScore || scoreDrafts[p.id] !== undefined
-                                    ? (showScoreValue ? displayScore.toFixed(1) : '0.0')
+                                    ? (showScoreValue ? displayScore.toFixed(2) : '0.00')
                                     : t.board.notVoted}
                                 </span>
-                                <span className="text-app-muted/50">10.0</span>
+                                <span className="text-app-muted/50">10.00</span>
                               </div>
                             </td>
                             {isHost && currentPhaseIndex === 0 && (
