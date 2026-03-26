@@ -463,7 +463,9 @@ export default function SessionBoard() {
     advancePhase().catch(() => {});
   };
 
-  const copyCode = () => {
+  const copyCode = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
     navigator.clipboard.writeText(session?.id || '');
     setCodeCopied(true);
     setTimeout(() => setCodeCopied(false), 2000);

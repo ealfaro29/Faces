@@ -25,7 +25,9 @@ export default function MusicCard({ code, isFavorite, onToggleFavorite, isAdmin,
         onContextMenu(e, { id: code.id, type: 'music', isHidden });
     };
 
-    const handleCopy = () => {
+    const handleCopy = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
         navigator.clipboard.writeText(code.id || '');
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);

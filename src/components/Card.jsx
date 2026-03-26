@@ -13,7 +13,9 @@ export default function Card({ id, displayName, group, imageSrc, codeId, isFavor
         onContextMenu(e, { id, type, isHidden });
     };
 
-    const handleCopy = () => {
+    const handleCopy = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
         navigator.clipboard.writeText(codeId || '');
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);

@@ -73,7 +73,9 @@ const FacebaseCard = ({ group, isFavorite, onToggleFavorite, isAdmin, showHidden
         }
     };
 
-    const handleCopy = () => {
+    const handleCopy = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
         navigator.clipboard.writeText(activeVariant.codeId || '');
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);

@@ -49,7 +49,9 @@ export default function TextureCard({ group, isFavorite, onToggleFavorite, isAdm
         }
     };
 
-    const handleCopy = () => {
+    const handleCopy = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
         navigator.clipboard.writeText(activeVariant.codeId || '');
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
