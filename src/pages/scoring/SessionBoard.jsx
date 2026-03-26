@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { db } from '../../core/firebase-config.js';
 import { doc, onSnapshot, setDoc, updateDoc, arrayUnion, deleteField } from 'firebase/firestore';
-import { Copy, Check, Search, Plus, X, ChevronRight, Globe, MapPin, AlertTriangle, Crown, BarChart3, Sun, Moon, RotateCcw, Settings2 } from 'lucide-react';
+import { Copy, Check, Search, Plus, X, ChevronRight, Globe, MapPin, AlertTriangle, Crown, BarChart3, Sun, Moon, RotateCcw, Settings2, LogOut } from 'lucide-react';
 import {
   getCountryDisplayName,
   getDefaultPhaseName,
@@ -549,7 +549,6 @@ export default function SessionBoard() {
   const isSessionComplete = session.status === 'completed' && Boolean(session.winnerId);
   const canUndoPhase = isHost && (currentPhaseIndex > 0 || isSessionComplete);
   const currentPhaseHasSavedScores = phaseHasSavedScores(currentPhaseIndex);
-  const undoNeedsConfirm = !isSessionComplete && currentPhaseIndex > 0 && currentPhaseHasSavedScores && !undoAttempted;
 
   const undoPhaseAdvance = async () => {
     setForceAttempted(false);
@@ -666,7 +665,7 @@ export default function SessionBoard() {
           <button
             type="button"
             onClick={() => navigate(`/session/join?code=${encodeURIComponent(sessionId)}`, { replace: true })}
-            className="scoring-btn-primary h-12 px-5 rounded-lg text-xs font-bold uppercase tracking-widest inline-flex items-center justify-center"
+            className="scoring-btn-primary h-12 px-5 rounded-lg text-sm font-bold uppercase tracking-widest inline-flex items-center justify-center"
           >
             {t.board.backToJoin}
           </button>
@@ -680,37 +679,34 @@ export default function SessionBoard() {
       className={`theme-scoring-${theme} min-h-screen bg-app-bg text-app-text font-sans flex flex-col h-screen overflow-hidden`}
       style={getScoringThemeStyleVars(accentColor, theme)}
     >
-      <div className="flex-1 flex flex-col lg:flex-row min-h-0 lg:gap-4 lg:p-4">
-        <div className="flex-1 flex flex-col min-h-0 bg-app-card lg:rounded-2xl lg:shadow-xl border-b lg:border border-app-border overflow-hidden">
-      
-      {/* HEADER */}
+      {/* HEADER - Global at top */}
       <header className="min-h-12 border-b border-app-border/60 bg-app-card/80 backdrop-blur-md flex items-center justify-between gap-3 px-3 md:px-5 py-2 flex-shrink-0 z-20 flex-wrap">
         <div className="flex items-center gap-3 min-w-0 flex-wrap">
           {session.type === 'Global' ? <Globe className="w-4 h-4 text-app-muted/70 shrink-0" /> : <MapPin className="w-4 h-4 text-app-muted/70 shrink-0" />}
-          <h1 className="text-sm font-bold text-app-text tracking-tight truncate">{session.name}</h1>
-          <span className="text-[10px] text-app-muted/50 bg-app-border/30 px-2 py-0.5 rounded border border-app-border shrink-0">{getSessionTypeLabel(session.type, currentLanguage)}</span>
-          <span className="text-[10px] text-app-muted/50 shrink-0">{judges.length} {judges.length === 1 ? t.board.judgeSingular : t.board.judgePlural}</span>
+          <h1 className="text-base font-bold text-app-text tracking-tight truncate">{session.name}</h1>
+          <span className="text-xs text-app-muted/50 bg-app-border/30 px-2 py-0.5 rounded border border-app-border shrink-0">{getSessionTypeLabel(session.type, currentLanguage)}</span>
+          <span className="text-xs text-app-muted/50 shrink-0">{judges.length} {judges.length === 1 ? t.board.judgeSingular : t.board.judgePlural}</span>
         </div>
         <div className="flex items-center gap-3 shrink-0 flex-wrap justify-end">
           {isHost && (
             <>
-              <button onClick={() => setIsSettingsModalOpen(true)} className="scoring-btn-icon flex items-center gap-1.5 px-2 py-1 rounded text-[10px] font-medium">
+              <button onClick={() => setIsSettingsModalOpen(true)} className="scoring-btn-icon flex items-center gap-1.5 px-2 py-1 rounded text-xs font-medium">
                 <Settings2 className="w-3 h-3" />
                 {t.board.settingsButton}
               </button>
-              <button onClick={() => setIsReportModalOpen(true)} className="scoring-btn-icon flex items-center gap-1.5 px-2 py-1 rounded text-[10px] font-medium">
+              <button onClick={() => setIsReportModalOpen(true)} className="scoring-btn-icon flex items-center gap-1.5 px-2 py-1 rounded text-xs font-medium">
                 <BarChart3 className="w-3 h-3" />
                 {t.board.reportsButton}
               </button>
             </>
           )}
-          <button onClick={copyCode} className="scoring-btn-icon flex items-center gap-1.5 px-2 py-1 rounded text-[10px] font-mono tracking-widest" title={t.board.copyCode}>
+          <button onClick={copyCode} className="scoring-btn-icon flex items-center gap-1.5 px-2 py-1 rounded text-xs font-mono tracking-widest" title={t.board.copyCode}>
             {session.id}
-            {codeCopied ? <Check className="w-3 h-3" style={{ color: 'var(--color-app-success)' }} /> : <Copy className="w-3 h-3" />}
+            {codeCopied ? <Check className="w-3 h-3 text-green-500" /> : <Copy className="w-3 h-3" />}
           </button>
           <div className="flex items-center gap-2">
-            <span className="text-xs text-app-muted">{judgeName}</span>
-            {isHost && <span className="scoring-badge text-[9px] px-1.5 py-0.5 rounded">{t.board.hostBadge}</span>}
+            <span className="text-sm text-app-muted">{judgeName}</span>
+            {isHost && <span className="scoring-badge text-[10px] px-1.5 py-0.5 rounded">{t.board.hostBadge}</span>}
             <button onClick={() => {
               const newTheme = theme === 'dark' ? 'light' : 'dark';
               setTheme(newTheme);
@@ -719,20 +715,24 @@ export default function SessionBoard() {
               {theme === 'dark' ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
             </button>
           </div>
+          <div className="h-4 w-px bg-app-border/50 mx-1" />
+          <button onClick={() => { localStorage.removeItem('judgeName'); navigate('/session'); }} className="scoring-btn-icon p-1.5 rounded-full text-app-danger hover:bg-app-danger/10" title={t.board.exitSession} aria-label={t.board.exitSession}>
+            <LogOut className="w-3.5 h-3.5" />
+          </button>
         </div>
       </header>
 
-      {/* TWO PANELS */}
-      <div className="flex flex-col lg:flex-row flex-grow min-h-0 overflow-hidden">
+      {/* MAIN CONTENT AREA with GAP */}
+      <div className="flex-1 flex flex-col lg:flex-row min-h-0 gap-4 p-4 overflow-hidden">
         
-        {/* LEFT: FASE ACTUAL */}
-        <div className="flex-1 flex flex-col overflow-hidden lg:border-r border-app-border min-w-0">
+        {/* LEFT: TABLERO DE PUNTUACIÓN (CARD) - 60% */}
+        <div className={`lg:w-[60%] flex flex-col min-h-0 bg-app-card rounded-2xl shadow-xl border border-app-border overflow-hidden ${isSessionComplete ? 'bg-gradient-to-br from-app-card to-app-border/10' : ''}`}>
           {/* Phase header */}
           <div className="p-4 border-b border-app-border/50 bg-app-card/50 shrink-0">
             <div className="flex items-center gap-3 flex-wrap">
               {/* Phase nav pills (completed + current) */}
               {phases.map((ph, i) => (
-                <div key={i} className={`text-[10px] px-2.5 py-1 rounded-md font-medium ${
+                <div key={i} className={`text-xs px-2.5 py-1 rounded-md font-medium ${
                   i === currentPhaseIndex ? 'scoring-badge-active' :
                   ph.status === 'completed' ? 'bg-app-border text-app-muted/70' : 'bg-app-border/30 text-app-muted/50'
                 }`}>
@@ -746,27 +746,27 @@ export default function SessionBoard() {
                 <input
                   type="text" value={currentPhase.name}
                   onChange={e => updatePhaseName(e.target.value)}
-                  className="bg-transparent text-lg font-bold text-app-text focus:outline-none border-b border-transparent focus:border-app-border transition-colors flex-1 min-w-0"
+                  className="bg-transparent text-xl font-bold text-app-text focus:outline-none border-b border-transparent focus:border-app-border transition-colors flex-1 min-w-0"
                   placeholder={t.board.phaseNamePlaceholder}
                 />
               ) : (
-                <h2 className="text-lg font-bold text-app-text">{currentPhase.name}</h2>
+                <h2 className="text-xl font-bold text-app-text">{currentPhase.name}</h2>
               )}
               {isHost && (
                 <div className="flex items-center gap-2 bg-app-border/30 border border-app-border rounded-lg px-2.5 py-1.5 shrink-0">
-                  <span className="text-[9px] text-app-muted/70 uppercase tracking-widest">{t.board.classifyLabel}</span>
+                  <span className="text-[10px] text-app-muted/70 uppercase tracking-widest">{t.board.classifyLabel}</span>
                   <input
                     type="number" min="1" max={currentParticipants.length || 99}
                     value={currentPhase.cutoff || ''}
                     onChange={e => updatePhaseCutoff(e.target.value)}
                     placeholder="—"
-                    className="bg-transparent text-sm text-app-text font-mono font-bold text-center focus:outline-none w-10"
+                    className="bg-transparent text-base text-app-text font-mono font-bold text-center focus:outline-none w-10"
                   />
                 </div>
               )}
             </div>
             {!isHost && currentPhase.cutoff && (
-              <p className="text-[10px] text-app-muted/50 mt-1">{t.board.classifySummary(currentPhase.cutoff, currentParticipants.length)}</p>
+              <p className="text-xs text-app-muted/50 mt-1">{t.board.classifySummary(currentPhase.cutoff, currentParticipants.length)}</p>
             )}
           </div>
 
@@ -778,8 +778,8 @@ export default function SessionBoard() {
                   <div className="relative">
                     <input type="text" value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
                       placeholder={t.board.addHostCountryFirst}
-                      className="scoring-input w-full rounded-lg h-8 pl-8 pr-3 text-xs" />
-                    <Search className="w-3.5 h-3.5 text-app-muted/70 absolute left-2.5 top-2" />
+                      className="scoring-input w-full rounded-lg h-10 pl-10 pr-3 text-sm" />
+                    <Search className="w-4 h-4 text-app-muted/70 absolute left-3 top-3" />
                   </div>
                   <AnimatePresence>
                     {searchResults.length > 0 && (
@@ -792,8 +792,8 @@ export default function SessionBoard() {
                       >
                         {searchResults.map(c => (
                           <button key={c.id} onClick={() => { setSelectedParentCountry(c); setSearchQuery(''); setSearchResults([]); }}
-                            className="scoring-popover-option w-full flex items-center gap-3 px-3 py-2.5 text-left text-xs rounded-lg group">
-                            <span className="text-base group-hover:scale-110 transition-transform">{c.flag}</span>
+                            className="scoring-popover-option w-full flex items-center gap-3 px-3 py-2.5 text-left text-sm rounded-lg group">
+                            <span className="text-lg group-hover:scale-110 transition-transform">{c.flag}</span>
                             <span className="scoring-popover-secondary font-medium">{c.name}</span>
                           </button>
                         ))}
@@ -804,8 +804,8 @@ export default function SessionBoard() {
               )}
               {session.type === 'Nacional' && selectedParentCountry && (
                 <div className="flex items-center gap-2 mb-2">
-                  <span className="text-xs">{t.board.hostCountryLabel}: {selectedParentCountry.flag} {selectedParentCountry.name}</span>
-                  <button onClick={() => { setSelectedParentCountry(null); setCities([]); }} className="text-[10px] text-app-muted/70 hover:text-app-text" title={t.board.changeHostCountry} aria-label={t.board.changeHostCountry}>✕</button>
+                  <span className="text-sm">{t.board.hostCountryLabel}: {selectedParentCountry.flag} {selectedParentCountry.name}</span>
+                  <button onClick={() => { setSelectedParentCountry(null); setCities([]); }} className="text-xs text-app-muted/70 hover:text-app-text" title={t.board.changeHostCountry} aria-label={t.board.changeHostCountry}>✕</button>
                 </div>
               )}
               {(session.type === 'Global' || (session.type === 'Nacional' && selectedParentCountry)) && (
@@ -814,8 +814,8 @@ export default function SessionBoard() {
                     <input type="text" value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
                       disabled={session.type === 'Nacional' && loadingCities}
                       placeholder={session.type === 'Global' ? t.board.addCountryPlaceholder : loadingCities ? t.board.loadingCities : t.board.addCityPlaceholder}
-                      className="scoring-input w-full rounded-lg h-8 pl-8 pr-3 text-xs disabled:opacity-40" />
-                    <Search className="w-3.5 h-3.5 text-app-muted/70 absolute left-2.5 top-2" />
+                      className="scoring-input w-full rounded-lg h-10 pl-10 pr-3 text-sm disabled:opacity-40" />
+                    <Search className="w-4 h-4 text-app-muted/70 absolute left-3 top-3" />
                   </div>
                   <AnimatePresence>
                     {searchResults.length > 0 && (
@@ -828,10 +828,10 @@ export default function SessionBoard() {
                       >
                         {searchResults.map(c => (
                           <button key={c.id} onClick={() => addParticipant(c)}
-                            className="scoring-popover-option w-full flex items-center gap-3 px-3 py-2.5 text-left text-xs rounded-lg group">
-                            {c.flag && <span className="text-base group-hover:scale-110 transition-transform">{c.flag}</span>}
+                            className="scoring-popover-option w-full flex items-center gap-3 px-3 py-2.5 text-left text-sm rounded-lg group">
+                            {c.flag && <span className="text-lg group-hover:scale-110 transition-transform">{c.flag}</span>}
                             <span className="scoring-popover-secondary font-medium">{c.name}</span>
-                            <Plus className="scoring-popover-icon w-3 h-3 text-app-muted/70 ml-auto transition-colors" />
+                            <Plus className="scoring-popover-icon w-4 h-4 text-app-muted/70 ml-auto transition-colors" />
                           </button>
                         ))}
                       </motion.div>
@@ -843,7 +843,7 @@ export default function SessionBoard() {
                         className="scoring-popover absolute mt-2 left-0 right-0 rounded-xl p-4 z-30 text-center"
                       >
                         <button onClick={() => addParticipant({ name: searchQuery.trim(), id: searchQuery.replace(/\s+/g, '').toUpperCase(), flag: selectedParentCountry.flag })}
-                          className="scoring-btn-primary text-[10px] px-4 py-2 rounded-lg font-bold uppercase tracking-widest">
+                          className="scoring-btn-primary text-xs px-4 py-2 rounded-lg font-bold uppercase tracking-widest">
                           {t.board.addManualEntry(searchQuery)}
                         </button>
                       </motion.div>
@@ -862,18 +862,18 @@ export default function SessionBoard() {
                   <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-full border border-amber-200/20 bg-amber-300/10 text-amber-200 shadow-[0_0_30px_rgba(251,191,36,0.2)]">
                     <Crown className="h-10 w-10" />
                   </div>
-                  <p className="text-[11px] uppercase tracking-[0.45em] text-amber-200/70">{t.board.winnerTitle}</p>
+                  <p className="text-xs uppercase tracking-[0.45em] text-amber-200/70">{t.board.winnerTitle}</p>
                   <h2 className="mt-3 text-4xl font-black tracking-tight text-app-text md:text-5xl">{winner?.flag} {winner?.name || t.board.winnerPending}</h2>
-                  <p className="mt-3 text-sm text-app-muted">{t.board.winnerSubtitle}</p>
+                  <p className="mt-3 text-base text-app-muted">{t.board.winnerSubtitle}</p>
                   {winnerResult && (
                     <div className="mt-8 grid w-full max-w-sm grid-cols-2 gap-3">
                       <div className="rounded-2xl border border-app-border bg-app-card/70 px-5 py-4">
-                        <p className="text-[10px] uppercase tracking-[0.3em] text-app-muted/70">{t.board.winnerScore}</p>
-                        <p className="mt-2 text-2xl font-mono text-app-text">{winnerResult.totalAvg.toFixed(2)}</p>
+                        <p className="text-xs uppercase tracking-[0.3em] text-app-muted/70">{t.board.winnerScore}</p>
+                        <p className="mt-2 text-3xl font-mono text-app-text">{winnerResult.totalAvg.toFixed(2)}</p>
                       </div>
                       <div className="rounded-2xl border border-app-border bg-app-card/70 px-5 py-4">
-                        <p className="text-[10px] uppercase tracking-[0.3em] text-app-muted/70">{t.board.winnerPhaseLabel}</p>
-                        <p className="mt-2 text-sm text-app-text">{winnerPhaseName}</p>
+                        <p className="text-xs uppercase tracking-[0.3em] text-app-muted/70">{t.board.winnerPhaseLabel}</p>
+                        <p className="mt-2 text-base text-app-text">{winnerPhaseName}</p>
                       </div>
                     </div>
                   )}
@@ -881,7 +881,7 @@ export default function SessionBoard() {
                     <button
                       type="button"
                       onClick={() => undoPhaseAdvance().catch(() => {})}
-                      className="scoring-btn-secondary mt-8 inline-flex items-center gap-2 rounded-xl px-5 py-3 text-xs font-bold uppercase tracking-widest"
+                      className="scoring-btn-secondary mt-8 inline-flex items-center gap-2 rounded-xl px-5 py-3 text-sm font-bold uppercase tracking-widest"
                     >
                       <RotateCcw className="w-3.5 h-3.5" />
                       {t.board.reopenFinal}
@@ -897,17 +897,17 @@ export default function SessionBoard() {
                 {scoredParticipants.length === 0 ? (
                   <div className="flex flex-col items-center justify-center h-full text-app-muted/50 gap-2 p-4">
                     <Search className="w-10 h-10 opacity-20" />
-                    <p className="text-xs text-center">{currentPhaseIndex === 0 ? t.board.useSearchToAdd : t.board.noParticipantsPhase}</p>
+                    <p className="text-sm text-center">{currentPhaseIndex === 0 ? t.board.useSearchToAdd : t.board.noParticipantsPhase}</p>
                   </div>
                 ) : (
-                  <table className="w-full text-sm">
-                    <thead className="bg-app-border/30 sticky top-0 border-b border-app-border text-[10px] tracking-wider text-app-muted/70 uppercase">
+                  <table className="w-full text-base">
+                    <thead className="bg-app-border/30 sticky top-0 border-b border-app-border text-xs tracking-wider text-app-muted/70 uppercase">
                       <tr>
                         <th className="font-normal py-3 pl-3 pr-1 w-6 text-center">#</th>
                         <th className="font-normal py-3 px-2 text-left">{t.board.contestantHeader}</th>
-                        <th className="font-normal py-3 px-2 text-center w-16">{t.board.averageHeader}</th>
-                        <th className="font-normal py-3 px-2 text-center w-44 bg-app-border/40 border-x border-app-border/50">{t.board.yourScoreHeader}</th>
-                        {isHost && currentPhaseIndex === 0 && <th className="font-normal py-3 pr-3 w-8"></th>}
+                        <th className="font-normal py-3 px-2 text-center w-20">{t.board.averageHeader}</th>
+                        <th className="font-normal py-3 px-2 text-center w-52 bg-app-border/40 border-x border-app-border/50">{t.board.yourScoreHeader}</th>
+                        {isHost && currentPhaseIndex === 0 && <th className="font-normal py-3 pr-3 w-10"></th>}
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-app-border/50">
@@ -921,20 +921,20 @@ export default function SessionBoard() {
                         return (
                           <tr key={p.id} className={`transition-all duration-300 ${!isQualified ? 'opacity-40 grayscale-[50%]' : 'hover:bg-app-border/30'}`} style={!isQualified ? { backgroundColor: 'var(--color-app-danger-soft)' } : undefined}>
                             <td className="py-4 pl-4 pr-2 text-center">
-                              <span className={`text-[10px] font-mono font-bold ${idx === 0 ? 'text-app-accent' : isQualified ? 'text-app-text' : 'text-app-muted/50'}`}>{idx + 1}</span>
+                              <span className={`text-xs font-mono font-bold ${idx === 0 ? 'text-app-accent' : isQualified ? 'text-app-text' : 'text-app-muted/50'}`}>{idx + 1}</span>
                             </td>
                             <td className="py-3 px-2">
                               <div className="flex items-center gap-2">
-                                <span className="text-base">{p.flag}</span>
-                                <span className={`text-xs font-medium truncate ${isQualified ? 'text-app-text' : 'text-app-muted/70'}`}>{p.name}</span>
+                                <span className="text-xl">{p.flag}</span>
+                                <span className={`text-sm font-medium truncate ${isQualified ? 'text-app-text' : 'text-app-muted/70'}`}>{p.name}</span>
                               </div>
                             </td>
                             <td className="py-3 px-2 text-center">
-                              <span className={`text-xs font-mono font-bold ${isQualified ? 'text-app-accent' : 'text-app-muted/30'}`}>{p.avg.toFixed(2)}</span>
-                              <span className="text-[8px] text-app-muted/50 ml-0.5">{p.voteCount > 0 && `(${p.voteCount})`}</span>
+                              <span className={`text-sm font-mono font-bold ${isQualified ? 'text-app-accent' : 'text-app-muted/30'}`}>{p.avg.toFixed(2)}</span>
+                              <span className="text-[10px] text-app-muted/50 ml-0.5">{p.voteCount > 0 && `(${p.voteCount})`}</span>
                             </td>
                             <td className="py-3 px-3 bg-app-border/10 border-x border-app-border/20 text-center">
-                              <div className="flex items-center gap-2">
+                              <div className="flex items-center gap-3">
                                 <input
                                   type="range"
                                   min="0"
@@ -945,7 +945,7 @@ export default function SessionBoard() {
                                   onMouseUp={e => flushScoreSave(p.id, e.currentTarget.value)}
                                   onTouchEnd={e => flushScoreSave(p.id, e.currentTarget.value)}
                                   onBlur={e => flushScoreSave(p.id, e.target.value)}
-                                  className="h-2 flex-1 cursor-pointer appearance-none rounded-full bg-app-border accent-app-accent"
+                                  className="h-2.5 flex-1 cursor-pointer appearance-none rounded-full bg-app-border accent-app-accent"
                                   aria-label={`${t.board.yourScoreHeader}: ${p.name}`}
                                 />
                                 <input
@@ -965,12 +965,14 @@ export default function SessionBoard() {
                                       flushScoreSave(p.id, e.target.value);
                                     }
                                   }}
-                                  className="w-14 h-8 bg-app-card border border-app-border rounded-lg text-center font-mono text-xs focus:outline-none focus:border-app-accent transition-colors"
+                                  className="w-16 h-9 bg-app-card border border-app-border rounded-lg text-center font-mono text-sm focus:outline-none focus:border-app-accent transition-colors"
                                   placeholder="0.00"
                                 />
                                 <button
                                   type="button"
-                                  onClick={() => {
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
                                     if (scoreSaveTimersRef.current[p.id]) {
                                       clearTimeout(scoreSaveTimersRef.current[p.id]);
                                       delete scoreSaveTimersRef.current[p.id];
@@ -982,16 +984,16 @@ export default function SessionBoard() {
                                     });
                                     deleteScore(p.id).catch(() => {});
                                   }}
-                                  className="scoring-btn-icon w-6 h-6 rounded text-[10px]"
+                                  className="scoring-btn-icon w-7 h-7 rounded text-xs"
                                   title={t.board.removeVote}
                                   aria-label={`${t.board.removeVote}: ${p.name}`}
                                 >
                                   ×
                                 </button>
                               </div>
-                              <div className="mt-1 flex items-center justify-between text-[10px] font-mono">
+                              <div className="mt-1-flex-items-center-justify-between font-mono text-xs">
                                 <span className="text-app-muted/50">0.00</span>
-                                <span className={hasScore ? 'text-app-accent' : 'text-app-muted'}>
+                                <span className={hasScore ? 'text-app-accent font-bold' : 'text-app-muted'}>
                                   {hasScore || scoreDrafts[p.id] !== undefined
                                     ? (showScoreValue ? displayScore.toFixed(2) : '0.00')
                                     : t.board.notVoted}
@@ -1001,8 +1003,8 @@ export default function SessionBoard() {
                             </td>
                             {isHost && currentPhaseIndex === 0 && (
                               <td className="py-3 pr-3 text-center">
-                                <button onClick={() => removeParticipant(p.id)} className="text-app-muted/30 transition-colors p-0.5 hover:opacity-80" style={{ color: 'var(--color-app-danger)' }} title={t.board.removeParticipant} aria-label={`${t.board.removeParticipant}: ${p.name}`}>
-                                  <X className="w-3 h-3" />
+                                <button onClick={() => removeParticipant(p.id)} className="text-app-muted/30 transition-colors p-1 hover:opacity-80" style={{ color: 'var(--color-app-danger)' }} title={t.board.removeParticipant} aria-label={`${t.board.removeParticipant}: ${p.name}`}>
+                                  <X className="w-4 h-4" />
                                 </button>
                               </td>
                             )}
@@ -1016,33 +1018,33 @@ export default function SessionBoard() {
 
               {/* Advance button (host only) */}
               {isHost && (currentParticipants.length > 0 || currentPhaseIndex > 0) && (
-                <div className="p-3 border-t border-app-border bg-app-card shrink-0">
-                  <div className="flex items-center justify-between gap-3 flex-wrap">
-                    <div className="text-[10px] text-app-muted/70 space-y-1">
+                <div className="p-4 border-t border-app-border bg-app-card shrink-0">
+                  <div className="flex items-center justify-between gap-4 flex-wrap">
+                    <div className="text-xs text-app-muted/70 space-y-1">
                       <span style={votedJudges === judges.length ? { color: 'var(--color-app-success)' } : undefined}>{t.board.judgesCompleted(votedJudges, judges.length)}</span>
                       {!isSessionComplete && currentPhaseIndex > 0 && undoAttempted && currentPhaseHasSavedScores && (
                         <p style={{ color: 'var(--color-app-danger)' }}>{t.board.undoPhaseWarning}</p>
                       )}
                     </div>
-                    <div className="flex items-center gap-2 flex-wrap justify-end">
+                    <div className="flex items-center gap-3 flex-wrap justify-end">
                       {canUndoPhase && !isSessionComplete && (
                         <button
                           type="button"
                           onClick={() => undoPhaseAdvance().catch(() => {})}
-                          className={`flex items-center gap-2 px-5 py-4 rounded-lg text-xs font-bold uppercase tracking-widest transition-all ${
+                          className={`flex items-center gap-2 px-6 py-5 rounded-lg text-sm font-bold uppercase tracking-widest transition-all ${
                             undoAttempted && currentPhaseHasSavedScores
                               ? 'scoring-btn-danger animate-pulse'
                               : 'scoring-btn-secondary'
                           }`}
                         >
-                          <RotateCcw className="w-3.5 h-3.5" />
+                          <RotateCcw className="w-4 h-4" />
                           {undoAttempted && currentPhaseHasSavedScores ? t.board.confirmUndoPhase : t.board.undoPhase}
                         </button>
                       )}
                       {canAdvance && (
                         <button
                           onClick={handlePhaseAction}
-                          className={`flex items-center gap-2 px-5 py-4 rounded-lg text-xs font-bold uppercase tracking-widest transition-all ${
+                          className={`flex items-center gap-2 px-6 py-5 rounded-lg text-sm font-bold uppercase tracking-widest transition-all ${
                             forceAttempted
                               ? 'scoring-btn-danger animate-pulse'
                               : allJudgesComplete
@@ -1051,9 +1053,9 @@ export default function SessionBoard() {
                           }`}
                         >
                           {forceAttempted ? (
-                            <><AlertTriangle className="w-3.5 h-3.5" /> {isFinalRound ? t.board.forceViewWinner(pendingJudges) : t.board.forceAdvance(pendingJudges)}</>
+                            <><AlertTriangle className="w-4 h-4" /> {isFinalRound ? t.board.forceViewWinner(pendingJudges) : t.board.forceAdvance(pendingJudges)}</>
                           ) : (
-                            <><ChevronRight className="w-3.5 h-3.5" /> {isFinalRound ? t.board.viewWinner : t.board.advancePhase}</>
+                            <><ChevronRight className="w-4 h-4" /> {isFinalRound ? t.board.viewWinner : t.board.advancePhase}</>
                           )}
                         </button>
                       )}
@@ -1064,39 +1066,38 @@ export default function SessionBoard() {
             </>
           )}
         </div>
-      </div>
 
-      {/* RIGHT: RESULTADOS GLOBALES */}
-        <div className="w-full lg:w-80 xl:w-96 max-h-[38vh] lg:max-h-none flex flex-col overflow-hidden shrink-0 bg-app-card lg:rounded-2xl lg:shadow-xl border-t lg:border border-app-border">
-          <div className="px-5 py-4 border-b border-app-border/50 bg-app-card shrink-0">
-            <h3 className="text-[10px] font-bold tracking-widest text-app-muted/70 uppercase">{t.board.globalResults}</h3>
-            <p className="text-[9px] text-app-muted/30 mt-0.5">{t.board.phasesCompleted(allParticipants.length, phases.filter(p => p.status === 'completed').length)}</p>
+        {/* RIGHT PANEL: RESULTADOS GLOBALES (CARD) - 40% */}
+        <div className="lg:w-[40%] flex flex-col overflow-hidden shrink-0 bg-app-card rounded-2xl shadow-xl border border-app-border">
+          <div className="px-6 py-5 border-b border-app-border/50 bg-app-card shrink-0">
+            <h3 className="text-xs font-bold tracking-widest text-app-muted/70 uppercase">{t.board.globalResults}</h3>
+            <p className="text-[10px] text-app-muted/30 mt-1">{t.board.phasesCompleted(allParticipants.length, phases.filter(p => p.status === 'completed').length)}</p>
           </div>
           <div className="flex-1 overflow-y-auto">
-            <div className="p-2">
+            <div className="p-3">
               {globalResults.length === 0 && (
-                <p className="text-xs text-app-muted/50 text-center py-8">{t.board.noGlobalParticipants}</p>
+                <p className="text-sm text-app-muted/50 text-center py-10">{t.board.noGlobalParticipants}</p>
               )}
               {globalResults.map((p, idx) => {
                 const eliminated = p.eliminated;
                 const isWinner = session.winnerId === p.id;
                 return (
-                  <div key={p.id} className={`flex items-center gap-2 px-2.5 py-3 mb-1 rounded-lg transition-colors ${
+                  <div key={p.id} className={`flex items-center gap-3 px-3 py-4 mb-2 rounded-xl transition-colors ${
                     isWinner ? 'border border-amber-300/20 bg-amber-300/5' : eliminated ? 'opacity-30' : 'hover:bg-app-border/30'
                   }`}>
-                    <div className={`w-5 text-center font-mono text-[10px] font-bold ${eliminated ? 'text-app-muted/30' : isWinner || idx === 0 ? 'text-app-text' : 'text-app-muted/70'}`}>{idx + 1}</div>
-                    <span className={`text-base ${eliminated ? 'grayscale' : ''}`}>{p.flag}</span>
+                    <div className={`w-6 text-center font-mono text-xs font-bold ${eliminated ? 'text-app-muted/30' : isWinner || idx === 0 ? 'text-app-text' : 'text-app-muted/70'}`}>{idx + 1}</div>
+                    <span className={`text-xl ${eliminated ? 'grayscale' : ''}`}>{p.flag}</span>
                     <div className="flex-1 min-w-0">
-                      <p className={`text-xs truncate ${eliminated ? 'text-app-muted/50 line-through' : isWinner || idx === 0 ? 'text-app-text font-medium' : 'text-app-muted'}`}>{p.name}</p>
+                      <p className={`text-sm truncate ${eliminated ? 'text-app-muted/50 line-through' : isWinner || idx === 0 ? 'text-app-text font-medium' : 'text-app-muted'}`}>{p.name}</p>
                       {isWinner && (
-                        <p className="text-[9px] text-amber-200/70">{t.board.winnerTitle}</p>
+                        <p className="text-[10px] text-amber-200/70 uppercase tracking-tighter">{t.board.winnerTitle}</p>
                       )}
                       {eliminated && (
-                        <p className="text-[9px] text-red-400/50">{t.board.eliminatedIn(phases[p.lastActivePhase]?.name || getDefaultPhaseName(p.lastActivePhase, currentLanguage))}</p>
+                        <p className="text-[10px] text-red-400/50">{t.board.eliminatedIn(phases[p.lastActivePhase]?.name || getDefaultPhaseName(p.lastActivePhase, currentLanguage))}</p>
                       )}
                     </div>
                     <div className="text-right">
-                      <p className={`text-xs font-mono ${eliminated ? 'text-app-muted/30' : 'text-app-text'}`}>{p.totalAvg.toFixed(2)}</p>
+                      <p className={`text-sm font-mono font-bold ${eliminated ? 'text-app-muted/30' : 'text-app-text'}`}>{p.totalAvg.toFixed(2)}</p>
                     </div>
                   </div>
                 );
@@ -1106,6 +1107,7 @@ export default function SessionBoard() {
         </div>
       </div>
 
+      {/* MODALS */}
       <PhaseReportModal
         isOpen={isReportModalOpen}
         onClose={() => setIsReportModalOpen(false)}
@@ -1129,7 +1131,6 @@ export default function SessionBoard() {
         onRenameSession={renameSession}
         onExpelJudge={expelJudge}
       />
-      </div>
     </div>
   );
 }
