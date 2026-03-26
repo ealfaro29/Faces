@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { db } from '../../core/firebase-config.js';
 import { doc, onSnapshot, setDoc, updateDoc, arrayUnion, deleteField } from 'firebase/firestore';
-import { Copy, Check, Search, Plus, X, ChevronRight, Globe, MapPin, AlertTriangle, Crown, BarChart3, Sun, Moon, RotateCcw, Settings2, LogOut } from 'lucide-react';
+import { Copy, Check, Search, Plus, X, ChevronRight, Globe, MapPin, AlertTriangle, Crown, BarChart3, Sun, Moon, RotateCcw, Settings2, LogOut, ClipboardList, Trophy, Settings } from 'lucide-react';
 import {
   getCountryDisplayName,
   getDefaultPhaseName,
@@ -130,6 +130,7 @@ export default function SessionBoard() {
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [theme, setTheme] = useState(getStoredScoringTheme());
   const [accentColor] = useState(getStoredScoringAccent());
+  const [activeTab, setActiveTab] = useState('scoring'); // 'scoring', 'results', 'settings'
 
   // Search state
   const [countries, setCountries] = useState([]);
@@ -723,10 +724,10 @@ export default function SessionBoard() {
       </header>
 
       {/* MAIN CONTENT AREA with GAP */}
-      <div className="flex-1 flex flex-col lg:flex-row min-h-0 gap-4 p-4 overflow-hidden">
+      <div className="flex-1 flex flex-col lg:flex-row min-h-0 gap-4 p-4 pb-20 lg:pb-4 overflow-hidden">
         
         {/* LEFT: TABLERO DE PUNTUACIÓN (CARD) - 60% */}
-        <div className={`lg:w-[60%] flex flex-col min-h-0 bg-app-card rounded-2xl shadow-xl border border-app-border overflow-hidden ${isSessionComplete ? 'bg-gradient-to-br from-app-card to-app-border/10' : ''}`}>
+        <div className={`lg:w-[60%] flex flex-col min-h-0 bg-app-card rounded-2xl shadow-xl border border-app-border overflow-hidden ${activeTab !== 'scoring' ? 'hidden lg:flex' : 'flex'} ${isSessionComplete ? 'bg-gradient-to-br from-app-card to-app-border/10' : ''}`}>
           {/* Phase header */}
           <div className="p-4 border-b border-app-border/50 bg-app-card/50 shrink-0">
             <div className="flex items-center gap-3 flex-wrap">
@@ -905,8 +906,7 @@ export default function SessionBoard() {
                       <tr>
                         <th className="font-normal py-3 pl-3 pr-1 w-6 text-center">#</th>
                         <th className="font-normal py-3 px-2 text-left">{t.board.contestantHeader}</th>
-                        <th className="font-normal py-3 px-2 text-center w-20">{t.board.averageHeader}</th>
-                        <th className="font-normal py-3 px-2 text-center w-52 bg-app-border/40 border-x border-app-border/50">{t.board.yourScoreHeader}</th>
+                         <th className="font-normal py-3 px-2 text-center w-52 bg-app-border/40 border-x border-app-border/50">{t.board.yourScoreHeader}</th>
                         {isHost && currentPhaseIndex === 0 && <th className="font-normal py-3 pr-3 w-10"></th>}
                       </tr>
                     </thead>
@@ -928,10 +928,6 @@ export default function SessionBoard() {
                                 <span className="text-xl">{p.flag}</span>
                                 <span className={`text-sm font-medium truncate ${isQualified ? 'text-app-text' : 'text-app-muted/70'}`}>{p.name}</span>
                               </div>
-                            </td>
-                            <td className="py-3 px-2 text-center">
-                              <span className={`text-sm font-mono font-bold ${isQualified ? 'text-app-accent' : 'text-app-muted/30'}`}>{p.avg.toFixed(2)}</span>
-                              <span className="text-[10px] text-app-muted/50 ml-0.5">{p.voteCount > 0 && `(${p.voteCount})`}</span>
                             </td>
                             <td className="py-3 px-3 bg-app-border/10 border-x border-app-border/20 text-center">
                               <div className="flex items-center gap-3">
@@ -968,37 +964,6 @@ export default function SessionBoard() {
                                   className="w-16 h-9 bg-app-card border border-app-border rounded-lg text-center font-mono text-sm focus:outline-none focus:border-app-accent transition-colors"
                                   placeholder="0.00"
                                 />
-                                <button
-                                  type="button"
-                                  onClick={(e) => {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    if (scoreSaveTimersRef.current[p.id]) {
-                                      clearTimeout(scoreSaveTimersRef.current[p.id]);
-                                      delete scoreSaveTimersRef.current[p.id];
-                                    }
-                                    setScoreDrafts(prev => {
-                                      const next = { ...prev };
-                                      delete next[p.id];
-                                      return next;
-                                    });
-                                    deleteScore(p.id).catch(() => {});
-                                  }}
-                                  className="scoring-btn-icon w-7 h-7 rounded text-xs"
-                                  title={t.board.removeVote}
-                                  aria-label={`${t.board.removeVote}: ${p.name}`}
-                                >
-                                  ×
-                                </button>
-                              </div>
-                              <div className="mt-1-flex-items-center-justify-between font-mono text-xs">
-                                <span className="text-app-muted/50">0.00</span>
-                                <span className={hasScore ? 'text-app-accent font-bold' : 'text-app-muted'}>
-                                  {hasScore || scoreDrafts[p.id] !== undefined
-                                    ? (showScoreValue ? displayScore.toFixed(2) : '0.00')
-                                    : t.board.notVoted}
-                                </span>
-                                <span className="text-app-muted/50">10.00</span>
                               </div>
                             </td>
                             {isHost && currentPhaseIndex === 0 && (
@@ -1068,7 +1033,7 @@ export default function SessionBoard() {
         </div>
 
         {/* RIGHT PANEL: RESULTADOS GLOBALES (CARD) - 40% */}
-        <div className="lg:w-[40%] flex flex-col overflow-hidden shrink-0 bg-app-card rounded-2xl shadow-xl border border-app-border">
+        <div className={`${activeTab !== 'results' ? 'hidden lg:flex' : 'flex'} lg:w-[40%] flex flex-col overflow-hidden shrink-0 bg-app-card rounded-2xl shadow-xl border border-app-border`}>
           <div className="px-6 py-5 border-b border-app-border/50 bg-app-card shrink-0">
             <h3 className="text-xs font-bold tracking-widest text-app-muted/70 uppercase">{t.board.globalResults}</h3>
             <p className="text-[10px] text-app-muted/30 mt-1">{t.board.phasesCompleted(allParticipants.length, phases.filter(p => p.status === 'completed').length)}</p>
@@ -1105,6 +1070,96 @@ export default function SessionBoard() {
             </div>
           </div>
         </div>
+        {/* MOBILE SETTINGS TAB */}
+        <div className={`${activeTab !== 'settings' ? 'hidden' : 'flex lg:hidden'} flex-1 flex flex-col overflow-hidden bg-app-card rounded-2xl shadow-xl border border-app-border`}>
+          <div className="px-6 py-5 border-b border-app-border/50 bg-app-card shrink-0">
+            <h3 className="text-xs font-bold tracking-widest text-app-muted/70 uppercase">{t.board.settingsButton} & {t.board.infoTitle || 'Info'}</h3>
+          </div>
+          <div className="flex-1 overflow-y-auto p-6 space-y-8 text-center pb-24">
+            <div className="space-y-2">
+              <p className="text-xs text-app-muted uppercase tracking-widest">{t.board.judgeSingular}</p>
+              <p className="text-2xl font-black text-app-text">{judgeName}</p>
+              {isHost && <span className="scoring-badge text-[10px] px-2 py-1 rounded inline-block mt-2">{t.board.hostBadge}</span>}
+            </div>
+
+            <div className="space-y-4 pt-4 border-t border-app-border/50">
+              <div>
+                <p className="text-[10px] text-app-muted uppercase tracking-widest mb-1">{t.board.sessionCode || 'Código de Sesión'}</p>
+                <div className="flex items-center justify-center gap-2">
+                  <code className="text-xl font-mono text-app-accent font-bold tracking-widest">{session.id}</code>
+                  <button onClick={copyCode} className="p-2 text-app-muted/50 transition-colors hover:text-app-text">
+                    {codeCopied ? <Check className="w-5 h-5 text-green-500" /> : <Copy className="w-5 h-5" />}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-6 space-y-3">
+              <button 
+                onClick={() => {
+                  const newTheme = theme === 'dark' ? 'light' : 'dark';
+                  setTheme(newTheme);
+                  persistScoringTheme(newTheme);
+                }}
+                className="w-full flex items-center justify-center gap-3 py-4 rounded-xl border border-app-border bg-app-border/10 text-sm font-bold uppercase tracking-widest"
+              >
+                {theme === 'dark' ? <><Sun className="w-4 h-4" /> {t.board.themeToggle} (Light)</> : <><Moon className="w-4 h-4" /> {t.board.themeToggle} (Dark)</>}
+              </button>
+              
+              {isHost && (
+                <button onClick={() => setIsSettingsModalOpen(true)} className="w-full flex items-center justify-center gap-3 py-4 rounded-xl border border-app-border bg-app-border/10 text-sm font-bold uppercase tracking-widest">
+                  <Settings2 className="w-4 h-4" />
+                  {t.board.settingsButton}
+                </button>
+              )}
+
+              <button 
+                onClick={() => { localStorage.removeItem('judgeName'); navigate('/session'); }}
+                className="w-full flex items-center justify-center gap-3 py-4 rounded-xl border border-app-danger/20 bg-app-danger/5 text-app-danger text-sm font-bold uppercase tracking-widest"
+              >
+                <LogOut className="w-4 h-4" />
+                {t.board.exitSession}
+              </button>
+            </div>
+            
+            <div className="pt-8">
+              <p className="text-[10px] text-app-muted/30">Pageants App v1.0.0</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* MOBILE BOTTOM NAVIGATION */}
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-app-card/95 backdrop-blur-lg border-t border-app-border flex items-center justify-around py-3 px-2 z-[60] shadow-[0_-10px_20px_rgba(0,0,0,0.1)]">
+        <button 
+          onClick={() => setActiveTab('scoring')} 
+          className={`flex flex-col items-center gap-1 min-w-[70px] transition-colors ${activeTab === 'scoring' ? 'text-app-accent' : 'text-app-muted/60'}`}
+        >
+          <div className={`p-1.5 rounded-lg transition-colors ${activeTab === 'scoring' ? 'bg-app-accent/10' : ''}`}>
+            <ClipboardList className="w-6 h-6" />
+          </div>
+          <span className="text-[10px] font-bold uppercase tracking-tighter">{t.board.scoringTitle || 'Votar'}</span>
+        </button>
+        
+        <button 
+          onClick={() => setActiveTab('results')} 
+          className={`flex flex-col items-center gap-1 min-w-[70px] transition-colors ${activeTab === 'results' ? 'text-app-accent' : 'text-app-muted/60'}`}
+        >
+          <div className={`p-1.5 rounded-lg transition-colors ${activeTab === 'results' ? 'bg-app-accent/10' : ''}`}>
+            <Trophy className="w-6 h-6" />
+          </div>
+          <span className="text-[10px] font-bold uppercase tracking-tighter">{t.board.resultsTitle || 'Resultados'}</span>
+        </button>
+
+        <button 
+          onClick={() => setActiveTab('settings')} 
+          className={`flex flex-col items-center gap-1 min-w-[70px] transition-colors ${activeTab === 'settings' ? 'text-app-accent' : 'text-app-muted/60'}`}
+        >
+          <div className={`p-1.5 rounded-lg transition-colors ${activeTab === 'settings' ? 'bg-app-accent/10' : ''}`}>
+            <Settings className="w-6 h-6" />
+          </div>
+          <span className="text-[10px] font-bold uppercase tracking-tighter">{t.board.moreTitle || 'Más'}</span>
+        </button>
       </div>
 
       {/* MODALS */}
