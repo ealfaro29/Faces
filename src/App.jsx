@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Routes, Route, Link } from 'react-router-dom';
+import { Routes, Route, Link, useLocation } from 'react-router-dom';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from './core/firebase-config.js';
 import Header from './components/Header';
@@ -20,6 +20,7 @@ import SessionBoard from './pages/scoring/SessionBoard';
 import ScoringLanding from './pages/scoring/ScoringLanding';
 import Login from './pages/Login';
 import GroupCard from './components/GroupCard';
+import { useFavicon, FAVICONS } from './hooks/useFavicon';
 
 // Friendly names for texture category codes
 const TEXTURE_TYPE_MAP = { 'M': 'Mesh', 'T': 'Translucid', 'S': 'Solid' };
@@ -585,6 +586,10 @@ function Dashboard({ user }) {
 
 function App() {
     const [user, setUser] = useState(undefined);
+    const { pathname } = useLocation();
+
+    // Dynamically change favicon based on route
+    useFavicon(pathname.startsWith('/session') ? FAVICONS.CROWN : FAVICONS.HEEL);
 
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
