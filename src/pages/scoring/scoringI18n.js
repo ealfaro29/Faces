@@ -54,11 +54,11 @@ export const scoringCopy = {
     loading: 'Cargando...',
     landing: {
       title: 'Sistema de Puntuacion',
-      subtitle: 'Panel de evaluación en tiempo real para certámenes y competencias.',
+      subtitle: 'Evaluación en tiempo real para certámenes.',
       createTitle: 'Crear sesión',
-      createDescription: 'Configura un nuevo tablero de evaluación como anfitrión.',
+      createDescription: 'Configura un tablero como anfitrión.',
       joinTitle: 'Unirse como juez',
-      joinDescription: 'Ingresa un código de sesión para comenzar a puntuar en tiempo real.'
+      joinDescription: 'Ingresa el código para puntuar en vivo.'
     },
     create: {
       title: 'Nueva sesión',
@@ -206,11 +206,11 @@ export const scoringCopy = {
     loading: 'Loading...',
     landing: {
       title: 'Scoring System',
-      subtitle: 'Real-time judging panel for pageants and live competitions.',
+      subtitle: 'Real-time assessment for pageants.',
       createTitle: 'Create Session',
-      createDescription: 'Set up a new scoring board as the host.',
+      createDescription: 'Set up a board as the host.',
       joinTitle: 'Join as Judge',
-      joinDescription: 'Enter a session code to start scoring in real time.'
+      joinDescription: 'Enter the code to score live.'
     },
     create: {
       title: 'New Session',
