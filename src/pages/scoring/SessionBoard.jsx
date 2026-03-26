@@ -681,12 +681,12 @@ export default function SessionBoard() {
       style={getScoringThemeStyleVars(accentColor, theme)}
     >
       {/* HEADER - Global at top */}
-      <header className="min-h-12 border-b border-app-border/60 bg-app-card/80 backdrop-blur-md flex items-center justify-between gap-3 px-3 md:px-5 py-2 flex-shrink-0 z-20 flex-wrap">
-        <div className="flex items-center gap-3 min-w-0 flex-wrap">
-          {session.type === 'Global' ? <Globe className="w-4 h-4 text-app-muted/70 shrink-0" /> : <MapPin className="w-4 h-4 text-app-muted/70 shrink-0" />}
-          <h1 className="text-base font-bold text-app-text tracking-tight truncate">{session.name}</h1>
-          <span className="text-xs text-app-muted/50 bg-app-border/30 px-2 py-0.5 rounded border border-app-border shrink-0">{getSessionTypeLabel(session.type, currentLanguage)}</span>
-          <span className="text-xs text-app-muted/50 shrink-0">{judges.length} {judges.length === 1 ? t.board.judgeSingular : t.board.judgePlural}</span>
+      <header className="min-h-10 md:min-h-12 border-b border-app-border/60 bg-app-card/80 backdrop-blur-md flex items-center justify-between gap-2 md:gap-3 px-2 md:px-5 py-1 md:py-2 flex-shrink-0 z-20 flex-wrap">
+        <div className="flex items-center gap-2 md:gap-3 min-w-0 flex-wrap">
+          {session.type === 'Global' ? <Globe className="w-3 md:w-4 h-3 md:h-4 text-app-muted/70 shrink-0" /> : <MapPin className="w-3 md:w-4 h-3 md:h-4 text-app-muted/70 shrink-0" />}
+          <h1 className="text-sm md:text-base font-bold text-app-text tracking-tight truncate">{session.name}</h1>
+          <span className="text-[10px] md:text-xs text-app-muted/50 bg-app-border/30 px-1.5 md:px-2 py-0.5 rounded border border-app-border shrink-0">{getSessionTypeLabel(session.type, currentLanguage)}</span>
+          <span className="text-[10px] md:text-xs text-app-muted/50 shrink-0">{judges.length} {judges.length === 1 ? t.board.judgeSingular : t.board.judgePlural}</span>
         </div>
         <div className="flex items-center gap-3 shrink-0 flex-wrap justify-end">
           {isHost && (
@@ -729,8 +729,8 @@ export default function SessionBoard() {
         {/* LEFT: TABLERO DE PUNTUACIÓN (CARD) - 60% */}
         <div className={`lg:w-[60%] flex flex-col min-h-0 bg-app-card rounded-2xl shadow-xl border border-app-border overflow-hidden ${activeTab !== 'scoring' ? 'hidden lg:flex' : 'flex'} ${isSessionComplete ? 'bg-gradient-to-br from-app-card to-app-border/10' : ''}`}>
           {/* Phase header */}
-          <div className="p-4 border-b border-app-border/50 bg-app-card/50 shrink-0">
-            <div className="flex items-center gap-3 flex-wrap">
+          <div className="p-2 md:p-4 border-b border-app-border/50 bg-app-card/50 shrink-0">
+            <div className="flex items-center gap-2 md:gap-3 flex-wrap">
               {/* Phase nav pills (completed + current) */}
               {phases.map((ph, i) => (
                 <div key={i} className={`text-xs px-2.5 py-1 rounded-md font-medium ${
@@ -901,13 +901,13 @@ export default function SessionBoard() {
                     <p className="text-sm text-center">{currentPhaseIndex === 0 ? t.board.useSearchToAdd : t.board.noParticipantsPhase}</p>
                   </div>
                 ) : (
-                  <table className="w-full text-base">
-                    <thead className="bg-app-border/30 sticky top-0 border-b border-app-border text-xs tracking-wider text-app-muted/70 uppercase">
+                  <table className="w-full text-sm md:text-base">
+                    <thead className="bg-app-border/30 sticky top-0 border-b border-app-border text-[10px] md:text-xs tracking-wider text-app-muted/70 uppercase">
                       <tr>
-                        <th className="font-normal py-3 pl-3 pr-1 w-6 text-center">#</th>
-                        <th className="font-normal py-3 px-2 text-left">{t.board.contestantHeader}</th>
-                         <th className="font-normal py-3 px-2 text-center w-52 bg-app-border/40 border-x border-app-border/50">{t.board.yourScoreHeader}</th>
-                        {isHost && currentPhaseIndex === 0 && <th className="font-normal py-3 pr-3 w-10"></th>}
+                        <th className="font-normal py-2 md:py-3 pl-2 md:pl-3 pr-1 w-5 md:w-6 text-center">#</th>
+                        <th className="font-normal py-2 md:py-3 px-2 text-left">{t.board.contestantHeader}</th>
+                         <th className="font-normal py-2 md:py-3 px-2 text-center w-36 md:w-52 bg-app-border/40 border-x border-app-border/50">{t.board.yourScoreHeader}</th>
+                        {isHost && currentPhaseIndex === 0 && <th className="font-normal py-2 md:py-3 pr-2 md:pr-3 w-8 md:w-10"></th>}
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-app-border/50">
@@ -920,17 +920,17 @@ export default function SessionBoard() {
 
                         return (
                           <tr key={p.id} className={`transition-all duration-300 ${!isQualified ? 'opacity-40 grayscale-[50%]' : 'hover:bg-app-border/30'}`} style={!isQualified ? { backgroundColor: 'var(--color-app-danger-soft)' } : undefined}>
-                            <td className="py-4 pl-4 pr-2 text-center">
-                              <span className={`text-xs font-mono font-bold ${idx === 0 ? 'text-app-accent' : isQualified ? 'text-app-text' : 'text-app-muted/50'}`}>{idx + 1}</span>
+                            <td className="py-2 md:py-4 pl-2 md:pl-4 pr-1 md:pr-2 text-center">
+                              <span className={`text-[10px] md:text-xs font-mono font-bold ${idx === 0 ? 'text-app-accent' : isQualified ? 'text-app-text' : 'text-app-muted/50'}`}>{idx + 1}</span>
                             </td>
-                            <td className="py-3 px-2">
-                              <div className="flex items-center gap-2">
-                                <span className="text-xl">{p.flag}</span>
-                                <span className={`text-sm font-medium truncate ${isQualified ? 'text-app-text' : 'text-app-muted/70'}`}>{p.name}</span>
+                            <td className="py-1.5 md:py-3 px-2">
+                              <div className="flex items-center gap-1.5 md:gap-2">
+                                <span className="text-lg md:text-xl">{p.flag}</span>
+                                <span className={`text-xs md:text-sm font-medium truncate ${isQualified ? 'text-app-text' : 'text-app-muted/70'}`}>{p.name}</span>
                               </div>
                             </td>
-                            <td className="py-3 px-3 bg-app-border/10 border-x border-app-border/20 text-center">
-                              <div className="flex items-center gap-3">
+                            <td className="py-1.5 md:py-3 px-1.5 md:px-3 bg-app-border/10 border-x border-app-border/20 text-center">
+                              <div className="flex items-center gap-2 md:gap-3">
                                 <input
                                   type="range"
                                   min="0"
@@ -961,15 +961,15 @@ export default function SessionBoard() {
                                       flushScoreSave(p.id, e.target.value);
                                     }
                                   }}
-                                  className="w-16 h-9 bg-app-card border border-app-border rounded-lg text-center font-mono text-sm focus:outline-none focus:border-app-accent transition-colors"
+                                  className="w-12 h-7 md:w-16 md:h-9 bg-app-card border border-app-border rounded-lg text-center font-mono text-xs md:text-sm focus:outline-none focus:border-app-accent transition-colors"
                                   placeholder="0.00"
                                 />
                               </div>
                             </td>
                             {isHost && currentPhaseIndex === 0 && (
-                              <td className="py-3 pr-3 text-center">
+                              <td className="py-1.5 md:py-3 pr-2 md:pr-3 text-center">
                                 <button onClick={() => removeParticipant(p.id)} className="text-app-muted/30 transition-colors p-1 hover:opacity-80" style={{ color: 'var(--color-app-danger)' }} title={t.board.removeParticipant} aria-label={`${t.board.removeParticipant}: ${p.name}`}>
-                                  <X className="w-4 h-4" />
+                                  <X className="w-3.5 h-3.5 md:w-4 md:h-4" />
                                 </button>
                               </td>
                             )}
@@ -983,7 +983,7 @@ export default function SessionBoard() {
 
               {/* Advance button (host only) */}
               {isHost && (currentParticipants.length > 0 || currentPhaseIndex > 0) && (
-                <div className="p-4 border-t border-app-border bg-app-card shrink-0">
+                <div className="p-2 md:p-4 border-t border-app-border bg-app-card shrink-0">
                   <div className="flex items-center justify-between gap-4 flex-wrap">
                     <div className="text-xs text-app-muted/70 space-y-1">
                       <span style={votedJudges === judges.length ? { color: 'var(--color-app-success)' } : undefined}>{t.board.judgesCompleted(votedJudges, judges.length)}</span>
@@ -1130,7 +1130,7 @@ export default function SessionBoard() {
       </div>
 
       {/* MOBILE BOTTOM NAVIGATION */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-app-card/95 backdrop-blur-lg border-t border-app-border flex items-center justify-around py-3 px-2 z-[60] shadow-[0_-10px_20px_rgba(0,0,0,0.1)]">
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-app-card/95 backdrop-blur-lg border-t border-app-border flex items-center justify-around py-1.5 md:py-3 px-2 z-[60] shadow-[0_-10px_20px_rgba(0,0,0,0.1)]">
         <button 
           onClick={() => setActiveTab('scoring')} 
           className={`flex flex-col items-center gap-1 min-w-[70px] transition-colors ${activeTab === 'scoring' ? 'text-app-accent' : 'text-app-muted/60'}`}
