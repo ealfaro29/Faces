@@ -686,7 +686,6 @@ export default function SessionBoard() {
           <h1 className="text-sm font-bold text-app-text tracking-tight truncate">{session.name}</h1>
           <span className="text-[10px] text-app-muted/50 bg-app-border/30 px-2 py-0.5 rounded border border-app-border shrink-0">{getSessionTypeLabel(session.type, currentLanguage)}</span>
           <span className="text-[10px] text-app-muted/50 shrink-0">{judges.length} {judges.length === 1 ? t.board.judgeSingular : t.board.judgePlural}</span>
-          <span className="text-[9px] text-app-muted/70 font-mono bg-app-border/30 px-1.5 py-0.5 rounded border border-app-border shrink-0" title={t.board.versionLabel}>v{__APP_VERSION__}</span>
         </div>
         <div className="flex items-center gap-3 shrink-0 flex-wrap justify-end">
           {isHost && (

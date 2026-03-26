@@ -36,7 +36,7 @@ export function getCountryDisplayName(country, language) {
 
 export const scoringCopy = {
   es: {
-    appTitle: `Pageants System v${typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : ''}`,
+    appTitle: 'Pageants System',
     languageLabel: 'Idioma',
     themeToggleLabel: 'Cambiar tema',
     accentLabel: 'Acento',
@@ -53,7 +53,7 @@ export const scoringCopy = {
     footerByLabel: 'Creado por',
     loading: 'Cargando...',
     landing: {
-      title: `Sistema de Puntuacion v${typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : ''}`,
+      title: 'Sistema de Puntuacion',
       subtitle: 'Panel de evaluación en tiempo real para certámenes y competencias.',
       createTitle: 'Crear sesión',
       createDescription: 'Configura un nuevo tablero de evaluación como anfitrión.',
@@ -188,7 +188,7 @@ export const scoringCopy = {
     }
   },
   en: {
-    appTitle: `Scoring System v${typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : ''}`,
+    appTitle: 'Scoring System',
     languageLabel: 'Language',
     themeToggleLabel: 'Toggle theme',
     accentLabel: 'Accent',
@@ -205,7 +205,7 @@ export const scoringCopy = {
     footerByLabel: 'Created by',
     loading: 'Loading...',
     landing: {
-      title: `Scoring System v${typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : ''}`,
+      title: 'Scoring System',
       subtitle: 'Real-time judging panel for pageants and live competitions.',
       createTitle: 'Create Session',
       createDescription: 'Set up a new scoring board as the host.',
