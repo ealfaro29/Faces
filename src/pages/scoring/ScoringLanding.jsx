@@ -60,7 +60,7 @@ export default function ScoringLanding() {
       >
         <Link to="/" className="flex items-center gap-2 no-underline group">
           <Crown className="w-6 h-6 text-app-accent transition-transform group-hover:scale-110" />
-          <span className="text-xl font-bold tracking-tight text-app-text">Pageants <span className="text-app-accent">Pro</span></span>
+          <span className="text-xl font-bold tracking-tight text-app-text">Pageants <span className="text-app-accent">App</span></span>
         </Link>
         
         <div className="flex items-center gap-4">
@@ -173,7 +173,7 @@ export default function ScoringLanding() {
         className="w-full py-10 text-center border-t border-app-border/20 z-10"
       >
         <p className="text-[12px] text-app-muted/40 font-medium tracking-wide">
-          &copy; {new Date().getFullYear()} PAGEANTS COLLECTION &bull; {t.footerByLabel.toUpperCase()}{' '}
+          &copy; {new Date().getFullYear()} PAGEANTS APP &bull; {t.footerByLabel.toUpperCase()}{' '}
           <a href="https://discord.com/users/angelmuse_87856" target="_blank" rel="noopener noreferrer" className="text-app-text/60 hover:text-app-accent transition-colors underline decoration-app-border underline-offset-4 font-bold">ANGEL MUSE DOLL</a>
         </p>
       </motion.footer>
