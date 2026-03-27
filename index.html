@@ -17,9 +17,46 @@
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js')
-            .then(reg => console.log('SW registered'))
-            .catch(err => console.log('SW failed', err));
+          const hadController = Boolean(navigator.serviceWorker.controller);
+          let isRefreshing = false;
+
+          navigator.serviceWorker.addEventListener('controllerchange', () => {
+            if (!hadController || isRefreshing) return;
+            isRefreshing = true;
+            window.location.reload();
+          });
+
+          navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' })
+            .then((registration) => {
+              const activateWaitingWorker = (worker) => {
+                if (!worker) return;
+                worker.postMessage({ type: 'SKIP_WAITING' });
+              };
+
+              if (registration.waiting) {
+                activateWaitingWorker(registration.waiting);
+              }
+
+              registration.addEventListener('updatefound', () => {
+                const newWorker = registration.installing;
+                if (!newWorker) return;
+
+                newWorker.addEventListener('statechange', () => {
+                  if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                    activateWaitingWorker(newWorker);
+                  }
+                });
+              });
+
+              const checkForUpdates = () => registration.update().catch(() => {});
+              window.addEventListener('focus', checkForUpdates);
+              document.addEventListener('visibilitychange', () => {
+                if (document.visibilityState === 'visible') {
+                  checkForUpdates();
+                }
+              });
+            })
+            .catch((err) => console.log('SW failed', err));
         });
       }
     </script>
